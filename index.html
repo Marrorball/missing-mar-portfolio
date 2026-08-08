@@ -3,160 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Портфолио Марата — UX/UI Designer">
-  <title>Портфолио — Windows XP</title>
+  <meta name="description" content="Портфолио Марата Дреева: продуктовый, цифровой и визуальный дизайн.">
+  <meta name="theme-color" content="#071d52">
+  <title>missing mar / Марат Дреев — Product &amp; Visual Designer</title>
   <link rel="stylesheet" href="assets/css/site.css">
 </head>
 <body>
-  <main id="desktop">
-    <nav class="desk-icons" id="desktop-icons" aria-label="Рабочий стол"></nav>
-
-    <section class="win" id="win-explorer" data-window-name="📁 Проекты">
-      <div class="win-title" data-drag-window="win-explorer">
-        <span class="t-icon" id="ex-icon">💼</span>
-        <span class="t-label" id="ex-title">Проекты</span>
-        <div class="t-btns">
-          <button class="t-btn min" data-action="close-window" data-id="win-explorer" aria-label="Свернуть">─</button>
-          <button class="t-btn max" data-action="maximize-window" data-id="win-explorer" aria-label="Развернуть">□</button>
-          <button class="t-btn cls" data-action="close-window" data-id="win-explorer" aria-label="Закрыть">✕</button>
-        </div>
-      </div>
-      <div class="win-menu">
-        <span class="m-item">Файл</span>
-        <span class="m-item">Правка</span>
-        <button class="m-item" data-action="toggle-view">Вид</button>
-        <span class="m-item">Избранное</span>
-        <span class="m-item">Сервис</span>
-      </div>
-      <div class="win-toolbar">
-        <button class="tb-btn" data-action="close-window" data-id="win-explorer">◄ Назад</button>
-        <button class="tb-btn" disabled>► Вперёд</button>
-        <div class="tb-sep"></div>
-        <button class="tb-btn" disabled>⬆ Вверх</button>
-        <div class="tb-sep"></div>
-        <button class="tb-btn" data-action="toggle-view">⊞ Вид</button>
-      </div>
-      <div class="xp-address">
-        <span class="addr-label">Адрес:</span>
-        <input class="addr-bar" id="addr-bar" type="text" value="Рабочий стол\Проекты" readonly>
-        <button class="addr-go">Перейти</button>
-      </div>
-      <div class="xp-explorer">
-        <aside class="explorer-left">
-          <div class="ex-section">
-            <div class="ex-section-title">🗂 Задачи</div>
-            <button class="ex-link" data-action="open-selected-project"><span class="lico">📄</span>Открыть</button>
-            <button class="ex-link" data-action="show-share-message"><span class="lico">✉️</span>Поделиться</button>
-            <button class="ex-link" data-action="show-print-message"><span class="lico">🖨️</span>Печать</button>
-          </div>
-          <div class="ex-section" id="category-links"></div>
-          <div class="ex-section">
-            <div class="ex-section-title">🔎 Детали</div>
-            <div id="ex-detail-preview">Выберите проект для просмотра</div>
-          </div>
-        </aside>
-        <div class="explorer-right">
-          <div class="folder-view">
-            <div class="folder-grid icons" id="folder-grid"></div>
-          </div>
-        </div>
-      </div>
-      <div class="win-status">
-        <div class="s-panel" id="ex-status">0 объектов</div>
-        <div class="s-panel" id="ex-count"></div>
-      </div>
-    </section>
-
-    <section class="win" id="win-detail" data-window-name="📄 Кейс">
-      <div class="win-title" data-drag-window="win-detail">
-        <span class="t-icon" id="dt-icon">📄</span>
-        <span class="t-label" id="dt-title">Проект</span>
-        <div class="t-btns">
-          <button class="t-btn min" data-action="close-window" data-id="win-detail" aria-label="Свернуть">─</button>
-          <button class="t-btn max" data-action="maximize-window" data-id="win-detail" aria-label="Развернуть">□</button>
-          <button class="t-btn cls" data-action="close-window" data-id="win-detail" aria-label="Закрыть">✕</button>
-        </div>
-      </div>
-      <div class="win-menu">
-        <span class="m-item">Файл</span>
-        <span class="m-item">Вид</span>
-        <a class="m-item" id="dt-behance-link" target="_blank" rel="noreferrer">🎨 Открыть проект</a>
-      </div>
-      <div id="dt-cover">
-        <div id="dt-thumb">📄</div>
-        <div class="detail-info">
-          <div id="dt-name">—</div>
-          <div id="dt-meta">—</div>
-          <div id="dt-desc">—</div>
-          <div id="dt-tags"></div>
-        </div>
-      </div>
-      <div id="dt-sections"></div>
-      <div class="win-status">
-        <div class="s-panel" id="dt-status">—</div>
-        <div class="s-panel" id="dt-tab-label">—</div>
-      </div>
-    </section>
-
-    <section class="win" id="win-skills" data-window-name="📄 Резюме">
-      <div class="win-title" data-drag-window="win-skills">
-        <span class="t-icon">📄</span>
-        <span class="t-label">Резюме — Марат.doc</span>
-        <div class="t-btns">
-          <button class="t-btn min" data-action="close-window" data-id="win-skills" aria-label="Свернуть">─</button>
-          <button class="t-btn max" data-action="maximize-window" data-id="win-skills" aria-label="Развернуть">□</button>
-          <button class="t-btn cls" data-action="close-window" data-id="win-skills" aria-label="Закрыть">✕</button>
-        </div>
-      </div>
-      <div class="win-menu"><span class="m-item">Файл</span><span class="m-item">Правка</span><span class="m-item">Вид</span></div>
-      <div class="win-body" id="resume-content"></div>
-      <div class="win-status"><div class="s-panel">📄 Резюме</div></div>
-    </section>
-
-    <div id="dynamic-windows"></div>
-
-    <div id="overlay"></div>
-    <section class="win" id="msgbox" role="dialog" aria-modal="true" aria-labelledby="mb-title">
-      <div class="win-title">
-        <span class="t-icon" id="mb-icon">ℹ️</span>
-        <span class="t-label" id="mb-title">Сообщение</span>
-        <div class="t-btns"><button class="t-btn cls" data-action="close-message" aria-label="Закрыть">✕</button></div>
-      </div>
-      <div class="msg-body"><div class="msg-ico" id="mb-bigico">ℹ️</div><div class="msg-txt" id="mb-text"></div></div>
-      <div class="msg-btns"><button class="tb-btn" data-action="close-message">OK</button></div>
-    </section>
-
-    <section class="win" id="win-loading" aria-live="polite">
-      <div class="win-title">
-        <span class="t-icon">⏳</span>
-        <span class="t-label">Windows XP — Загрузка портфолио...</span>
-      </div>
-      <div class="load-body">
-        <div class="load-label" id="load-lbl">Запуск системы...</div>
-        <div class="load-bar"><div class="load-fill" id="load-fill"></div></div>
-        <div class="load-pct" id="load-pct">0%</div>
-      </div>
-    </section>
+  <a class="skip-link" href="#main-content">К содержанию</a>
+  <header id="site-header"></header>
+  <main id="main-content">
+    <div id="home-view"></div>
+    <div id="overlay-view" hidden></div>
   </main>
-
-  <footer id="taskbar">
-    <button id="start-btn" data-action="toggle-start"><span class="s-flag">🪟</span>Пуск</button>
-    <div class="task-sep"></div>
-    <nav class="quick-launch" aria-label="Быстрый запуск">
-      <button class="ql-btn" data-action="open-page" data-id="about" title="Обо мне">🖥️</button>
-      <button class="ql-btn" data-action="open-folder" data-id="uxui" title="Проекты">💼</button>
-    </nav>
-    <div class="task-sep"></div>
-    <div class="tb-wins" id="tb-wins"></div>
-    <div class="sys-tray"><span class="tray-ico">🔊</span><span class="tray-ico">🌐</span><time class="tray-time" id="clock">00:00</time></div>
-  </footer>
-
-  <aside id="start-menu">
-    <div class="sm-top"><div class="sm-avatar">👤</div><div class="sm-name" id="start-owner-name">Марат</div></div>
-    <div class="sm-cols"><div class="sm-left" id="start-items"></div><div class="sm-right"><button class="sm-item" data-action="show-trash"><span class="sm-ico">🗑️</span><span class="sm-label">Корзина</span></button></div></div>
-    <div class="sm-bottom"><button class="sm-bot-btn" data-action="show-shutdown">🔴 Выключение</button></div>
-  </aside>
-
+  <div id="live-region" class="sr-only" aria-live="polite"></div>
   <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+import { filterProjects, selectFeaturedProjects } from './selectors.js';
+
 export function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, character => ({
     '&': '&amp;',
@@ -8,115 +10,128 @@ export function escapeHtml(value = '') {
   })[character]);
 }
 
-function renderShortcut(item, action) {
-  return `<button class="d-icon" data-action="${action}" data-id="${escapeHtml(item.id)}">
-    <span class="ico">${escapeHtml(item.icon || '📄')}</span>
-    <span>${escapeHtml(item.title)}</span>
-  </button>`;
+function routeForPage(page) {
+  if (page.id === 'about' || page.id === 'contact') return `#${page.id}`;
+  return `#page/${encodeURIComponent(page.id)}`;
 }
 
-export function renderDesktopShortcuts({ site, pages }) {
-  const about = pages.filter(page => page.id === 'about' && page.showOnDesktop);
-  const otherPages = pages.filter(page => page.id !== 'about' && page.showOnDesktop);
-  const categories = (site.categories || []).filter(category => category.showOnDesktop);
-  return [
-    ...about.map(page => renderShortcut(page, 'open-page')),
-    ...categories.map(category => renderShortcut(category, 'open-folder')),
-    renderShortcut({ id: 'resume', title: 'Резюме', icon: '📄' }, 'open-resume'),
-    ...otherPages.map(page => renderShortcut(page, 'open-page')),
-    '<button class="d-icon" data-action="show-trash"><span class="ico">🗑️</span><span>Корзина</span></button>'
-  ].join('');
+function navigationPages(pages = []) {
+  return pages
+    .filter(page => page.published !== false && page.showInNavigation !== false)
+    .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 }
 
-function renderStartItem(item, action) {
-  return `<button class="sm-item" data-action="${action}" data-id="${escapeHtml(item.id)}">
-    <span class="sm-ico">${escapeHtml(item.icon || '📄')}</span>
-    <span class="sm-label">${escapeHtml(item.title)}</span>
-  </button>`;
+export function renderHeader(site = {}, pages = []) {
+  const visiblePages = navigationPages(pages);
+  const primaryPages = visiblePages.slice(0, 2);
+  const owner = site.owner || {};
+
+  return `<div class="site-header-inner">
+    <a class="header-mark" href="#" aria-label="${escapeHtml(owner.brandName || 'На главную')}"><span aria-hidden="true">*</span></a>
+    <span class="header-rule" aria-hidden="true"></span>
+    <nav class="primary-navigation" aria-label="Основная навигация">
+      <a href="#" data-action="show-projects">Проекты</a>
+      ${primaryPages.map(page => `<a href="${routeForPage(page)}">${escapeHtml(page.title)}</a>`).join('')}
+    </nav>
+    <details class="page-menu">
+      <summary aria-label="Все страницы">Меню</summary>
+      <nav class="page-menu-panel" aria-label="Все страницы портфолио">
+        ${visiblePages.map(page => `<a href="${routeForPage(page)}" data-page-id="${escapeHtml(page.id)}">${escapeHtml(page.title)}</a>`).join('')}
+      </nav>
+    </details>
+  </div>`;
 }
 
-export function renderStartItems({ site, pages }) {
-  const categories = (site.categories || []).filter(category => category.showInStart);
-  const visiblePages = pages.filter(page => page.showInStart);
-  return [
-    ...visiblePages.map(page => renderStartItem(page, 'open-page')),
-    ...categories.map(category => renderStartItem(category, 'open-folder')),
-    renderStartItem({ id: 'resume', title: 'Резюме', icon: '📄' }, 'open-resume')
-  ].join('');
-}
-
-export function renderFolderItems(projects, viewMode = 'icons') {
-  if (viewMode === 'list') {
-    const rows = projects.map(project => `<button class="f-list-row" data-action="open-project" data-id="${escapeHtml(project.id)}">
-      <span class="fco" style="background:${escapeHtml(project.background || '#ffffff')}"></span>
-      <span class="fn">${escapeHtml(project.title)}</span>
-      <span class="ft">${escapeHtml(project.year || project.category || '')}</span>
-      <span class="fdate">${escapeHtml(project.status || '')}</span>
-    </button>`).join('');
-    return `<div class="f-list-row f-list-head"><span></span><span>Имя</span><span>Год</span><span>Статус</span></div>${rows}`;
-  }
-
-  return projects.map(project => `<button class="f-icon" data-action="open-project" data-id="${escapeHtml(project.id)}">
-    <span class="fco" style="background:${escapeHtml(project.background || '#ffffff')}">${escapeHtml(project.icon || '')}</span>
-    <span class="fn">${escapeHtml(project.title)}</span>
-    <span class="ft">${escapeHtml(project.year || '')}</span>
-  </button>`).join('');
-}
-
-export function renderProjectSections(project) {
-  const sections = project.sections || [];
-  const tabs = sections.map((section, index) => `<button class="cs-tab${index === 0 ? ' active' : ''}" data-action="switch-project-section" data-id="${escapeHtml(project.id)}" data-section-id="${escapeHtml(section.id)}">${escapeHtml(section.label)}</button>`).join('');
-  const panels = sections.map((section, index) => `<div class="project-section-panel" data-section-panel="${escapeHtml(section.id)}"${index === 0 ? '' : ' hidden'}>${section.content || ''}</div>`).join('');
-  return `<div class="project-tabs">${tabs}</div><div class="project-panels">${panels}</div>`;
-}
-
-function renderAboutProfile(site) {
-  if (!site?.owner) return '';
-  const owner = site.owner;
-  const rows = [
-    ['Имя', owner.name],
-    ['Роль', owner.role],
-    ['Опыт', owner.experience],
-    ['Локация', owner.location],
-    ['Статус', owner.status]
-  ].filter(([, value]) => value);
-  return `<table class="about-table"><tbody>${rows.map(([label, value]) => `<tr><td>${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>`).join('')}</tbody></table>`;
-}
-
-export function renderGenericPage(page, site) {
-  const windowId = `win-page-${page.id}`;
-  const body = page.template === 'contact'
-    ? renderContact(site || {})
-    : `<div class="generic-page-content">${page.content || ''}${page.id === 'about' ? renderAboutProfile(site) : ''}</div>`;
-  return `<section class="win dynamic-page" id="${escapeHtml(windowId)}" data-window-name="${escapeHtml(`${page.icon || '📄'} ${page.title}`)}">
-    <div class="win-title" data-drag-window="${escapeHtml(windowId)}">
-      <span class="t-icon">${escapeHtml(page.icon || '📄')}</span>
-      <span class="t-label">${escapeHtml(page.title)}</span>
-      <div class="t-btns">
-        <button class="t-btn min" data-action="close-window" data-id="${escapeHtml(windowId)}" aria-label="Свернуть">─</button>
-        <button class="t-btn max" data-action="maximize-window" data-id="${escapeHtml(windowId)}" aria-label="Развернуть">□</button>
-        <button class="t-btn cls" data-action="close-window" data-id="${escapeHtml(windowId)}" aria-label="Закрыть">✕</button>
-      </div>
+function renderIdentity(owner = {}) {
+  return `<div class="hero-identity">
+    <div class="identity-line">
+      <h1>${escapeHtml(owner.brandName || '')}</h1>
+      ${owner.name ? `<span class="owner-name">/ ${escapeHtml(owner.name)}</span>` : ''}
     </div>
-    <div class="win-menu"><span class="m-item">Файл</span><span class="m-item">Вид</span><span class="m-item">Справка</span></div>
-    <div class="win-body generic-window-body">${body}</div>
-    <div class="win-status"><div class="s-panel">Готово</div><div class="s-panel">Система: OK</div></div>
+    ${owner.role ? `<p class="owner-role"><span aria-hidden="true"></span>${escapeHtml(owner.role)}</p>` : ''}
+  </div>`;
+}
+
+function renderProfileCard(owner = {}) {
+  const tagline = escapeHtml(owner.cardTagline || '').replace(/\n/g, '<br>');
+  return `<a href="#about" class="profile-card" aria-label="${escapeHtml(owner.cardAction || 'Обо мне')}">
+    <img src="${escapeHtml(owner.profileImage || '')}" alt="${escapeHtml(owner.name || '')}" loading="eager">
+    <span class="profile-card-shade" aria-hidden="true"></span>
+    <span class="profile-card-copy">
+      <strong>${escapeHtml(owner.cardTitle || '')}</strong>
+      <span class="profile-card-tagline">${tagline}</span>
+    </span>
+    <span class="profile-card-footer">
+      <span>${escapeHtml(owner.role || '')}</span>
+      <span>${escapeHtml(owner.cardMeta || '')}</span>
+      <span>${escapeHtml(owner.cardAction || '')}</span>
+    </span>
+  </a>`;
+}
+
+function renderFeaturedProjects(projects, activeProjectId) {
+  return `<div class="featured-list" id="featured-list" aria-label="Избранные проекты">
+    ${projects.map((project, index) => `<button class="featured-project${project.id === activeProjectId ? ' is-active' : ''}" type="button" data-action="select-featured" data-project-id="${escapeHtml(project.id)}" aria-pressed="${project.id === activeProjectId}">
+      <span class="featured-index">${String(index + 1).padStart(2, '0')}</span>
+      <span class="featured-title">${escapeHtml(project.shortLabel || project.title)}</span>
+      <span class="featured-indicator" aria-hidden="true"></span>
+    </button>`).join('')}
+  </div>`;
+}
+
+function renderCategoryFilters(categories, activeCategory) {
+  const items = [{ id: 'all', title: 'Все' }, ...(categories || [])];
+  return `<div class="archive-filters" aria-label="Фильтр проектов">
+    ${items.map(category => `<button type="button" data-action="filter-projects" data-category-id="${escapeHtml(category.id)}" aria-pressed="${category.id === activeCategory}">${escapeHtml(category.title)}</button>`).join('')}
+  </div>`;
+}
+
+function renderProjectArchive(projects, categories, activeCategory) {
+  const visibleProjects = filterProjects(projects, activeCategory);
+  return `<section class="project-archive" id="project-archive" aria-labelledby="archive-title">
+    <div class="archive-heading">
+      <div>
+        <p class="eyebrow">INDEX / SELECTED &amp; OTHER WORK</p>
+        <h2 id="archive-title">Все проекты — ${projects.length}</h2>
+      </div>
+      ${renderCategoryFilters(categories, activeCategory)}
+    </div>
+    <ol class="archive-list">
+      ${visibleProjects.map((project, index) => `<li>
+        <a href="#project/${encodeURIComponent(project.id)}" data-project-id="${escapeHtml(project.id)}">
+          <span class="archive-index">${String(index + 1).padStart(2, '0')}</span>
+          <span class="archive-project-copy"><strong>${escapeHtml(project.title)}</strong><small>${escapeHtml(project.summary || '')}</small></span>
+          <span class="archive-project-meta">${escapeHtml([project.year, project.status].filter(Boolean).join(' · '))}</span>
+        </a>
+      </li>`).join('')}
+    </ol>
   </section>`;
 }
 
-function renderResumeGroup(title, items, itemRenderer) {
-  if (!items?.length) return '';
-  return `<section class="resume-section"><h3>${escapeHtml(title)}</h3>${items.map(itemRenderer).join('')}</section>`;
-}
+export function renderHome({
+  site = {},
+  pages = [],
+  projects = [],
+  categories = [],
+  activeProjectId = '',
+  activeCategory = 'all'
+} = {}) {
+  const featured = selectFeaturedProjects(projects, 3);
+  const selectedId = activeProjectId || featured[0]?.id || '';
+  const owner = site.owner || {};
 
-export function renderResume(resume) {
-  const experience = renderResumeGroup('💼 Опыт работы', resume.experience, item => `<article class="resume-item"><div class="resume-heading"><strong>${escapeHtml(item.company)}</strong><span>${escapeHtml(item.period)}</span></div><div class="resume-role">${escapeHtml(item.role)}</div><p>${escapeHtml(item.description)}</p></article>`);
-  const education = renderResumeGroup('🎓 Образование', resume.education, item => `<article class="resume-item"><div class="resume-heading"><strong>${escapeHtml(item.institution)}</strong><span>${escapeHtml(item.period)}</span></div><div>${escapeHtml(item.program)}</div>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}</article>`);
-  const publications = renderResumeGroup('📝 Научные публикации', resume.publications, item => `<article class="resume-item"><div class="resume-heading"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.year)}</span></div><p>${escapeHtml(item.description)}</p></article>`);
-  const skills = renderResumeGroup('✦ Что умею', resume.skills, item => `<div class="resume-skill"><strong>${escapeHtml(item.name)}:</strong> ${escapeHtml(item.level)}</div>`);
-  const tools = resume.tools?.length ? `<section class="resume-section"><h3>🛠 Инструменты</h3><div class="resume-tags">${resume.tools.map(tool => `<span class="dtag">${escapeHtml(tool)}</span>`).join('')}</div></section>` : '';
-  const about = resume.about ? `<section class="resume-section"><h3>✨ О себе</h3><p>${escapeHtml(resume.about)}</p></section>` : '';
-  return `${experience}${education}${publications}${tools}${skills}${about}`;
+  return `<div data-view="home">
+    <section class="landscape-hero" aria-labelledby="portfolio-title">
+      ${renderIdentity(owner).replace('<h1>', '<h1 id="portfolio-title">')}
+      ${renderProfileCard(owner)}
+      <div class="featured-selector">
+        ${renderFeaturedProjects(featured, selectedId)}
+        <a class="open-project-link" href="#project/${encodeURIComponent(selectedId)}">Открыть проект <span aria-hidden="true">→</span></a>
+      </div>
+      <p class="hero-caption">DESIGNING DIGITAL EXPERIENCES<br>SINCE 2018</p>
+    </section>
+    ${renderProjectArchive(projects, categories, activeCategory)}
+  </div>`;
 }
 
 function safeHttpsUrl(value) {
@@ -128,25 +143,96 @@ function safeHttpsUrl(value) {
   }
 }
 
-export function renderContact(site) {
-  const contacts = site.contacts || {};
+function renderTags(tags = []) {
+  return tags.length
+    ? `<ul class="tag-list">${tags.map(tag => `<li>${escapeHtml(tag)}</li>`).join('')}</ul>`
+    : '';
+}
+
+export function renderProjectView(project = {}, category = {}) {
+  const projectUrl = safeHttpsUrl(project.behance || '');
+  return `<article class="portfolio-view project-view" data-view="project" data-project-id="${escapeHtml(project.id || '')}">
+    <header class="view-header">
+      <a class="back-link" href="#">← Все проекты</a>
+      <p>${escapeHtml(category.title || '')}${project.year ? ` · ${escapeHtml(project.year)}` : ''}</p>
+      <h1>${escapeHtml(project.title || '')}</h1>
+      ${project.summary ? `<p class="view-summary">${escapeHtml(project.summary)}</p>` : ''}
+      ${renderTags(project.tags)}
+      ${projectUrl ? `<a class="external-project-link" href="${escapeHtml(projectUrl)}" target="_blank" rel="noreferrer">Открыть исходный проект ↗</a>` : ''}
+    </header>
+    <div class="case-study-sections">
+      ${(project.sections || []).map((section, index) => `<section id="${escapeHtml(section.id)}" class="case-study-section">
+        <p class="section-index">${String(index + 1).padStart(2, '0')}</p>
+        <h2>${escapeHtml(section.label || '')}</h2>
+        <div class="rich-content">${section.content || ''}</div>
+      </section>`).join('')}
+    </div>
+  </article>`;
+}
+
+function renderResume(resume = {}) {
+  const experience = (resume.experience || []).map(item => `<article class="resume-item"><p>${escapeHtml(item.period || '')}</p><h3>${escapeHtml(item.company || '')}</h3><strong>${escapeHtml(item.role || '')}</strong><span>${escapeHtml(item.description || '')}</span></article>`).join('');
+  const education = (resume.education || []).map(item => `<article class="resume-item"><p>${escapeHtml(item.period || '')}</p><h3>${escapeHtml(item.institution || '')}</h3><strong>${escapeHtml(item.program || '')}</strong><span>${escapeHtml(item.description || '')}</span></article>`).join('');
+  const skills = (resume.skills || []).map(item => `<li><strong>${escapeHtml(item.name || '')}</strong><span>${escapeHtml(item.level || '')}</span></li>`).join('');
+  const tools = (resume.tools || []).map(tool => `<li>${escapeHtml(tool)}</li>`).join('');
+  return `<div class="resume-grid">
+    ${experience ? `<section><h2>Опыт</h2>${experience}</section>` : ''}
+    ${education ? `<section><h2>Образование</h2>${education}</section>` : ''}
+    ${skills ? `<section><h2>Навыки</h2><ul class="skill-list">${skills}</ul></section>` : ''}
+    ${tools ? `<section><h2>Инструменты</h2><ul class="tool-list">${tools}</ul></section>` : ''}
+  </div>`;
+}
+
+export function renderAboutView(site = {}, resume = {}, page = {}) {
   const owner = site.owner || {};
-  const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacts.email || '')
-    ? contacts.email
-    : '';
+  return `<article class="portfolio-view about-view" data-view="about">
+    <header class="view-header">
+      <a class="back-link" href="#">← На главную</a>
+      <p>PROFILE / ${escapeHtml(owner.location || '')}</p>
+      <h1>${escapeHtml(page.title || 'Обо мне')}</h1>
+      <p class="view-summary">${escapeHtml(owner.bio || '')}</p>
+    </header>
+    <div class="about-layout">
+      ${owner.profileImage ? `<img src="${escapeHtml(owner.profileImage)}" alt="${escapeHtml(owner.name || '')}">` : ''}
+      <div class="rich-content">${page.content || ''}</div>
+    </div>
+    ${renderResume(resume)}
+  </article>`;
+}
+
+export function renderContactView(site = {}) {
+  const owner = site.owner || {};
+  const contacts = site.contacts || {};
+  const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacts.email || '') ? contacts.email : '';
   const telegram = String(contacts.telegram || '').replace(/^@/, '');
-  const telegramUrl = /^[A-Za-z0-9_]{5,32}$/.test(telegram)
-    ? `https://t.me/${telegram}`
-    : '';
-  const behance = safeHttpsUrl(contacts.behance || '');
-  const links = [
-    email && `<a class="c-btn" href="mailto:${escapeHtml(email)}"><span>📧</span><span><small>Email</small>${escapeHtml(email)}</span></a>`,
-    telegramUrl && `<a class="c-btn" href="${escapeHtml(telegramUrl)}" target="_blank" rel="noreferrer"><span>✈️</span><span><small>Telegram</small>@${escapeHtml(telegram)}</span></a>`,
-    behance && `<a class="c-btn" href="${escapeHtml(behance)}" target="_blank" rel="noreferrer"><span>🎨</span><span><small>Behance</small>${escapeHtml(behance.replace(/^https?:\/\//, ''))}</span></a>`
-  ].filter(Boolean).join('');
-  return `<div class="contact-card"><h3>${escapeHtml(owner.name || '')}${owner.role ? ` — ${escapeHtml(owner.role)}` : ''}</h3>${links}</div>`;
+  const telegramUrl = /^[A-Za-z0-9_]{5,32}$/.test(telegram) ? `https://t.me/${telegram}` : '';
+  const behanceUrl = safeHttpsUrl(contacts.behance || '');
+  return `<article class="portfolio-view contact-view" data-view="contact">
+    <header class="view-header">
+      <a class="back-link" href="#">← На главную</a>
+      <p>CONTACT / AVAILABLE FOR PROJECTS</p>
+      <h1>Давайте делать странные, понятные вещи.</h1>
+      <p class="view-summary">${escapeHtml(owner.name || '')} — ${escapeHtml(owner.role || '')}</p>
+    </header>
+    <div class="contact-links">
+      ${email ? `<a href="mailto:${escapeHtml(email)}"><small>Email</small>${escapeHtml(email)}</a>` : ''}
+      ${telegramUrl ? `<a href="${escapeHtml(telegramUrl)}" target="_blank" rel="noreferrer"><small>Telegram</small>@${escapeHtml(telegram)}</a>` : ''}
+      ${behanceUrl ? `<a href="${escapeHtml(behanceUrl)}" target="_blank" rel="noreferrer"><small>Behance</small>${escapeHtml(behanceUrl.replace(/^https?:\/\//, ''))}</a>` : ''}
+    </div>
+  </article>`;
+}
+
+export function renderGenericPageView(page = {}) {
+  return `<article class="portfolio-view generic-page-view" data-view="page" data-page-id="${escapeHtml(page.id || '')}">
+    <header class="view-header">
+      <a class="back-link" href="#">← На главную</a>
+      <p>PAGE / ${escapeHtml(page.id || '')}</p>
+      <h1>${escapeHtml(page.title || '')}</h1>
+    </header>
+    <div class="rich-content">${page.content || ''}</div>
+  </article>`;
 }
 
 export function renderLoadError(message) {
-  return `<div class="load-error"><div class="load-error-icon">⚠️</div><div><strong>Не удалось загрузить портфолио</strong><p>${escapeHtml(message)}</p><p>Обновите страницу или попробуйте немного позже.</p></div></div>`;
+  return `<div class="load-error" role="alert"><strong>Не удалось загрузить портфолио</strong><p>${escapeHtml(message)}</p><a href="">Попробовать снова</a></div>`;
 }

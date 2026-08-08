@@ -1,91 +1,91 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  renderContact,
-  renderDesktopShortcuts,
-  renderFolderItems,
-  renderGenericPage,
-  renderLoadError,
-  renderProjectSections,
-  renderResume,
-  renderStartItems
+  renderAboutView,
+  renderContactView,
+  renderGenericPageView,
+  renderHeader,
+  renderHome,
+  renderProjectView
 } from '../assets/js/render.js';
 
 const bundle = {
   site: {
-    owner: { name: 'Марат', role: 'UX/UI Designer' },
+    owner: {
+      brandName: 'missing mar',
+      name: 'Марат Дреев',
+      role: 'Product & Visual Designer',
+      profileImage: '/missing-mar-portfolio/assets/media/profile/missing-mar-profile.jpg',
+      cardTitle: "WHERE'S MISSING MAR?",
+      cardTagline: 'I DESIGN CLEAR SYSTEMS\nWITH A STRANGE EDGE.',
+      cardMeta: 'МОСКВА · 2026',
+      cardAction: 'ОБО МНЕ ↗'
+    },
     contacts: {
       email: 'marrorball@gmail.com',
       telegram: 'marrorball',
       behance: 'https://www.behance.net/marmaraj11'
     },
     categories: [
-      { id: 'uxui', title: 'UX/UI', icon: '💼', order: 10, showOnDesktop: true, showInStart: true }
+      { id: 'uxui', title: 'UX/UI проекты', order: 10 },
+      { id: 'graphic', title: 'Графический дизайн', order: 20 }
     ]
   },
-  projects: [],
   pages: [
-    {
-      id: 'about',
-      title: 'Обо мне',
-      icon: '🖥️',
-      showOnDesktop: true,
-      showInStart: true,
-      content: '<p>Привет</p>'
-    }
+    { id: 'about', title: 'Обо мне', order: 10, published: true, showInNavigation: true, content: '<p>Привет</p>' },
+    { id: 'contact', title: 'Контакт', order: 20, published: true, showInNavigation: true, content: '' },
+    { id: 'press', title: 'Пресса', order: 30, published: true, showInNavigation: true, content: '<p>Материал</p>' }
   ]
 };
 
-test('renders category and page desktop shortcuts with data actions', () => {
-  const html = renderDesktopShortcuts(bundle);
-  assert.match(html, /data-action="open-folder" data-id="uxui"/);
-  assert.match(html, /data-action="open-page" data-id="about"/);
-  assert.match(html, /data-action="open-resume"/);
+test('renders the approved identity, three featured projects, and complete archive', () => {
+  const html = renderHome({
+    site: bundle.site,
+    pages: bundle.pages,
+    projects: [
+      { id: 'a', title: 'A', shortLabel: 'A', featured: true, featuredOrder: 10, category: 'uxui', sections: [] },
+      { id: 'b', title: 'B', shortLabel: 'B', featured: true, featuredOrder: 20, category: 'uxui', sections: [] },
+      { id: 'c', title: 'C', shortLabel: 'C', featured: true, featuredOrder: 30, category: 'graphic', sections: [] },
+      { id: 'd', title: 'D', featured: false, category: 'graphic', sections: [] }
+    ],
+    categories: bundle.site.categories,
+    activeProjectId: 'a',
+    activeCategory: 'all'
+  });
+
+  assert.match(html, /missing mar/);
+  assert.match(html, /WHERE&#39;S MISSING MAR\?/);
+  assert.equal((html.match(/class="featured-project/g) || []).length, 3);
+  assert.match(html, /Все проекты — 4/);
+  assert.match(html, /data-project-id="d"/);
+  assert.match(html, /id="project-archive"/);
 });
 
-test('renders visible start-menu entries', () => {
-  const html = renderStartItems(bundle);
-  assert.match(html, /UX\/UI/);
-  assert.match(html, /Обо мне/);
-  assert.match(html, /Резюме/);
+test('renders navigation pages in header links and the complete menu', () => {
+  const html = renderHeader(bundle.site, bundle.pages);
+  assert.match(html, /href="#about"/);
+  assert.match(html, /href="#contact"/);
+  assert.match(html, /data-page-id="press"/);
 });
 
-test('escapes project titles but preserves owner-authored rich HTML sections', () => {
-  const folder = renderFolderItems([
-    { id: 'x', title: '<script>', icon: '📄', background: '#fff' }
-  ], 'icons');
-  assert.doesNotMatch(folder, /<script>/);
-  assert.match(folder, /&lt;script&gt;/);
+test('renders a linkable case study and safe contact links', () => {
+  assert.match(
+    renderProjectView({ id: 'x', title: 'Case', summary: 'Summary', sections: [] }, { title: 'UX/UI' }),
+    /data-view="project"/
+  );
+  assert.match(renderContactView(bundle.site), /mailto:marrorball@gmail\.com/);
+  assert.match(renderAboutView(bundle.site, { experience: [] }, bundle.pages[0]), /Обо мне/);
+  assert.match(renderGenericPageView(bundle.pages[2]), /Материал/);
+});
 
-  const sections = renderProjectSections({
+test('escapes titles while preserving owner-authored rich content', () => {
+  const html = renderProjectView({
     id: 'x',
-    sections: [{ id: 'a', label: 'Обзор', content: '<p>Текст</p>' }]
-  });
-  assert.match(sections, /<p>Текст<\/p>/);
-  assert.match(sections, /data-section-panel="a"/);
-});
+    title: '<script>',
+    sections: [{ id: 'story', label: 'История', content: '<p>Авторский HTML</p>' }]
+  }, { title: 'UX/UI' });
 
-test('renders a generic page and a useful loading error', () => {
-  assert.match(renderGenericPage(bundle.pages[0]), /Привет/);
-  assert.match(renderLoadError('HTTP 404'), /Не удалось загрузить портфолио/);
-  assert.match(renderLoadError('HTTP 404'), /HTTP 404/);
-});
-
-test('renders resume and safe contact links from structured data', () => {
-  const resume = renderResume({
-    experience: [{ company: 'Студия', role: 'Дизайнер', period: '2025', description: 'Работа' }],
-    education: [],
-    publications: [],
-    skills: [],
-    tools: ['Figma'],
-    links: [],
-    about: 'О себе'
-  });
-  assert.match(resume, /Студия/);
-  assert.match(resume, /Figma/);
-
-  const contact = renderContact(bundle.site);
-  assert.match(contact, /mailto:marrorball@gmail\.com/);
-  assert.match(contact, /https:\/\/t\.me\/marrorball/);
-  assert.match(contact, /https:\/\/www\.behance\.net\/marmaraj11/);
+  assert.doesNotMatch(html, /<script>/);
+  assert.match(html, /&lt;script&gt;/);
+  assert.match(html, /<p>Авторский HTML<\/p>/);
 });
