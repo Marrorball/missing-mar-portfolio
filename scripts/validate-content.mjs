@@ -13,7 +13,7 @@ const entries = await Promise.all(names.map(async name => [
 const bundle = normalizeBundle(Object.fromEntries(entries));
 
 for (const publicPath of collectMediaPaths(bundle)) {
-  const relativePath = publicPath.replace('/portfolio/', '../');
+  const relativePath = publicPath.replace('/missing-mar-portfolio/', '../');
   await access(fileURLToPath(new URL(relativePath, import.meta.url)));
 }
 

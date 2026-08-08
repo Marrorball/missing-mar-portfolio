@@ -9,7 +9,12 @@ import {
 
 const validRaw = {
   site: {
-    owner: { name: 'Марат', role: 'UX/UI Designer' },
+    owner: {
+      brandName: 'missing mar',
+      name: 'Марат Дреев',
+      role: 'Product & Visual Designer',
+      profileImage: '/missing-mar-portfolio/assets/media/profile/marat.jpg'
+    },
     categories: []
   },
   resume: {
@@ -62,6 +67,7 @@ test('normalizes, filters hidden records, and sorts published records', () => {
   const bundle = normalizeBundle(validRaw);
   assert.deepEqual(bundle.projects.map(({ id }) => id), ['a', 'b']);
   assert.deepEqual(bundle.pages.map(({ id }) => id), ['about']);
+  assert.equal(bundle.site.owner.brandName, 'missing mar');
 });
 
 test('sorts equal order values by Russian title', () => {
@@ -114,15 +120,17 @@ test('loads all four content files and reports an HTTP failure', async () => {
 
 test('collects local media paths from fields and rich HTML only', () => {
   const paths = collectMediaPaths({
-    cover: '/portfolio/assets/media/cover.webp',
-    gallery: ['/portfolio/assets/media/one.jpg', 'https://example.com/two.jpg'],
+    profileImage: '/missing-mar-portfolio/assets/media/profile/marat.jpg',
+    cover: '/missing-mar-portfolio/assets/media/cover.webp',
+    gallery: ['/missing-mar-portfolio/assets/media/one.jpg', 'https://example.com/two.jpg'],
     sections: [{
-      content: '<img src="/portfolio/assets/media/inside.png"><img src="https://example.com/outside.png">'
+      content: '<img src="/missing-mar-portfolio/assets/media/inside.png"><img src="https://example.com/outside.png">'
     }]
   });
   assert.deepEqual(paths, [
-    '/portfolio/assets/media/cover.webp',
-    '/portfolio/assets/media/inside.png',
-    '/portfolio/assets/media/one.jpg'
+    '/missing-mar-portfolio/assets/media/cover.webp',
+    '/missing-mar-portfolio/assets/media/inside.png',
+    '/missing-mar-portfolio/assets/media/one.jpg',
+    '/missing-mar-portfolio/assets/media/profile/marat.jpg'
   ]);
 });

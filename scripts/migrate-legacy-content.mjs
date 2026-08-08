@@ -67,7 +67,7 @@ async function migrateProjects({ folders, projects }, root) {
         const extracted = await extractDataUris(
           tab.html,
           join(root, relativeDirectory),
-          `/portfolio/${relativeDirectory}`
+          `/missing-mar-portfolio/${relativeDirectory}`
         );
         imageCount += extracted.files.length;
         sections.push({

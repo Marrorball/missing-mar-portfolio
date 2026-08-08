@@ -274,7 +274,7 @@ export async function loadContent({ basePath = 'content', fetchImpl = fetch } = 
 
 - [ ] **Step 5: Add the repository validator**
 
-`scripts/validate-content.mjs` must read the four files, call `normalizeBundle`, scan every `cover`, `gallery[]`, and `<img src="...">` reference beginning with `/portfolio/assets/`, and fail when the referenced file does not exist.
+`scripts/validate-content.mjs` must read the four files, call `normalizeBundle`, scan every `cover`, `gallery[]`, and `<img src="...">` reference beginning with `/missing-mar-portfolio/assets/`, and fail when the referenced file does not exist.
 
 ```js
 import { readFile, access } from 'node:fs/promises';
@@ -339,8 +339,8 @@ import { extractDataUris } from '../scripts/migrate-legacy-content.mjs';
 test('extracts a data image and replaces it with a public path', async () => {
   const destination = await mkdtemp(join(tmpdir(), 'portfolio-image-'));
   const html = '<img src="data:image/png;base64,aGVsbG8=">';
-  const result = await extractDataUris(html, destination, '/portfolio/assets/media/test');
-  assert.equal(result.html, '<img src="/portfolio/assets/media/test/image-01.png">');
+  const result = await extractDataUris(html, destination, '/missing-mar-portfolio/assets/media/test');
+  assert.equal(result.html, '<img src="/missing-mar-portfolio/assets/media/test/image-01.png">');
   assert.equal((await readFile(join(destination, 'image-01.png'))).toString(), 'hello');
   assert.equal(result.files.length, 1);
 });
@@ -459,7 +459,7 @@ git commit -m "refactor: extract portfolio content and media"
 **Interfaces:**
 
 - Consumes: the exact record field names defined in Shared Interfaces and Task 2.
-- Produces: Pages CMS sidebar entries `projects`, `pages`, `resume`, and `site`; image uploads under `assets/media` with public URLs under `/portfolio/assets/media`.
+- Produces: Pages CMS sidebar entries `projects`, `pages`, `resume`, and `site`; image uploads under `assets/media` with public URLs under `/missing-mar-portfolio/assets/media`.
 
 - [ ] **Step 1: Write the failing configuration smoke test**
 
@@ -496,7 +496,7 @@ The file starts with:
 ```yaml
 media:
   input: assets/media
-  output: /portfolio/assets/media
+  output: /missing-mar-portfolio/assets/media
   rename: safe
   extensions: [png, jpg, jpeg, webp, gif]
 

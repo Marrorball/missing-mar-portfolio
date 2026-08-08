@@ -11,12 +11,12 @@ test('extracts a data image and replaces it with a public path', async () => {
   const result = await extractDataUris(
     html,
     destination,
-    '/portfolio/assets/media/test'
+    '/missing-mar-portfolio/assets/media/test'
   );
 
   assert.equal(
     result.html,
-    '<img src="/portfolio/assets/media/test/image-01.png">'
+    '<img src="/missing-mar-portfolio/assets/media/test/image-01.png">'
   );
   assert.equal(
     (await readFile(join(destination, 'image-01.png'))).toString(),
@@ -31,12 +31,12 @@ test('extracts a base64 SVG with an svg extension', async () => {
   const result = await extractDataUris(
     html,
     destination,
-    '/portfolio/assets/media/test'
+    '/missing-mar-portfolio/assets/media/test'
   );
 
   assert.equal(
     result.html,
-    '<img src="/portfolio/assets/media/test/image-01.svg">'
+    '<img src="/missing-mar-portfolio/assets/media/test/image-01.svg">'
   );
   assert.equal(
     (await readFile(join(destination, 'image-01.svg'))).toString(),

@@ -2,7 +2,7 @@ const collator = new Intl.Collator('ru');
 
 export function collectMediaPaths(value) {
   const matches = JSON.stringify(value)
-    .match(/\/portfolio\/assets\/media\/[^"'<>\\\s]+/g) || [];
+    .match(/\/missing-mar-portfolio\/assets\/media\/[^"'<>\\\s]+/g) || [];
   return [...new Set(matches)].sort();
 }
 

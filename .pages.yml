@@ -1,6 +1,6 @@
 media:
   input: assets/media
-  output: /portfolio/assets/media
+  output: /missing-mar-portfolio/assets/media
   rename: safe
   extensions: [png, jpg, jpeg, webp, gif, svg]
 
@@ -20,6 +20,21 @@ content:
         label: Название
         type: string
         required: true
+      - name: shortLabel
+        label: Короткое название
+        type: string
+      - name: featured
+        label: Показывать на первом экране
+        type: boolean
+        default: false
+      - name: featuredOrder
+        label: Порядок на первом экране
+        type: number
+        default: 100
+      - name: accent
+        label: Акцентный цвет
+        type: string
+        default: "#caff18"
       - name: category
         label: Категория
         type: select
@@ -140,12 +155,8 @@ content:
         label: Опубликована
         type: boolean
         default: true
-      - name: showOnDesktop
-        label: Показывать на рабочем столе
-        type: boolean
-        default: true
-      - name: showInStart
-        label: Показывать в меню Пуск
+      - name: showInNavigation
+        label: Показывать в навигации
         type: boolean
         default: true
       - name: content
@@ -273,12 +284,34 @@ content:
         label: Владелец
         type: object
         fields:
+          - name: brandName
+            label: Псевдоним
+            type: string
+            required: true
           - name: name
-            label: Имя
+            label: Имя и фамилия
             type: string
             required: true
           - name: role
             label: Роль
+            type: string
+          - name: profileImage
+            label: Фотография на главной
+            type: image
+            options:
+              path: profile
+              rename: safe
+          - name: cardTitle
+            label: Заголовок личной карточки
+            type: string
+          - name: cardTagline
+            label: Слоган личной карточки
+            type: text
+          - name: cardMeta
+            label: Подпись личной карточки
+            type: string
+          - name: cardAction
+            label: Текст ссылки на личной карточке
             type: string
           - name: experience
             label: Опыт
@@ -329,16 +362,3 @@ content:
             label: Порядок
             type: number
             default: 100
-          - name: showOnDesktop
-            label: Показывать на рабочем столе
-            type: boolean
-            default: true
-          - name: showInStart
-            label: Показывать в меню Пуск
-            type: boolean
-            default: true
-      - name: loadingMessages
-        label: Сообщения загрузки
-        type: string
-        list:
-          min: 1

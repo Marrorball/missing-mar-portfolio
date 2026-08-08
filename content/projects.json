@@ -2,6 +2,10 @@
   {
     "id": "kortex",
     "title": "KORTEX",
+    "shortLabel": "KORTEX",
+    "featured": true,
+    "featuredOrder": 10,
+    "accent": "#caff18",
     "category": "uxui",
     "year": "2025",
     "status": "Figma · 2025",
@@ -51,6 +55,10 @@
   {
     "id": "pik",
     "title": "ПИК Production",
+    "shortLabel": "ПИК PRODUCTION",
+    "featured": true,
+    "featuredOrder": 20,
+    "accent": "#caff18",
     "category": "uxui",
     "year": "2025",
     "status": "Figma · 2025",
@@ -94,6 +102,10 @@
   {
     "id": "uchi",
     "title": "Учи.ру — Social Proof",
+    "shortLabel": "УЧИ.РУ",
+    "featured": true,
+    "featuredOrder": 30,
+    "accent": "#caff18",
     "category": "uxui",
     "year": "2026",
     "status": "Figma · 2026",
@@ -142,6 +154,10 @@
   {
     "id": "kortex_logo",
     "title": "KORTEX — Логотип",
+    "shortLabel": "KORTEX — ЛОГОТИП",
+    "featured": false,
+    "featuredOrder": 100,
+    "accent": "#caff18",
     "category": "graphic",
     "year": "2025",
     "status": "Illustrator · 2025",
@@ -163,7 +179,7 @@
       {
         "id": "cover",
         "label": "🖼 Обложка",
-        "content": "<div class=\"cs-section\" style=\"background:#0d0d1a;border-radius:4px;padding:30px;text-align:center\"><img src=\"/portfolio/assets/media/projects/kortex_logo/cover/image-01.svg\" style=\"max-width:260px;width:100%\"></div><div class=\"cs-section\"><div class=\"cs-row-2\"><div class=\"cs-card\"><div class=\"cs-card-title\">Инструменты</div><div class=\"cs-card-text\">Illustrator, Figma</div></div><div class=\"cs-card\"><div class=\"cs-card-title\">Год</div><div class=\"cs-card-text\">2025</div></div></div></div>"
+        "content": "<div class=\"cs-section\" style=\"background:#0d0d1a;border-radius:4px;padding:30px;text-align:center\"><img src=\"/missing-mar-portfolio/assets/media/projects/kortex_logo/cover/image-01.svg\" style=\"max-width:260px;width:100%\"></div><div class=\"cs-section\"><div class=\"cs-row-2\"><div class=\"cs-card\"><div class=\"cs-card-title\">Инструменты</div><div class=\"cs-card-text\">Illustrator, Figma</div></div><div class=\"cs-card\"><div class=\"cs-card-title\">Год</div><div class=\"cs-card-text\">2025</div></div></div></div>"
       },
       {
         "id": "concept",
@@ -173,13 +189,17 @@
       {
         "id": "outcome",
         "label": "💡 Что вынес",
-        "content": "<div class=\"cs-section\"><div class=\"cs-section-title\"><span class=\"cs-ico\">✅</span>Результат</div><div class=\"cs-text\">Проверил знак на тёмном и светлом фоне, в мелком и крупном размере — он сохраняет читаемость и узнаваемость во всех вариантах. Логотип готов только тогда, когда работает в любом контексте, а не только на обложке.</div></div><div style=\"background:#0d0d1a;border-radius:4px;padding:20px;text-align:center;margin:8px 0\"><img src=\"/portfolio/assets/media/projects/kortex_logo/outcome/image-01.svg\" style=\"max-width:180px;width:100%\"></div>"
+        "content": "<div class=\"cs-section\"><div class=\"cs-section-title\"><span class=\"cs-ico\">✅</span>Результат</div><div class=\"cs-text\">Проверил знак на тёмном и светлом фоне, в мелком и крупном размере — он сохраняет читаемость и узнаваемость во всех вариантах. Логотип готов только тогда, когда работает в любом контексте, а не только на обложке.</div></div><div style=\"background:#0d0d1a;border-radius:4px;padding:20px;text-align:center;margin:8px 0\"><img src=\"/missing-mar-portfolio/assets/media/projects/kortex_logo/outcome/image-01.svg\" style=\"max-width:180px;width:100%\"></div>"
       }
     ]
   },
   {
     "id": "drevo_logo",
     "title": "Древо — Логотип",
+    "shortLabel": "ДРЕВО — ЛОГОТИП",
+    "featured": false,
+    "featuredOrder": 100,
+    "accent": "#caff18",
     "category": "graphic",
     "year": "2025",
     "status": "Illustrator · 2025",
@@ -201,7 +221,7 @@
       {
         "id": "cover",
         "label": "🖼 Обложка",
-        "content": "<div class=\"cs-section\" style=\"background:#fff;border-radius:4px;padding:24px;text-align:center\"><img src=\"/portfolio/assets/media/projects/drevo_logo/cover/image-01.svg\" style=\"max-width:380px;width:100%\"></div><div class=\"cs-section\"><div class=\"cs-row-2\"><div class=\"cs-card\"><div class=\"cs-card-title\">Клиент</div><div class=\"cs-card-text\">Творческая мастерская «Древо»</div></div><div class=\"cs-card\"><div class=\"cs-card-title\">Инструменты</div><div class=\"cs-card-text\">Illustrator</div></div></div></div>"
+        "content": "<div class=\"cs-section\" style=\"background:#fff;border-radius:4px;padding:24px;text-align:center\"><img src=\"/missing-mar-portfolio/assets/media/projects/drevo_logo/cover/image-01.svg\" style=\"max-width:380px;width:100%\"></div><div class=\"cs-section\"><div class=\"cs-row-2\"><div class=\"cs-card\"><div class=\"cs-card-title\">Клиент</div><div class=\"cs-card-text\">Творческая мастерская «Древо»</div></div><div class=\"cs-card\"><div class=\"cs-card-title\">Инструменты</div><div class=\"cs-card-text\">Illustrator</div></div></div></div>"
       },
       {
         "id": "brief",
@@ -223,6 +243,10 @@
   {
     "id": "surf_stickers",
     "title": "Surf Coffee",
+    "shortLabel": "SURF COFFEE",
+    "featured": false,
+    "featuredOrder": 100,
+    "accent": "#caff18",
     "category": "graphic",
     "year": "2025",
     "status": "Illustrator · 2025",
@@ -244,7 +268,7 @@
       {
         "id": "stickers",
         "label": "🎨 Стикеры",
-        "content": "<div class=\"cs-section\"><div class=\"cs-section-title\"><span class=\"cs-ico\">🎨</span>4й день рождения Surf x Aviapark</div><img src=\"/portfolio/assets/media/projects/surf_stickers/stickers/image-01.jpg\" style=\"width:100%;border-radius:4px;display:block;margin-bottom:8px\"></div><div class=\"cs-section\"><div class=\"cs-section-title\"><span class=\"cs-ico\">🎨</span>3й день рождения Surf x Aviapark</div><img src=\"/portfolio/assets/media/projects/surf_stickers/stickers/image-02.jpg\" style=\"width:100%;border-radius:4px;display:block;margin-bottom:8px\"></div>"
+        "content": "<div class=\"cs-section\"><div class=\"cs-section-title\"><span class=\"cs-ico\">🎨</span>4й день рождения Surf x Aviapark</div><img src=\"/missing-mar-portfolio/assets/media/projects/surf_stickers/stickers/image-01.jpg\" style=\"width:100%;border-radius:4px;display:block;margin-bottom:8px\"></div><div class=\"cs-section\"><div class=\"cs-section-title\"><span class=\"cs-ico\">🎨</span>3й день рождения Surf x Aviapark</div><img src=\"/missing-mar-portfolio/assets/media/projects/surf_stickers/stickers/image-02.jpg\" style=\"width:100%;border-radius:4px;display:block;margin-bottom:8px\"></div>"
       },
       {
         "id": "outcome",
@@ -256,6 +280,10 @@
   {
     "id": "surf_booklets",
     "title": "Surf Coffee — Буклеты",
+    "shortLabel": "SURF — БУКЛЕТЫ",
+    "featured": false,
+    "featuredOrder": 100,
+    "accent": "#caff18",
     "category": "graphic",
     "year": "2025",
     "status": "Illustrator · 2025",
@@ -277,12 +305,12 @@
       {
         "id": "b1",
         "label": "🖼 Буклет 1",
-        "content": "<div class=\"cs-section\"><img src=\"/portfolio/assets/media/projects/surf_booklets/b1/image-01.jpg\" style=\"width:100%;border-radius:4px;display:block;margin-bottom:8px\"><img src=\"/portfolio/assets/media/projects/surf_booklets/b1/image-02.jpg\" style=\"width:100%;border-radius:4px;display:block\"></div>"
+        "content": "<div class=\"cs-section\"><img src=\"/missing-mar-portfolio/assets/media/projects/surf_booklets/b1/image-01.jpg\" style=\"width:100%;border-radius:4px;display:block;margin-bottom:8px\"><img src=\"/missing-mar-portfolio/assets/media/projects/surf_booklets/b1/image-02.jpg\" style=\"width:100%;border-radius:4px;display:block\"></div>"
       },
       {
         "id": "b2",
         "label": "🖼 Буклет 2",
-        "content": "<div class=\"cs-section\"><img src=\"/portfolio/assets/media/projects/surf_booklets/b2/image-01.jpg\" style=\"width:100%;border-radius:4px;display:block;margin-bottom:8px\"><img src=\"/portfolio/assets/media/projects/surf_booklets/b2/image-02.jpg\" style=\"width:100%;border-radius:4px;display:block\"></div>"
+        "content": "<div class=\"cs-section\"><img src=\"/missing-mar-portfolio/assets/media/projects/surf_booklets/b2/image-01.jpg\" style=\"width:100%;border-radius:4px;display:block;margin-bottom:8px\"><img src=\"/missing-mar-portfolio/assets/media/projects/surf_booklets/b2/image-02.jpg\" style=\"width:100%;border-radius:4px;display:block\"></div>"
       },
       {
         "id": "outcome",

@@ -21,7 +21,7 @@
 - Do not use the selected mockup as one flattened website screenshot; controls, text, photo, and project content must remain responsive and interactive.
 - Do not add a framework, backend, authentication, WebGL, or a custom admin panel.
 - Support `prefers-reduced-motion` and keyboard navigation.
-- Keep public media paths rooted at `/portfolio/assets/media/` for GitHub Pages.
+- Keep public media paths rooted at `/missing-mar-portfolio/assets/media/` for GitHub Pages.
 
 ## File Map
 
@@ -107,7 +107,7 @@ test('fills missing featured slots from published project order', () => {
 
 test('filters the archive and resolves an authored cover', () => {
   assert.equal(filterProjects([{ category: 'uxui' }, { category: 'graphic' }], 'graphic').length, 1);
-  assert.equal(resolveProjectCover({ cover: '/portfolio/assets/media/a.jpg' }), '/portfolio/assets/media/a.jpg');
+  assert.equal(resolveProjectCover({ cover: '/missing-mar-portfolio/assets/media/a.jpg' }), '/missing-mar-portfolio/assets/media/a.jpg');
   assert.equal(resolveProjectCover({ cover: '' }), '');
 });
 ```
@@ -157,7 +157,7 @@ Set `content/site.json` owner fields to:
   "brandName": "missing mar",
   "name": "Марат Дреев",
   "role": "Product & Visual Designer",
-  "profileImage": "/portfolio/assets/media/profile/missing-mar-profile.jpg",
+  "profileImage": "/missing-mar-portfolio/assets/media/profile/missing-mar-profile.jpg",
   "cardTitle": "WHERE'S MISSING MAR?",
   "cardTagline": "I DESIGN CLEAR SYSTEMS\nWITH A STRANGE EDGE.",
   "cardMeta": "МОСКВА · 2026",
@@ -439,7 +439,7 @@ Add Vite as a development dependency and create:
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/portfolio/',
+  base: '/missing-mar-portfolio/',
   server: {
     host: '0.0.0.0',
     allowedHosts: ['localhost', 'terminal.local']
@@ -637,8 +637,8 @@ git commit -m "feat: add portfolio navigation and interactions"
 test('uses the first local gallery image when cover is empty', () => {
   assert.equal(resolveProjectCover({
     cover: '',
-    gallery: ['/portfolio/assets/media/gallery/first.jpg']
-  }), '/portfolio/assets/media/gallery/first.jpg');
+    gallery: ['/missing-mar-portfolio/assets/media/gallery/first.jpg']
+  }), '/missing-mar-portfolio/assets/media/gallery/first.jpg');
 });
 
 test('does not render an unsafe external project link', () => {
@@ -651,7 +651,7 @@ test('does not render an unsafe external project link', () => {
 
 - [ ] **Step 2: Implement deterministic cover resolution**
 
-Use `project.cover` first, then the first item from `project.gallery`, then the first local `/portfolio/assets/media/` image found in section HTML. If none exist, render the project as a text-led editorial preview using its title, accent, and summary; do not render a broken image.
+Use `project.cover` first, then the first item from `project.gallery`, then the first local `/missing-mar-portfolio/assets/media/` image found in section HTML. If none exist, render the project as a text-led editorial preview using its title, accent, and summary; do not render a broken image.
 
 - [ ] **Step 3: Render full case-study sections**
 

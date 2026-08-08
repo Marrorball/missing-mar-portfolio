@@ -1,7 +1,13 @@
 {
   "owner": {
-    "name": "Марат",
-    "role": "UX/UI Designer",
+    "brandName": "missing mar",
+    "name": "Марат Дреев",
+    "role": "Product & Visual Designer",
+    "profileImage": "/missing-mar-portfolio/assets/media/profile/missing-mar-profile.jpg",
+    "cardTitle": "WHERE'S MISSING MAR?",
+    "cardTagline": "I DESIGN CLEAR SYSTEMS\nWITH A STRANGE EDGE.",
+    "cardMeta": "МОСКВА · 2026",
+    "cardAction": "ОБО МНЕ ↗",
     "experience": "1.5 года",
     "location": "Москва, Россия",
     "status": "Всё сложно (хочу работать)",
