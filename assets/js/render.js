@@ -52,22 +52,11 @@ function renderIdentity(owner = {}) {
   </div>`;
 }
 
-function renderProfileCard(owner = {}) {
-  const title = escapeHtml(owner.cardTitle || '').replace(/\n/g, '<br>');
-  const tagline = escapeHtml(owner.cardTagline || '').replace(/\n/g, '<br>');
+function renderProfileMonument(owner = {}) {
   const cardImage = owner.profileCardImage || owner.profileImage || '';
-  return `<a href="#about" class="profile-card" aria-label="${escapeHtml(owner.cardAction || 'Обо мне')}">
-    <img class="profile-card-art" src="${escapeHtml(cardImage)}" alt="${escapeHtml(owner.name || '')}" loading="eager">
-    <span class="profile-card-copy">
-      <strong>${title}</strong>
-      <span class="profile-card-tagline">${tagline}</span>
-    </span>
-    <span class="profile-card-footer">
-      <span>${escapeHtml(owner.role || '')}</span>
-      <span>${escapeHtml(owner.cardMeta || '')}</span>
-      <span>${escapeHtml(owner.cardAction || '')}</span>
-    </span>
-  </a>`;
+  return `<div class="profile-monument" aria-hidden="true">
+    <img class="profile-monument-art" src="${escapeHtml(cardImage)}" alt="" loading="eager">
+  </div>`;
 }
 
 function renderFeaturedProjects(projects, activeProjectId) {
@@ -124,7 +113,8 @@ export function renderHome({
   return `<div data-view="home">
     <section class="landscape-hero" aria-labelledby="portfolio-title">
       ${renderIdentity(owner).replace('<h1>', '<h1 id="portfolio-title">')}
-      ${renderProfileCard(owner)}
+      ${renderProfileMonument(owner)}
+      <img class="landscape-foreground-grass" src="/missing-mar-portfolio/assets/media/y2k/landscape-foreground-grass.webp" alt="" aria-hidden="true" loading="eager">
       <div class="featured-selector">
         ${renderFeaturedProjects(featured, selectedId)}
         <a class="open-project-link" href="#project/${encodeURIComponent(selectedId)}">Открыть проект <i class="ph ph-arrow-right" aria-hidden="true"></i></a>

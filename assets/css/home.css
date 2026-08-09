@@ -4,7 +4,7 @@
   overflow: hidden;
   isolation: isolate;
   background-color: var(--cobalt);
-  background-image: url('../media/y2k/landscape-background.webp');
+  background-image: url('../media/y2k/landscape-background-smooth-chrome.webp');
   background-position: center;
   background-size: cover;
 }
@@ -69,80 +69,37 @@
   border-radius: 50%;
 }
 
-.profile-card {
+.profile-monument {
   position: absolute;
   z-index: 4;
-  bottom: clamp(68px, 7vh, 86px);
-  left: calc(var(--page-pad) + 38px);
+  bottom: clamp(54px, 5.8vh, 72px);
+  left: calc(var(--page-pad) + 8px);
   display: block;
-  width: clamp(350px, 30vw, 460px);
-  aspect-ratio: 1.1;
+  width: clamp(430px, 36vw, 560px);
   overflow: visible;
-  color: var(--ink);
-  border: 0;
-  background: transparent;
-  box-shadow:
-    0 28px 22px -24px rgba(0, 7, 20, .96),
-    0 12px 22px -18px rgba(0, 9, 24, .78);
-  transform: perspective(900px) rotateY(1deg) rotateZ(.35deg);
+  pointer-events: none;
+  filter:
+    drop-shadow(0 20px 13px rgba(0, 7, 20, .48))
+    drop-shadow(0 4px 3px rgba(0, 7, 20, .32));
+  transform: perspective(1100px) rotateY(1deg) rotateZ(.15deg);
   transform-origin: 50% 100%;
 }
 
-.profile-card img {
+.profile-monument-art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.landscape-foreground-grass {
   position: absolute;
+  z-index: 5;
   inset: 0;
   width: 100%;
   height: 100%;
-}
-
-.profile-card-art {
-  z-index: 1;
-  object-fit: contain;
-  object-position: center bottom;
+  object-fit: cover;
+  object-position: center;
   pointer-events: none;
-}
-
-.profile-card-copy {
-  position: absolute;
-  z-index: 3;
-  top: 8.5%;
-  left: 6%;
-  display: grid;
-  gap: 9px;
-  width: 38%;
-  max-width: 165px;
-  text-shadow: 0 1px 4px rgba(5, 8, 18, .72);
-}
-
-.profile-card-copy strong {
-  max-width: 165px;
-  font-size: clamp(19px, 1.55vw, 22px);
-  line-height: 1.03;
-}
-
-.profile-card-tagline {
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.profile-card-footer {
-  position: absolute;
-  z-index: 3;
-  right: 7.5%;
-  bottom: 5.5%;
-  left: 7.5%;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 7px 18px;
-  padding-top: 9px;
-  font-size: 11px;
-  border-top: 1px solid rgba(255, 255, 255, .7);
-  text-shadow: 0 1px 4px rgba(5, 8, 18, .72);
-}
-
-.profile-card-footer span:first-child {
-  grid-column: 1 / -1;
-  text-transform: uppercase;
 }
 
 .featured-selector {

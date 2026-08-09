@@ -66,7 +66,7 @@
   }
 
   .hero-identity,
-  .profile-card,
+  .profile-monument,
   .featured-selector,
   .hero-caption {
     position: relative;
@@ -92,12 +92,18 @@
     font-size: 13px;
   }
 
-  .profile-card {
-    width: min(360px, 94vw);
+  .profile-monument {
+    width: min(390px, 104vw);
     height: auto;
-    aspect-ratio: 1.1;
     margin-top: 280px;
-    margin-left: -2px;
+    margin-left: -18px;
+    filter:
+      drop-shadow(0 16px 11px rgba(0, 7, 20, .44))
+      drop-shadow(0 3px 2px rgba(0, 7, 20, .28));
+  }
+
+  .landscape-foreground-grass {
+    object-position: 46% center;
   }
 
   .featured-selector {
