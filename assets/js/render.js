@@ -1,5 +1,7 @@
 import { filterProjects, selectFeaturedProjects } from './selectors.js';
 
+const profileSceneOverlay = new URL('../media/y2k/profile-scene-reference-overlay.png', import.meta.url).href;
+
 export function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, character => ({
     '&': '&amp;',
@@ -113,8 +115,8 @@ export function renderHome({
   return `<div data-view="home">
     <section class="landscape-hero" aria-labelledby="portfolio-title">
       ${renderIdentity(owner).replace('<h1>', '<h1 id="portfolio-title">')}
+      <img class="profile-scene-overlay" src="${profileSceneOverlay}" alt="" aria-hidden="true" loading="eager">
       ${renderProfileMonument(owner)}
-      <img class="landscape-foreground-grass" src="/missing-mar-portfolio/assets/media/y2k/landscape-foreground-grass.webp" alt="" aria-hidden="true" loading="eager">
       <div class="featured-selector">
         ${renderFeaturedProjects(featured, selectedId)}
         <a class="open-project-link" href="#project/${encodeURIComponent(selectedId)}">Открыть проект <i class="ph ph-arrow-right" aria-hidden="true"></i></a>

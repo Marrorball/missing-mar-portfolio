@@ -70,36 +70,25 @@
 }
 
 .profile-monument {
+  display: none;
+}
+
+.profile-scene-overlay {
   position: absolute;
-  z-index: 4;
-  bottom: clamp(54px, 5.8vh, 72px);
-  left: calc(var(--page-pad) + 8px);
+  z-index: 3;
+  inset: 0;
   display: block;
-  width: clamp(430px, 36vw, 560px);
-  overflow: visible;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
   pointer-events: none;
-  filter:
-    drop-shadow(0 20px 13px rgba(0, 7, 20, .48))
-    drop-shadow(0 4px 3px rgba(0, 7, 20, .32));
-  transform: perspective(1100px) rotateY(1deg) rotateZ(.15deg);
-  transform-origin: 50% 100%;
 }
 
 .profile-monument-art {
   display: block;
   width: 100%;
   height: auto;
-}
-
-.landscape-foreground-grass {
-  position: absolute;
-  z-index: 5;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  pointer-events: none;
 }
 
 .featured-selector {

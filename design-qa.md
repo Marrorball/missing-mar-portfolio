@@ -1,56 +1,51 @@
-# Design QA — selected profile monument
+# Design QA — flattened profile scene
 
 ## Comparison target
 
 - Source visual truth: `docs/superpowers/specs/assets/profile-monument-selected-reference.png`
-- Desktop implementation: `docs/superpowers/qa/implementation-selected-monument-1440x1024.png`
-- Mobile implementation: `docs/superpowers/qa/implementation-selected-monument-390x844.png`
-- Full desktop comparison: `docs/superpowers/qa/comparison-selected-monument.jpg`
-- Focused monument comparison: `docs/superpowers/qa/comparison-selected-monument-focused.jpg`
-- Focused chrome comparison: `docs/superpowers/qa/comparison-smooth-chrome-focused.jpg`
+- Desktop implementation: `docs/superpowers/qa/implementation-profile-scene-flattened-1440x810.jpg`
+- Mobile implementation: `docs/superpowers/qa/implementation-profile-scene-flattened-390x844.jpg`
+- Full desktop comparison: `docs/superpowers/qa/comparison-profile-scene-flattened-1440x810.jpg`
 - Local route: `/missing-mar-portfolio/`
 - State: home, first featured project selected
 
 ## Normalization
 
 - Source pixels: 1486 × 1058.
-- Desktop implementation pixels and CSS viewport: 1440 × 1024 at browser density 1.
+- Desktop implementation pixels and CSS viewport: 1440 × 810 at browser density 1.
 - Mobile implementation pixels and CSS viewport: 390 × 844 at browser density 1.
-- The source was center-fitted to 1440 × 1024 before placement beside the equal-size implementation capture.
+- The source was resized with `cover` to 1440 × 810 before side-by-side placement with the equal-size implementation capture.
 
 ## Required fidelity surfaces
 
-- Composition: identity at upper left, the large chrome sculpture in the center, the three-project selector at right, and the personal monument grounded in the lower-left grass remain in the selected arrangement.
-- Monument asset: the approved irregular dark stone surface, organic chrome rim, full upside-down seated figure, acidic yellow/blue contour, and embedded white mono copy are delivered as one transparent raster rather than reconstructed with HTML or CSS.
-- Grounding: a foreground layer sampled from the exact landscape image masks the lower edge of the monument so it reads as planted in the grass instead of floating above it.
-- Live interface: header navigation, all three featured-project rows, and the `Открыть проект` action remain semantic, interactive DOM controls. The monument itself is decorative and intentionally non-interactive because the live `Обо мне` link remains in the header.
-- Chrome finish: the landscape background preserves the original sky, grass, silhouette, and reflections while applying a restrained local smoothing/sharpening pass to the central chrome sculpture.
-- Responsiveness: desktop keeps the approved spatial hierarchy; mobile preserves the monument without horizontal overflow and continues the project list below it.
+- Fonts and typography: live identity, navigation, featured-project labels, and CTA retain the existing Exo 2 and IBM Plex Mono hierarchy. Text embedded inside the personal monument remains part of the selected raster, as in the visual target.
+- Spacing and layout rhythm: the desktop scene follows the source crop and keeps the personal monument in the same lower-left zone while the live project selector remains at right. Mobile retains the existing stacked layout without horizontal overflow.
+- Colors and visual tokens: the cobalt sky, acid yellow-green states, dark stone, chrome rim, and grass tones come directly from the approved source and existing landscape.
+- Image quality and asset fidelity: desktop no longer combines a sharp transparent monument with a separately softened grass mask. The monument, its contact shadow, surrounding blades, nearby hill, and sky are one alpha-masked crop taken directly from the approved full image, so their sharpness and compression are internally consistent. The mask fades only through matching background pixels outside the monument.
+- Copy and content: identity, three featured projects, About, Contact, and CTA copy remain unchanged and live.
 
 ## Comparison history
 
 ### Pass 1 — blocked
 
-- [P2] The monument initially read as a separate floating card.
-  - Fix: replaced the composed HTML card with the approved transparent monument asset and added a foreground grass occlusion layer derived from the exact background.
-  - Post-fix evidence: `comparison-selected-monument-focused.jpg`.
-- [P2] The central chrome sculpture retained noisy, grainy texture.
-  - Fix: introduced the locally retouched landscape background, limiting the adjustment to the sculpture so the environment did not drift or gain new generative artifacts.
-  - Post-fix evidence: `comparison-smooth-chrome-focused.jpg`.
+- [P2] The monument looked sharper than the landscape and read as an independent foreground card.
+  - Cause: `missing-mar-profile-monument-v1.webp` was rendered as a standalone high-resolution element with its own drop shadows.
+- [P2] The grass below the monument looked soft and artificial.
+  - Cause: `landscape-foreground-grass.webp` was a second full-screen alpha mask that was resampled independently from both the monument and background.
 
 ### Pass 2 — passed
 
-- The monument now follows the approved silhouette, treatment, scale, and lower-left placement.
-- The lower edge is partially obscured by matching grass and no longer reads as a rectangular overlay.
-- The live controls remain distinct from the decorative raster and continue to work.
-- No actionable P0, P1, or P2 visual differences remain.
-- Residual P3: the live monument is slightly wider and lower than the normalized mock, and its grass occlusion is softer; these differences do not change the intended hierarchy or treatment.
+- Fix: desktop now renders `profile-scene-reference-overlay.png`, extracted from the exact approved image at its full 1486 × 1058 canvas size. It contains the monument and the immediately surrounding real grass as one flattened visual layer.
+- Fix: removed the separately blurred foreground-grass image and all desktop monument transforms/drop shadows.
+- Post-fix evidence: `implementation-profile-scene-flattened-1440x810.jpg` and `comparison-profile-scene-flattened-1440x810.jpg`.
+- No actionable P0, P1, or P2 differences remain in the requested desktop scene.
+- Residual P3: mobile uses the standalone monument asset because the wide reference crop would remove it from a narrow viewport; this preserves the existing responsive layout and has no horizontal overflow.
 
-## Primary interactions to verify
+## Primary interactions tested
 
-- Selecting projects 01–03 updates the active state and the destination of `Открыть проект`.
-- Header `Обо мне` and `Контакт` links still open their corresponding views.
-- The monument has `aria-hidden="true"` and does not introduce a duplicate focus target.
+- Project 02 becomes pressed and updates `Открыть проект` to `#project/pik`.
+- Header `Обо мне` and `Контакт` links render their corresponding views.
+- Browser warning/error log is empty.
 
 ## Final result
 

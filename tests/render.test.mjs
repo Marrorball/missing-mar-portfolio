@@ -58,8 +58,9 @@ test('renders the approved identity, three featured projects, and complete archi
   assert.match(html, /class="profile-monument" aria-hidden="true"/);
   assert.match(html, /class="profile-monument-art"/);
   assert.match(html, /missing-mar-profile-monument-v1\.webp/);
-  assert.match(html, /class="landscape-foreground-grass"/);
-  assert.match(html, /landscape-foreground-grass\.webp/);
+  assert.match(html, /class="profile-scene-overlay"/);
+  assert.match(html, /profile-scene-reference-overlay\.png/);
+  assert.doesNotMatch(html, /class="landscape-foreground-grass"/);
   assert.doesNotMatch(html, /href="#about" class="profile-card"/);
   assert.equal((html.match(/WHERE&#39;S/g) || []).length, 0);
   assert.match(html, /featured-indicator ph ph-star-four/);
