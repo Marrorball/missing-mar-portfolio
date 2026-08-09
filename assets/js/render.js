@@ -52,13 +52,31 @@ function renderIdentity(owner = {}) {
   </div>`;
 }
 
+function renderProfileCard(owner = {}) {
+  const title = escapeHtml(owner.cardTitle || '').replace(/\n/g, '<br>');
+  const tagline = escapeHtml(owner.cardTagline || '').replace(/\n/g, '<br>');
+  const cardImage = owner.profileCardImage || owner.profileImage || '';
+  return `<a href="#about" class="profile-card" aria-label="${escapeHtml(owner.cardAction || 'Обо мне')}">
+    <img class="profile-card-art" src="${escapeHtml(cardImage)}" alt="${escapeHtml(owner.name || '')}" loading="eager">
+    <span class="profile-card-copy">
+      <strong>${title}</strong>
+      <span class="profile-card-tagline">${tagline}</span>
+    </span>
+    <span class="profile-card-footer">
+      <span>${escapeHtml(owner.role || '')}</span>
+      <span>${escapeHtml(owner.cardMeta || '')}</span>
+      <span>${escapeHtml(owner.cardAction || '')}</span>
+    </span>
+  </a>`;
+}
+
 function renderFeaturedProjects(projects, activeProjectId) {
   return `<div class="featured-list" id="featured-list" aria-label="Избранные проекты">
-    ${projects.map((project, index) => `<a class="featured-project${project.id === activeProjectId ? ' is-active' : ''}" href="#project/${encodeURIComponent(project.id)}" data-project-id="${escapeHtml(project.id)}"${project.id === activeProjectId ? ' aria-current="true"' : ''}>
+    ${projects.map((project, index) => `<button class="featured-project${project.id === activeProjectId ? ' is-active' : ''}" type="button" data-action="select-featured" data-project-id="${escapeHtml(project.id)}" aria-pressed="${project.id === activeProjectId}">
       <span class="featured-index">${String(index + 1).padStart(2, '0')}</span>
       <span class="featured-title">${escapeHtml(project.shortLabel || project.title)}</span>
       <i class="featured-indicator ph ph-sparkle" aria-hidden="true"></i>
-    </a>`).join('')}
+    </button>`).join('')}
   </div>`;
 }
 
@@ -102,11 +120,11 @@ export function renderHome({
   const featured = selectFeaturedProjects(projects, 3);
   const selectedId = activeProjectId || featured[0]?.id || '';
   const owner = site.owner || {};
-  const heroImage = site.heroImage || '/missing-mar-portfolio/assets/media/y2k/y2k-selected-reference-hero-v1.png';
 
   return `<div data-view="home">
-    <section class="landscape-hero reference-raster-hero" aria-labelledby="portfolio-title" style="--hero-image: url('${escapeHtml(heroImage)}')">
+    <section class="landscape-hero" aria-labelledby="portfolio-title">
       ${renderIdentity(owner).replace('<h1>', '<h1 id="portfolio-title">')}
+      ${renderProfileCard(owner)}
       <div class="featured-selector">
         ${renderFeaturedProjects(featured, selectedId)}
         <a class="open-project-link" href="#project/${encodeURIComponent(selectedId)}">Открыть проект <i class="ph ph-arrow-right" aria-hidden="true"></i></a>

@@ -58,16 +58,19 @@
   }
 
   .landscape-hero {
-    display: block;
-    min-height: max(760px, 100svh);
-    padding: 0;
-    background-position: center;
+    display: flex;
+    min-height: 1080px;
+    padding: 108px var(--page-pad) 40px;
+    flex-direction: column;
+    background-position: 46% center;
   }
 
   .hero-identity,
+  .profile-card,
   .featured-selector,
   .hero-caption {
-    position: absolute;
+    position: relative;
+    inset: auto;
   }
 
   .hero-identity {
@@ -89,11 +92,17 @@
     font-size: 13px;
   }
 
+  .profile-card {
+    width: min(360px, 94vw);
+    height: auto;
+    aspect-ratio: 1.1;
+    margin-top: 280px;
+    margin-left: -2px;
+  }
+
   .featured-selector {
-    top: 35%;
-    right: 2%;
-    width: 31%;
-    margin-top: 0;
+    width: 100%;
+    margin-top: 44px;
   }
 
   .featured-list {
@@ -110,6 +119,11 @@
     min-height: 74px;
     border: 1px solid var(--line);
     scroll-snap-align: start;
+  }
+
+  .hero-caption {
+    align-self: flex-end;
+    margin-top: auto;
   }
 
   .project-archive {

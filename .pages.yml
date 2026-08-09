@@ -280,13 +280,6 @@ content:
     path: content/site.json
     format: json
     fields:
-      - name: heroImage
-        label: Готовый первый экран
-        description: Цельное изображение главной — небо, трава, металл, личная панель и весь визуальный текст
-        type: image
-        options:
-          path: y2k
-          rename: safe
       - name: owner
         label: Владелец
         type: object
@@ -308,6 +301,25 @@ content:
             options:
               path: profile
               rename: safe
+          - name: profileCardImage
+            label: Панель с фотографией на главной
+            description: Готовая каменно-металлическая панель с вырезанной фигурой без текста
+            type: image
+            options:
+              path: profile
+              rename: safe
+          - name: cardTitle
+            label: Заголовок личной карточки
+            type: string
+          - name: cardTagline
+            label: Слоган личной карточки
+            type: text
+          - name: cardMeta
+            label: Подпись личной карточки
+            type: string
+          - name: cardAction
+            label: Текст ссылки на личной карточке
+            type: string
           - name: experience
             label: Опыт
             type: string
