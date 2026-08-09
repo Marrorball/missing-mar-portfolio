@@ -1,0 +1,206 @@
+@media (max-width: 900px) {
+  .site-header-inner {
+    grid-template-columns: 22px 1fr auto;
+  }
+
+  .header-rule {
+    display: none;
+  }
+
+  .primary-navigation {
+    justify-content: flex-end;
+  }
+
+  .identity-line {
+    display: grid;
+    gap: 14px;
+  }
+
+  .featured-selector {
+    width: min(380px, 34vw);
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --page-pad: 20px;
+  }
+
+  #site-header {
+    position: absolute;
+    padding-top: 18px;
+  }
+
+  .site-header-inner {
+    grid-template-columns: 22px 1fr;
+    gap: 12px;
+  }
+
+  .primary-navigation {
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .primary-navigation a {
+    min-height: 44px;
+    padding: 11px 6px;
+    font-size: 11px;
+  }
+
+  .primary-navigation a:first-child::before {
+    display: none;
+  }
+
+  .page-menu {
+    grid-column: 2;
+    justify-self: end;
+    margin-top: -8px;
+  }
+
+  .landscape-hero {
+    display: flex;
+    min-height: 1080px;
+    padding: 108px var(--page-pad) 40px;
+    flex-direction: column;
+    background-position: 46% center;
+  }
+
+  .hero-identity,
+  .profile-card,
+  .featured-selector,
+  .hero-caption {
+    position: relative;
+    inset: auto;
+  }
+
+  .hero-identity {
+    max-width: 100%;
+  }
+
+  .hero-identity h1 {
+    font-size: clamp(50px, 15.5vw, 72px);
+    margin-right: 0;
+    transform: none;
+  }
+
+  .owner-name {
+    font-size: 12px;
+  }
+
+  .owner-role {
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .profile-card {
+    width: min(340px, 90vw);
+    height: 360px;
+    margin-top: 340px;
+    margin-left: 2px;
+  }
+
+  .featured-selector {
+    width: 100%;
+    margin-top: 44px;
+  }
+
+  .featured-list {
+    display: grid;
+    grid-auto-columns: minmax(240px, 78vw);
+    grid-auto-flow: column;
+    gap: 10px;
+    overflow-x: auto;
+    border-top: 0;
+    scroll-snap-type: x mandatory;
+  }
+
+  .featured-project {
+    min-height: 74px;
+    border: 1px solid var(--line);
+    scroll-snap-align: start;
+  }
+
+  .hero-caption {
+    align-self: flex-end;
+    margin-top: auto;
+  }
+
+  .project-archive {
+    padding-top: 70px;
+    padding-bottom: 90px;
+  }
+
+  .archive-heading {
+    display: grid;
+  }
+
+  .archive-filters {
+    justify-content: flex-start;
+  }
+
+  .archive-list a {
+    grid-template-columns: 42px 1fr;
+    gap: 14px;
+    min-height: 116px;
+  }
+
+  .archive-project-meta {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  #overlay-view {
+    padding-top: 88px;
+  }
+
+  .portfolio-view {
+    width: calc(100% - 2 * var(--page-pad));
+    padding-top: 38px;
+  }
+
+  .view-header {
+    margin-bottom: 48px;
+  }
+
+  .back-link {
+    margin-bottom: 34px;
+  }
+
+  .case-study-section {
+    grid-template-columns: 40px 1fr;
+  }
+
+  .case-study-section .rich-content {
+    grid-column: 1 / -1;
+  }
+
+  .cs-row-2,
+  .about-layout,
+  .resume-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-layout {
+    gap: 32px;
+  }
+
+  .contact-links a {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

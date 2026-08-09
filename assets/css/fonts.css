@@ -1,0 +1,52 @@
+@font-face {
+  font-family: 'Exo 2';
+  src: url('../fonts/Exo2-ExtraBoldItalic.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/IBMPlexMono-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Phosphor';
+  src: url('../fonts/Phosphor-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+.ph {
+  font-family: 'Phosphor' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: 400;
+  font-variant: normal;
+  line-height: 1;
+  text-transform: none;
+}
+
+.ph::before {
+  display: inline-block;
+}
+
+.ph-arrow-left::before { content: '\e058'; }
+.ph-arrow-right::before { content: '\e06c'; }
+.ph-arrow-up-right::before { content: '\e092'; }
+.ph-asterisk::before { content: '\e0aa'; }
+.ph-dots-nine::before { content: '\e1fc'; }
+.ph-sparkle::before { content: '\e6a2'; }
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/IBMPlexMono-Medium.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
