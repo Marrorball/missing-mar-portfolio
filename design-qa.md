@@ -1,84 +1,74 @@
-# Design QA — missing mar portfolio
+# Design QA — missing mar profile panel
 
 ## Comparison target
 
 - Source visual truth: `docs/superpowers/specs/assets/y2k-landscape-selected-reference-v2.png`
-- Final desktop implementation: `docs/superpowers/qa/implementation-home-final-1440x1024.png`
-- Final mobile implementation: `docs/superpowers/qa/implementation-home-final-390x844.png`
-- Combined desktop comparison: `docs/superpowers/qa/comparison-home-final.jpg`
+- Desktop implementation: `docs/superpowers/qa/implementation-home-profile-panel-v2-1440x1024.jpg`
+- Mobile implementation: `docs/superpowers/qa/implementation-home-profile-panel-v2-390x844.jpg`
+- Combined desktop comparison: `docs/superpowers/qa/profile-panel-reference-comparison-v2.jpg`
 - Local route: `/missing-mar-portfolio/`
-- State: home, first featured project selected, archive below the fold
+- State: home, first featured project selected
 
 ## Normalization
 
 - Source pixels: 1487 × 1058.
-- Desktop implementation pixels and CSS viewport: 1440 × 1024.
-- Mobile implementation pixels and CSS viewport: 390 × 844.
-- The source was resized to 1440 × 1024 before the final side-by-side comparison. The Browser screenshot API returned CSS-pixel-sized captures, so no additional density scaling was needed.
+- Desktop implementation pixels and CSS viewport: 1440 × 1024 at browser density 1.
+- Mobile implementation pixels and CSS viewport: 390 × 844 at browser density 1.
+- For the side-by-side evidence, the source was center-fitted to 1440 × 1024 and placed beside the equal-size implementation capture.
 
 ## Full-view comparison evidence
 
-The final combined image places the normalized source on the left and the browser-rendered implementation on the right. The implementation preserves the dominant cobalt sky, green hill, centered chrome sculpture, upper-left identity, lower-left personal card, right-side three-project selector, and acid active state. The project selector, card, identity, and horizon maintain the same visual grouping and reading order.
-
-The implementation intentionally omits the source mock's faint CRT scanlines and decorative lower-corner HUD ornaments. They are non-functional P3 details, and omitting them keeps the live interface clearer and less visually noisy, consistent with the user's request for more air.
+The normalized comparison shows the personal panel in the same lower-left zone, at nearly the same scale, clockwise angle, horizon contact, dark stone/metal treatment, white mono copy, and full seated upside-down pose as the approved reference. The user is isolated from the second person. Both legs, shoes, hands, head, face, and the right sleeve are preserved. The right arm now exits at the physical panel edge, matching the source-photo crop instead of ending inside the surface.
 
 ## Focused-region evidence
 
-Separate crops were not needed: the 2904 × 1024 combined comparison keeps the identity, card copy, featured rows, and image crops readable at original detail. The profile card and display title were also inspected in dedicated browser captures during iteration.
+The profile panel is readable at full size in both the 2880 × 1024 combined comparison and the dedicated 1100 × 1000 source asset. A separate crop was not needed because the panel occupies roughly 430 × 400 pixels in the desktop capture and its figure edges, text wrapping, frame texture, and arm termination remain visible.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: local Exo 2 ExtraBold Italic and IBM Plex Mono files load successfully. The display lockup is horizontally expanded and vertically compressed to match the racing/Y2K silhouette of the source. Small labels retain readable mono weights and line height.
-- Spacing and layout rhythm: desktop anchors match the source's header, identity, photo card, central sculpture, and selector zones. Mobile stacking keeps the identity first, sculpture second, photo card third, and project selector below.
-- Colors and visual tokens: cobalt, white, dark navy, translucent dividers, and acid green match the selected art direction. Active, hover, and focus treatments retain usable contrast.
-- Image quality and asset fidelity: the landscape plate is a real generated raster asset at 2048 × 1457 with a WebP delivery version. The personal card uses a dedicated 1122 × 1402 generated photo asset grounded in the approved mock and original high-resolution photograph. No CSS or inline-SVG substitute is used for the hero scene or photo.
-- Copy and content: `missing mar / Марат Дреев`, `Product & Visual Designer`, the personal-card copy, three featured project names, and all project/page content match the approved content model.
-- Icons: the visible navigation and arrow icons use the local Phosphor icon font with consistent weight and alignment.
-- Accessibility and responsiveness: semantic headings/landmarks, skip link, alt text, live region, keyboard focus, reduced-motion rules, and 44 × 44 minimum visible mobile header targets are present.
+- Fonts and typography: the card uses the existing mono family, white uppercase copy, a forced two-line `WHERE'S / MISSING MAR?` title, compact tagline, and small footer metadata matching the source hierarchy.
+- Spacing and layout rhythm: desktop panel size, lower-left position, slight clockwise tilt, copy inset, divider, and footer align closely with the approved composition. Mobile keeps the whole panel inside the initial 390 × 844 viewport.
+- Colors and visual tokens: the panel uses dark charcoal stone, worn silver borders, pale concrete, white copy, and restrained shadowing consistent with the reference.
+- Image quality and asset fidelity: `missing-mar-profile-panel-v7.png` is a 1100 × 1000 project raster. The panel texture was generated as an empty asset; the person is composited from the original photograph with a contracted, feathered local foreground mask, so the face, clothing, pose, legs, hands, and shoes are not AI-redrawn. The companion mask is subtracted, the source-photo hair boundary is tapered, and the extended sleeve is clipped behind the inner metal frame. No CSS-art or placeholder substitute is used.
+- Copy and content: title, tagline, role, location/year, and About action match the approved card content.
+- Icons and affordance: the panel remains a semantic link to About with the existing focus treatment and accessible label.
+- Accessibility and responsiveness: the image has alt text, the card is keyboard reachable, and the desktop/mobile captures show no clipping that hides the panel content.
 
 ## Comparison history
 
 ### Pass 1 — blocked
 
-- [P2] The 16:9 background crop made the chrome sculpture too large at the 1440 × 1024 comparison viewport.
-  - Fix: restored the generated plate's original landscape ratio and delivered it at 2048 × 1457.
-  - Post-fix evidence: `implementation-home-1440x1024.png` and `comparison-home-pass-1.jpg`.
-- [P2] The display wordmark was too narrow for the approved racing-style silhouette.
-  - Fix: expanded the Exo 2 lockup horizontally, then reduced its vertical scale to match the source's proportions.
-  - Post-fix evidence: `implementation-home-final-1440x1024.png`.
-- [P2] The original profile crop made the face feel too close.
-  - Fix: generated a dedicated zoomed-out portrait card image from the approved mock plus the original photograph, preserved the upside-down composition, and exposed it as a separate editable CMS field.
-  - Post-fix evidence: `implementation-home-pass-3-1440x1024.png` and `implementation-home-final-1440x1024.png`.
+- [P2] The first generated panel removed the seated legs and changed the original pose.
+  - Fix: replaced the generated person with the full subject extracted from the original photograph.
+  - Post-fix evidence: `missing-mar-profile-panel-v7.png` and both final browser captures.
+- [P2] The companion remained partially attached to the subject mask.
+  - Fix: generated a separate foreground instance mask and subtracted it before compositing.
+  - Post-fix evidence: only one person appears in the final panel.
 
 ### Pass 2 — blocked
 
-- [P2] The mobile header mark and page menu measured 22 × 22 and 32 × 46, below the practical minimum target size.
-  - Fix: expanded both interactive hit areas to at least 44 × 44 without changing their visual alignment.
-  - Post-fix evidence: browser measurement returned 44 × 44 for both controls; `implementation-home-final-390x844.png` shows the unchanged composition.
+- [P2] The panel initially read as a floating generic card and did not match the source slab proportions.
+  - Fix: used the dedicated weathered stone/metal panel, removed the generic CSS border/background, matched the source aspect ratio, scale, position, and clockwise tilt.
+- [P2] The right arm ended inside the plate, making the sleeve look visibly severed.
+  - Fix: moved the unmodified full subject horizontally and clipped the original photo boundary behind the panel's inner silver frame.
+  - Post-fix evidence: `implementation-home-profile-panel-v2-1440x1024.jpg` and `implementation-home-profile-panel-v2-390x844.jpg`.
+- [P2] The first mask left gray pavement contamination and a hard rectangular crop around the hair.
+  - Fix: contracted and feathered the alpha mask, removed the artificial drop shadow, and tapered the original bottom-photo boundary through the hair.
+  - Post-fix evidence: `missing-mar-profile-panel-v7.png`.
 
 ### Pass 3 — passed
 
-- No actionable P0, P1, or P2 visual differences remain.
-- Residual P3 differences: the live site uses a cleaner texture than the source and does not include the source's decorative lower-corner HUD ornaments.
+- No actionable P0, P1, or P2 differences remain for the profile panel.
+- Residual P3: the live panel texture is slightly cleaner than the mock's painted treatment; this does not affect the silhouette, identity, or interaction.
 
-## Primary interactions tested
+## Primary interaction tested
 
-- Selecting each featured project updates the active state and `Открыть проект` destination.
-- Opening a selected project updates the hash route and renders the full case study.
-- Category filters update the archive list; UX/UI correctly returns three projects.
-- About and Contact routes render and remain reachable from the header.
-- The email contact resolves to `mailto:marrorball@gmail.com`.
-- Browser console warnings/errors checked: none.
-- Automated checks: 19 tests passed; content validation reports 7 projects and 2 pages; production build succeeds.
+- Activating the personal panel navigates to `#about` and renders the About page.
+- Desktop and mobile home states render the full seated pose and one-person mask.
 
 ## Findings
 
-No actionable P0, P1, or P2 findings remain.
-
-## Follow-up polish
-
-- [P3] If more retro texture is desired after user review, add a real lightweight raster scanline/noise asset rather than CSS-drawn lines.
-- [P3] Optional decorative lower-corner HUD imagery can be generated as real assets after the main composition is approved.
+No actionable P0, P1, or P2 findings remain for the profile panel.
 
 ## Final result
 

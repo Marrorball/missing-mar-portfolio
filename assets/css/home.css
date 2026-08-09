@@ -72,17 +72,18 @@
 .profile-card {
   position: absolute;
   z-index: 4;
-  bottom: clamp(74px, 8vh, 100px);
-  left: calc(var(--page-pad) + 38px);
+  bottom: clamp(104px, 11vh, 130px);
+  left: calc(var(--page-pad) + 50px);
   display: block;
-  width: clamp(300px, 27vw, 390px);
-  height: clamp(330px, 40vh, 410px);
-  overflow: hidden;
+  width: clamp(350px, 30vw, 460px);
+  aspect-ratio: 1.1;
+  overflow: visible;
   color: var(--ink);
-  border: 2px solid rgba(255, 255, 255, .72);
-  background: #222733;
-  box-shadow: 0 18px 42px rgba(2, 10, 31, .34);
-  transform: rotate(-1.5deg);
+  border: 0;
+  background: transparent;
+  box-shadow: 0 18px 17px -17px rgba(1, 8, 24, .8);
+  transform: perspective(900px) rotateY(1.5deg) rotateZ(1deg);
+  transform-origin: 50% 100%;
 }
 
 .profile-card img {
@@ -92,58 +93,54 @@
   height: 100%;
 }
 
-.profile-card-photo {
+.profile-card-art {
   z-index: 1;
-  object-fit: cover;
-  object-position: center;
-  filter: saturate(.92) contrast(1.04);
-  transform: scale(1.18);
-}
-
-.profile-card-shade {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  background: rgba(5, 12, 32, .24);
+  object-fit: contain;
+  object-position: center bottom;
+  pointer-events: none;
 }
 
 .profile-card-copy {
   position: absolute;
   z-index: 3;
-  top: 22px;
-  left: 24px;
+  top: 8.5%;
+  left: 6%;
   display: grid;
-  gap: 12px;
-  max-width: 260px;
+  gap: 9px;
+  width: 38%;
+  max-width: 165px;
+  text-shadow: 0 1px 4px rgba(5, 8, 18, .72);
 }
 
 .profile-card-copy strong {
-  max-width: 230px;
-  font-size: clamp(22px, 2vw, 30px);
+  max-width: 165px;
+  font-size: clamp(19px, 1.55vw, 22px);
   line-height: 1.03;
 }
 
 .profile-card-tagline {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.45;
 }
 
 .profile-card-footer {
   position: absolute;
   z-index: 3;
-  right: 18px;
-  bottom: 16px;
-  left: 18px;
+  right: 7.5%;
+  bottom: 5.5%;
+  left: 7.5%;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 7px 18px;
-  padding-top: 10px;
+  padding-top: 9px;
   font-size: 11px;
   border-top: 1px solid rgba(255, 255, 255, .7);
+  text-shadow: 0 1px 4px rgba(5, 8, 18, .72);
 }
 
 .profile-card-footer span:first-child {
   grid-column: 1 / -1;
+  text-transform: uppercase;
 }
 
 .featured-selector {

@@ -53,13 +53,13 @@ function renderIdentity(owner = {}) {
 }
 
 function renderProfileCard(owner = {}) {
+  const title = escapeHtml(owner.cardTitle || '').replace(/\n/g, '<br>');
   const tagline = escapeHtml(owner.cardTagline || '').replace(/\n/g, '<br>');
   const cardImage = owner.profileCardImage || owner.profileImage || '';
   return `<a href="#about" class="profile-card" aria-label="${escapeHtml(owner.cardAction || 'Обо мне')}">
-    <img class="profile-card-photo" src="${escapeHtml(cardImage)}" alt="${escapeHtml(owner.name || '')}" loading="eager">
-    <span class="profile-card-shade" aria-hidden="true"></span>
+    <img class="profile-card-art" src="${escapeHtml(cardImage)}" alt="${escapeHtml(owner.name || '')}" loading="eager">
     <span class="profile-card-copy">
-      <strong>${escapeHtml(owner.cardTitle || '')}</strong>
+      <strong>${title}</strong>
       <span class="profile-card-tagline">${tagline}</span>
     </span>
     <span class="profile-card-footer">

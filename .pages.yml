@@ -302,7 +302,8 @@ content:
               path: profile
               rename: safe
           - name: profileCardImage
-            label: Фотография в карточке на главной
+            label: Панель с фотографией на главной
+            description: Готовая каменно-металлическая панель с вырезанной фигурой без текста
             type: image
             options:
               path: profile

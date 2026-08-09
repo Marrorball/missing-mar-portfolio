@@ -93,10 +93,11 @@
   }
 
   .profile-card {
-    width: min(340px, 90vw);
-    height: 360px;
-    margin-top: 340px;
-    margin-left: 2px;
+    width: min(360px, 94vw);
+    height: auto;
+    aspect-ratio: 1.1;
+    margin-top: 280px;
+    margin-left: -2px;
   }
 
   .featured-selector {

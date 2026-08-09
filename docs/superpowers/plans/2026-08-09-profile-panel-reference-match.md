@@ -21,8 +21,8 @@
 ### Task 1: Create the reference-matched panel artwork
 
 **Files:**
-- Create: `assets/media/profile/missing-mar-profile-panel-v2.png`
-- Create: `assets/media/profile/missing-mar-profile-panel-v2.webp`
+- Create: `assets/media/profile/missing-mar-profile-panel-v7.png`
+- Create: `assets/media/profile/missing-mar-profile-panel-v7.webp`
 - Reference: `docs/superpowers/specs/assets/y2k-landscape-selected-reference-v2.png`
 - Reference: `assets/media/profile/missing-mar-profile.jpg`
 
@@ -40,12 +40,12 @@ Confirm that only Marat is visible, the face matches the source, the full figure
 
 - [ ] **Step 3: Save the selected output into the project**
 
-Copy the selected PNG to `assets/media/profile/missing-mar-profile-panel-v2.png` and create `assets/media/profile/missing-mar-profile-panel-v2.webp` at the same dimensions.
+Copy the selected PNG to `assets/media/profile/missing-mar-profile-panel-v7.png` and create `assets/media/profile/missing-mar-profile-panel-v7.webp` at the same dimensions.
 
 - [ ] **Step 4: Commit the artwork**
 
 ```bash
-git add assets/media/profile/missing-mar-profile-panel-v2.png assets/media/profile/missing-mar-profile-panel-v2.webp
+git add assets/media/profile/missing-mar-profile-panel-v7.png assets/media/profile/missing-mar-profile-panel-v7.webp
 git commit -m "feat: add reference-matched profile panel artwork"
 ```
 
@@ -75,7 +75,7 @@ Expected: FAIL because the current image still uses `profile-card-photo`.
 
 - [ ] **Step 3: Update the render markup and content path**
 
-Rename the image layer to `profile-card-art`, point `profileCardImage` to `/missing-mar-portfolio/assets/media/profile/missing-mar-profile-panel-v2.webp`, and update the Pages CMS help text to describe the complete panel artwork.
+Rename the image layer to `profile-card-art`, point `profileCardImage` to `/missing-mar-portfolio/assets/media/profile/missing-mar-profile-panel-v7.webp`, and update the Pages CMS help text to describe the complete panel artwork.
 
 - [ ] **Step 4: Rebuild the desktop panel styling**
 
