@@ -59,6 +59,8 @@ test('renders the approved identity, three featured projects, and complete archi
   assert.match(html, /href="#about" class="profile-card"/);
   assert.match(html, /class="profile-card-art"/);
   assert.match(html, /missing-mar-profile-panel-v7\.webp/);
+  assert.match(html, /featured-indicator ph ph-star-four/);
+  assert.doesNotMatch(html, /ph-sparkle/);
   assert.equal((html.match(/class="featured-project/g) || []).length, 3);
   assert.match(html, /Все проекты — 4/);
   assert.match(html, /data-project-id="d"/);
@@ -70,6 +72,7 @@ test('renders navigation pages in header links and the complete menu', () => {
   assert.match(html, /href="#about"/);
   assert.match(html, /href="#contact"/);
   assert.match(html, /data-page-id="press"/);
+  assert.match(html, /ph ph-star-four/);
 });
 
 test('renders a linkable case study and safe contact links', () => {

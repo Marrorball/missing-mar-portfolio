@@ -30,7 +30,7 @@ export function renderHeader(site = {}, pages = []) {
     <a class="header-mark" href="#" aria-label="${escapeHtml(owner.brandName || 'На главную')}"><i class="ph ph-asterisk" aria-hidden="true"></i></a>
     <span class="header-rule" aria-hidden="true"></span>
     <nav class="primary-navigation" aria-label="Основная навигация">
-      <a href="#" data-action="show-projects"><i class="ph ph-sparkle" aria-hidden="true"></i>Проекты</a>
+      <a href="#" data-action="show-projects"><i class="ph ph-star-four" aria-hidden="true"></i>Проекты</a>
       ${primaryPages.map(page => `<a href="${routeForPage(page)}">${escapeHtml(page.title)}</a>`).join('')}
     </nav>
     <details class="page-menu">
@@ -75,7 +75,7 @@ function renderFeaturedProjects(projects, activeProjectId) {
     ${projects.map((project, index) => `<button class="featured-project${project.id === activeProjectId ? ' is-active' : ''}" type="button" data-action="select-featured" data-project-id="${escapeHtml(project.id)}" aria-pressed="${project.id === activeProjectId}">
       <span class="featured-index">${String(index + 1).padStart(2, '0')}</span>
       <span class="featured-title">${escapeHtml(project.shortLabel || project.title)}</span>
-      <i class="featured-indicator ph ph-sparkle" aria-hidden="true"></i>
+      <i class="featured-indicator ph ph-star-four" aria-hidden="true"></i>
     </button>`).join('')}
   </div>`;
 }
