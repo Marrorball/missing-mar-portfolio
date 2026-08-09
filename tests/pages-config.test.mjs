@@ -26,10 +26,15 @@ test('Pages CMS config parses and exposes the intended content files', () => {
     page_fields = entries[1].fetch('fields').map { |field| field.fetch('name') }
     abort 'missing showInNavigation' unless page_fields.include?('showInNavigation')
     abort 'obsolete XP page field' if page_fields.include?('showOnDesktop') || page_fields.include?('showInStart')
+    site_fields = entries[3].fetch('fields').map { |field| field.fetch('name') }
+    abort 'missing heroImage' unless site_fields.include?('heroImage')
     owner = entries[3].fetch('fields').find { |field| field['name'] == 'owner' }
     owner_fields = owner.fetch('fields').map { |field| field.fetch('name') }
-    %w[brandName name role profileImage profileCardImage cardTitle cardTagline cardMeta cardAction].each do |name|
+    %w[brandName name role profileImage experience location status bio].each do |name|
       abort "missing owner field #{name}" unless owner_fields.include?(name)
+    end
+    %w[profileCardImage cardTitle cardTagline cardMeta cardAction].each do |name|
+      abort "obsolete profile card field #{name}" if owner_fields.include?(name)
     end
     text = File.read('.pages.yml')
     abort 'secret in config' if text.match?(/token|password|client_secret/i)

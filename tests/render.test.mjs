@@ -11,16 +11,12 @@ import {
 
 const bundle = {
   site: {
+    heroImage: '/missing-mar-portfolio/assets/media/y2k/y2k-selected-reference-hero-v1.png',
     owner: {
       brandName: 'missing mar',
       name: 'Марат Дреев',
       role: 'Product & Visual Designer',
-      profileImage: '/missing-mar-portfolio/assets/media/profile/missing-mar-profile.jpg',
-      profileCardImage: '/missing-mar-portfolio/assets/media/profile/missing-mar-profile-panel-v7.webp',
-      cardTitle: "WHERE'S\nMISSING MAR?",
-      cardTagline: 'I DESIGN CLEAR SYSTEMS\nWITH A STRANGE EDGE.',
-      cardMeta: 'МОСКВА · 2026',
-      cardAction: 'ОБО МНЕ ↗'
+      profileImage: '/missing-mar-portfolio/assets/media/profile/missing-mar-profile.jpg'
     },
     contacts: {
       email: 'marrorball@gmail.com',
@@ -55,11 +51,13 @@ test('renders the approved identity, three featured projects, and complete archi
   });
 
   assert.match(html, /missing mar/);
-  assert.match(html, /WHERE&#39;S<br>MISSING MAR\?/);
-  assert.match(html, /href="#about" class="profile-card"/);
-  assert.match(html, /class="profile-card-art"/);
-  assert.match(html, /missing-mar-profile-panel-v7\.webp/);
+  assert.match(html, /y2k-selected-reference-hero-v1\.png/);
+  assert.match(html, /class="landscape-hero reference-raster-hero"/);
+  assert.doesNotMatch(html, /class="profile-card"/);
+  assert.doesNotMatch(html, /href="#about" class="profile-card"/);
   assert.equal((html.match(/class="featured-project/g) || []).length, 3);
+  assert.match(html, /class="featured-project is-active" href="#project\/a"/);
+  assert.match(html, /class="featured-project" href="#project\/b"/);
   assert.match(html, /Все проекты — 4/);
   assert.match(html, /data-project-id="d"/);
   assert.match(html, /id="project-archive"/);

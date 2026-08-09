@@ -1,14 +1,10 @@
 {
+  "heroImage": "/missing-mar-portfolio/assets/media/y2k/y2k-selected-reference-hero-v1.png",
   "owner": {
     "brandName": "missing mar",
     "name": "Марат Дреев",
     "role": "Product & Visual Designer",
     "profileImage": "/missing-mar-portfolio/assets/media/profile/missing-mar-profile.jpg",
-    "profileCardImage": "/missing-mar-portfolio/assets/media/profile/missing-mar-profile-panel-v7.webp",
-    "cardTitle": "WHERE'S\nMISSING MAR?",
-    "cardTagline": "I DESIGN CLEAR SYSTEMS\nWITH A STRANGE EDGE.",
-    "cardMeta": "МОСКВА · 2026",
-    "cardAction": "ОБО МНЕ ↗",
     "experience": "1.5 года",
     "location": "Москва, Россия",
     "status": "Всё сложно (хочу работать)",

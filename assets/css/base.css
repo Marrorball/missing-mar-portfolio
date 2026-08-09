@@ -104,6 +104,10 @@ img {
   pointer-events: none;
 }
 
+body[data-route="home"] #site-header {
+  opacity: 0;
+}
+
 .site-header-inner {
   display: grid;
   grid-template-columns: 22px minmax(80px, 1fr) auto auto;

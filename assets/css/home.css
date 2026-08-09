@@ -4,18 +4,14 @@
   overflow: hidden;
   isolation: isolate;
   background-color: var(--cobalt);
-  background-image: url('../media/y2k/landscape-background.webp');
+  background-image: var(--hero-image, url('../media/y2k/y2k-selected-reference-hero-v1.png'));
   background-position: center;
-  background-size: cover;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 .landscape-hero::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: rgba(3, 16, 48, .12);
-  pointer-events: none;
+  display: none;
 }
 
 .hero-identity {
@@ -24,6 +20,8 @@
   top: clamp(112px, 13vh, 142px);
   left: var(--page-pad);
   max-width: min(720px, 58vw);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .identity-line {
@@ -69,86 +67,13 @@
   border-radius: 50%;
 }
 
-.profile-card {
-  position: absolute;
-  z-index: 4;
-  bottom: clamp(104px, 11vh, 130px);
-  left: calc(var(--page-pad) + 50px);
-  display: block;
-  width: clamp(350px, 30vw, 460px);
-  aspect-ratio: 1.1;
-  overflow: visible;
-  color: var(--ink);
-  border: 0;
-  background: transparent;
-  box-shadow: 0 18px 17px -17px rgba(1, 8, 24, .8);
-  transform: perspective(900px) rotateY(1.5deg) rotateZ(1deg);
-  transform-origin: 50% 100%;
-}
-
-.profile-card img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.profile-card-art {
-  z-index: 1;
-  object-fit: contain;
-  object-position: center bottom;
-  pointer-events: none;
-}
-
-.profile-card-copy {
-  position: absolute;
-  z-index: 3;
-  top: 8.5%;
-  left: 6%;
-  display: grid;
-  gap: 9px;
-  width: 38%;
-  max-width: 165px;
-  text-shadow: 0 1px 4px rgba(5, 8, 18, .72);
-}
-
-.profile-card-copy strong {
-  max-width: 165px;
-  font-size: clamp(19px, 1.55vw, 22px);
-  line-height: 1.03;
-}
-
-.profile-card-tagline {
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.profile-card-footer {
-  position: absolute;
-  z-index: 3;
-  right: 7.5%;
-  bottom: 5.5%;
-  left: 7.5%;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 7px 18px;
-  padding-top: 9px;
-  font-size: 11px;
-  border-top: 1px solid rgba(255, 255, 255, .7);
-  text-shadow: 0 1px 4px rgba(5, 8, 18, .72);
-}
-
-.profile-card-footer span:first-child {
-  grid-column: 1 / -1;
-  text-transform: uppercase;
-}
-
 .featured-selector {
   position: absolute;
   z-index: 4;
   top: 35%;
   right: 24px;
   width: min(365px, 29vw);
+  opacity: 0;
 }
 
 .featured-list {
@@ -207,6 +132,8 @@
   margin: 0;
   font-size: 10px;
   line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .project-archive {
