@@ -129,6 +129,7 @@
   }
 
   .hero-caption {
+    display: block;
     align-self: flex-end;
     margin-top: auto;
   }
