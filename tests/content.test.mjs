@@ -13,7 +13,8 @@ const validRaw = {
       brandName: 'missing mar',
       name: 'Марат Дреев',
       role: 'Product & Visual Designer',
-      profileImage: '/missing-mar-portfolio/assets/media/profile/marat.jpg'
+      profileImage: '/missing-mar-portfolio/assets/media/profile/marat.jpg',
+      profileCardImage: '/missing-mar-portfolio/assets/media/profile/marat-card.webp'
     },
     categories: []
   },
@@ -121,6 +122,7 @@ test('loads all four content files and reports an HTTP failure', async () => {
 test('collects local media paths from fields and rich HTML only', () => {
   const paths = collectMediaPaths({
     profileImage: '/missing-mar-portfolio/assets/media/profile/marat.jpg',
+    profileCardImage: '/missing-mar-portfolio/assets/media/profile/marat-card.webp',
     cover: '/missing-mar-portfolio/assets/media/cover.webp',
     gallery: ['/missing-mar-portfolio/assets/media/one.jpg', 'https://example.com/two.jpg'],
     sections: [{
@@ -131,6 +133,7 @@ test('collects local media paths from fields and rich HTML only', () => {
     '/missing-mar-portfolio/assets/media/cover.webp',
     '/missing-mar-portfolio/assets/media/inside.png',
     '/missing-mar-portfolio/assets/media/one.jpg',
+    '/missing-mar-portfolio/assets/media/profile/marat-card.webp',
     '/missing-mar-portfolio/assets/media/profile/marat.jpg'
   ]);
 });

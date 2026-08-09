@@ -27,14 +27,14 @@ export function renderHeader(site = {}, pages = []) {
   const owner = site.owner || {};
 
   return `<div class="site-header-inner">
-    <a class="header-mark" href="#" aria-label="${escapeHtml(owner.brandName || 'На главную')}"><span aria-hidden="true">*</span></a>
+    <a class="header-mark" href="#" aria-label="${escapeHtml(owner.brandName || 'На главную')}"><i class="ph ph-asterisk" aria-hidden="true"></i></a>
     <span class="header-rule" aria-hidden="true"></span>
     <nav class="primary-navigation" aria-label="Основная навигация">
-      <a href="#" data-action="show-projects">Проекты</a>
+      <a href="#" data-action="show-projects"><i class="ph ph-sparkle" aria-hidden="true"></i>Проекты</a>
       ${primaryPages.map(page => `<a href="${routeForPage(page)}">${escapeHtml(page.title)}</a>`).join('')}
     </nav>
     <details class="page-menu">
-      <summary aria-label="Все страницы">Меню</summary>
+      <summary aria-label="Все страницы"><i class="ph ph-dots-nine" aria-hidden="true"></i><span class="sr-only">Меню</span></summary>
       <nav class="page-menu-panel" aria-label="Все страницы портфолио">
         ${visiblePages.map(page => `<a href="${routeForPage(page)}" data-page-id="${escapeHtml(page.id)}">${escapeHtml(page.title)}</a>`).join('')}
       </nav>
@@ -54,8 +54,9 @@ function renderIdentity(owner = {}) {
 
 function renderProfileCard(owner = {}) {
   const tagline = escapeHtml(owner.cardTagline || '').replace(/\n/g, '<br>');
+  const cardImage = owner.profileCardImage || owner.profileImage || '';
   return `<a href="#about" class="profile-card" aria-label="${escapeHtml(owner.cardAction || 'Обо мне')}">
-    <img src="${escapeHtml(owner.profileImage || '')}" alt="${escapeHtml(owner.name || '')}" loading="eager">
+    <img class="profile-card-photo" src="${escapeHtml(cardImage)}" alt="${escapeHtml(owner.name || '')}" loading="eager">
     <span class="profile-card-shade" aria-hidden="true"></span>
     <span class="profile-card-copy">
       <strong>${escapeHtml(owner.cardTitle || '')}</strong>
@@ -74,7 +75,7 @@ function renderFeaturedProjects(projects, activeProjectId) {
     ${projects.map((project, index) => `<button class="featured-project${project.id === activeProjectId ? ' is-active' : ''}" type="button" data-action="select-featured" data-project-id="${escapeHtml(project.id)}" aria-pressed="${project.id === activeProjectId}">
       <span class="featured-index">${String(index + 1).padStart(2, '0')}</span>
       <span class="featured-title">${escapeHtml(project.shortLabel || project.title)}</span>
-      <span class="featured-indicator" aria-hidden="true"></span>
+      <i class="featured-indicator ph ph-sparkle" aria-hidden="true"></i>
     </button>`).join('')}
   </div>`;
 }
@@ -126,7 +127,7 @@ export function renderHome({
       ${renderProfileCard(owner)}
       <div class="featured-selector">
         ${renderFeaturedProjects(featured, selectedId)}
-        <a class="open-project-link" href="#project/${encodeURIComponent(selectedId)}">Открыть проект <span aria-hidden="true">→</span></a>
+        <a class="open-project-link" href="#project/${encodeURIComponent(selectedId)}">Открыть проект <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
       </div>
       <p class="hero-caption">DESIGNING DIGITAL EXPERIENCES<br>SINCE 2018</p>
     </section>
@@ -153,12 +154,12 @@ export function renderProjectView(project = {}, category = {}) {
   const projectUrl = safeHttpsUrl(project.behance || '');
   return `<article class="portfolio-view project-view" data-view="project" data-project-id="${escapeHtml(project.id || '')}">
     <header class="view-header">
-      <a class="back-link" href="#">← Все проекты</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>Все проекты</a>
       <p>${escapeHtml(category.title || '')}${project.year ? ` · ${escapeHtml(project.year)}` : ''}</p>
       <h1>${escapeHtml(project.title || '')}</h1>
       ${project.summary ? `<p class="view-summary">${escapeHtml(project.summary)}</p>` : ''}
       ${renderTags(project.tags)}
-      ${projectUrl ? `<a class="external-project-link" href="${escapeHtml(projectUrl)}" target="_blank" rel="noreferrer">Открыть исходный проект ↗</a>` : ''}
+      ${projectUrl ? `<a class="external-project-link" href="${escapeHtml(projectUrl)}" target="_blank" rel="noreferrer">Открыть исходный проект <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>` : ''}
     </header>
     <div class="case-study-sections">
       ${(project.sections || []).map((section, index) => `<section id="${escapeHtml(section.id)}" class="case-study-section">
@@ -187,7 +188,7 @@ export function renderAboutView(site = {}, resume = {}, page = {}) {
   const owner = site.owner || {};
   return `<article class="portfolio-view about-view" data-view="about">
     <header class="view-header">
-      <a class="back-link" href="#">← На главную</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>На главную</a>
       <p>PROFILE / ${escapeHtml(owner.location || '')}</p>
       <h1>${escapeHtml(page.title || 'Обо мне')}</h1>
       <p class="view-summary">${escapeHtml(owner.bio || '')}</p>
@@ -209,7 +210,7 @@ export function renderContactView(site = {}) {
   const behanceUrl = safeHttpsUrl(contacts.behance || '');
   return `<article class="portfolio-view contact-view" data-view="contact">
     <header class="view-header">
-      <a class="back-link" href="#">← На главную</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>На главную</a>
       <p>CONTACT / AVAILABLE FOR PROJECTS</p>
       <h1>Давайте делать странные, понятные вещи.</h1>
       <p class="view-summary">${escapeHtml(owner.name || '')} — ${escapeHtml(owner.role || '')}</p>
@@ -225,7 +226,7 @@ export function renderContactView(site = {}) {
 export function renderGenericPageView(page = {}) {
   return `<article class="portfolio-view generic-page-view" data-view="page" data-page-id="${escapeHtml(page.id || '')}">
     <header class="view-header">
-      <a class="back-link" href="#">← На главную</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>На главную</a>
       <p>PAGE / ${escapeHtml(page.id || '')}</p>
       <h1>${escapeHtml(page.title || '')}</h1>
     </header>
