@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   renderAboutView,
   renderContactView,
@@ -39,6 +40,15 @@ const bundle = {
   ]
 };
 
+test('keeps the approved Y2K scene untinted behind the live interface', async () => {
+  const css = await readFile(new URL('../assets/css/home.css', import.meta.url), 'utf8');
+  const responsiveCss = await readFile(new URL('../assets/css/responsive.css', import.meta.url), 'utf8');
+
+  assert.match(css, /\.landscape-hero::after\s*\{[^}]*background:\s*transparent;/s);
+  assert.match(css, /\.profile-scene-overlay\s*\{[^}]*z-index:\s*1;/s);
+  assert.match(responsiveCss, /landscape-y2k-smooth-v3\.png'\)\s*!important/);
+});
+
 test('renders the approved identity, three featured projects, and complete archive', () => {
   const html = renderHome({
     site: bundle.site,
@@ -59,7 +69,7 @@ test('renders the approved identity, three featured projects, and complete archi
   assert.match(html, /class="profile-monument-art"/);
   assert.match(html, /missing-mar-profile-monument-v1\.webp/);
   assert.match(html, /class="profile-scene-overlay"/);
-  assert.match(html, /profile-scene-natural-grass-v2\.png/);
+  assert.match(html, /landscape-profile-y2k-v3\.png/);
   assert.doesNotMatch(html, /class="landscape-foreground-grass"/);
   assert.doesNotMatch(html, /href="#about" class="profile-card"/);
   assert.equal((html.match(/WHERE&#39;S/g) || []).length, 0);

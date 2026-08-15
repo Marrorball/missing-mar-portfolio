@@ -1,6 +1,6 @@
 import { filterProjects, selectFeaturedProjects } from './selectors.js';
 
-const profileSceneOverlay = new URL('../media/y2k/profile-scene-natural-grass-v2.png', import.meta.url).href;
+const profileSceneOverlay = new URL('../media/y2k/landscape-profile-y2k-v3.png', import.meta.url).href;
 
 export function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, character => ({

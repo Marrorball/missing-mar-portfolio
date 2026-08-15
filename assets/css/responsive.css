@@ -62,6 +62,7 @@
     min-height: 1080px;
     padding: 108px var(--page-pad) 40px;
     flex-direction: column;
+    background-image: url('../media/y2k/landscape-y2k-smooth-v3.png') !important;
     background-position: 46% center;
   }
 

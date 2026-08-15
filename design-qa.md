@@ -1,57 +1,51 @@
-# Design QA — natural grass profile scene
+# Design QA — smooth chrome, Y2K color, identity-preserved portrait
 
 ## Comparison target
 
-- Source visual truth: `docs/superpowers/specs/assets/profile-scene-natural-grass-selected.png`
-- Desktop implementation: `docs/superpowers/qa/implementation-natural-grass-v2-1440x810.jpg`
-- Mobile implementation: `docs/superpowers/qa/implementation-natural-grass-v2-390x844.png`
-- Full desktop comparison: `docs/superpowers/qa/comparison-natural-grass-v2-1440x810.jpg`
+- Source visual truth: `assets/media/y2k/landscape-profile-y2k-v3.png`
+- Original portrait truth: `docs/superpowers/specs/assets/missing-mar-profile-source.jpg`
+- Desktop implementation: `docs/superpowers/qa/implementation-y2k-chrome-face-v3-pass2-1440x1024.png`
+- Mobile implementation: `docs/superpowers/qa/implementation-y2k-chrome-face-v3-390x844.png`
+- Full desktop comparison: `docs/superpowers/qa/comparison-y2k-chrome-face-v3-pass2-1440x1024.jpg`
+- Focused chrome/profile comparison: `docs/superpowers/qa/comparison-y2k-chrome-face-v3-pass2-focused.jpg`
 - Local route: `/missing-mar-portfolio/`
 - State: home, first featured project selected
 
 ## Normalization
 
-- Source pixels: 1485 × 1059.
-- Desktop implementation pixels and CSS viewport: 1440 × 810 at browser density 1.
+- Source pixels: 1486 × 1059.
+- Desktop implementation pixels and CSS viewport: 1440 × 1024 at browser density 1.
 - Mobile implementation pixels and CSS viewport: 390 × 844 at browser density 1.
-- The source was resized with `cover` to 1440 × 810 before side-by-side placement with the equal-size implementation capture.
+- The source was resized with `cover` to 1440 × 1024 before equal-size side-by-side comparison.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: live identity, navigation, featured-project labels, and CTA retain the existing Exo 2 and IBM Plex Mono hierarchy. Text embedded inside the personal monument remains part of the selected raster, as in the visual target.
-- Spacing and layout rhythm: the profile monument is uniformly reduced to about 85% of its previous scale and sits farther inside the lower-left landscape. The live project selector remains at right. Mobile retains the existing stacked layout without horizontal overflow.
-- Colors and visual tokens: the cobalt sky, acid yellow-green states, dark stone, chrome rim, and natural green field preserve the approved Y2K palette.
-- Image quality and asset fidelity: the desktop foreground is one flattened scene layer. Medium-long grass has individually visible blades, natural wind direction and distance falloff; stones have irregular mineral texture, lichen, grounded shadows, and grass growing around their bases. The monument, its contact shadow, surrounding grass, and foreground rocks share the same raster sharpness, so the plaque no longer reads as pasted on.
-- Copy and content: identity, three featured projects, About, Contact, and CTA copy remain unchanged and live.
+- Fonts and typography: identity, navigation, featured-project labels, CTA, and footer caption remain live text using the existing Exo 2 and IBM Plex Mono hierarchy.
+- Spacing and layout rhythm: the landscape composition, monument location, central chrome silhouette, project selector, and navigation preserve the selected desktop structure. Mobile keeps its stacked monument layout with no horizontal overflow.
+- Colors and visual tokens: the final image uses saturated cobalt/cyan sky, clean white clouds, vivid emerald/acid-lime grass, cool silver-blue chrome, and the existing acid UI state color. The final scene is displayed without a dark color wash.
+- Image quality and asset fidelity: the central sculpture uses continuous polished reflections, clean highlight bands, crisp edges, and no generative speckle. The plaque is integrated into the same landscape raster. The portrait inside it comes from `missing-mar-profile-monument-v1.png`, which preserves the exact face pixels from the original supplied photo; ImageGen was not used to reconstruct the face in the final composite.
+- Copy and content: identity, three featured projects, About, Contact, project CTA, and archive content remain unchanged and live.
 
 ## Comparison history
 
 ### Pass 1 — blocked
 
-- [P2] The monument looked sharper than the landscape and read as an independent foreground card.
-  - Cause: `missing-mar-profile-monument-v1.webp` was rendered as a standalone high-resolution element with its own drop shadows.
-- [P2] The grass below the monument looked soft and artificial.
-  - Cause: `landscape-foreground-grass.webp` was a second full-screen alpha mask that was resampled independently from both the monument and background.
+- [P2] The initial implementation was visibly darker and less acid than the selected image.
+  - Cause: `.landscape-hero::after` applied a navy 5% wash over the entire generated scene.
+  - Evidence: `implementation-y2k-chrome-face-v3-1440x1024.png` and `comparison-y2k-chrome-face-v3-1440x1024.jpg`.
 
-### Pass 2 — improved but not final
+### Pass 2 — passed
 
-- Fix: desktop now renders `profile-scene-reference-overlay.png`, extracted from the exact approved image at its full 1486 × 1058 canvas size. It contains the monument and the immediately surrounding real grass as one flattened visual layer.
-- Fix: removed the separately blurred foreground-grass image and all desktop monument transforms/drop shadows.
-- Remaining P2: the grass still had repeated AI-like curls, rocks lacked believable mineral detail, and the monument sat too close to the viewer.
-
-### Pass 3 — passed
-
-- Fix: desktop now renders `profile-scene-natural-grass-v2.png`, built from the selected full-scene reference after a constrained image edit using the three supplied grass references.
-- Fix: grass was replaced with medium-length, wind-swept blades with visible strand detail; rocks were rebuilt as irregular field stones with grounded shadows and vegetation at their bases.
-- Fix: the entire monument group was uniformly reduced and integrated into the same foreground raster, keeping all live site controls separate and interactive.
-- Post-fix evidence: `implementation-natural-grass-v2-1440x810.jpg` and `comparison-natural-grass-v2-1440x810.jpg`.
-- No actionable P0, P1, or P2 differences remain in the requested desktop scene.
-- Residual P3: mobile uses the standalone monument asset because the wide reference crop would remove it from a narrow viewport; this preserves the existing responsive layout and has no horizontal overflow.
+- Fix: removed the color wash and kept the full scene behind the live interface at `z-index: 1`.
+- Fix: mobile now uses the same smooth-chrome, saturated no-plaque landscape while retaining the original transparent monument asset.
+- Post-fix evidence: `implementation-y2k-chrome-face-v3-pass2-1440x1024.png`, `comparison-y2k-chrome-face-v3-pass2-1440x1024.jpg`, `comparison-y2k-chrome-face-v3-pass2-focused.jpg`, and `implementation-y2k-chrome-face-v3-390x844.png`.
+- No actionable P0, P1, or P2 differences remain. Minor screenshot color-management variation is classified as P3 because the browser renders the exact source asset without a CSS tint.
 
 ## Primary interactions tested
 
 - Project 02 becomes pressed and updates `Открыть проект` to `#project/pik`.
 - Header `Обо мне` and `Контакт` links render their corresponding views.
+- Desktop and mobile have no horizontal overflow.
 - Browser warning/error log is empty.
 
 ## Final result
