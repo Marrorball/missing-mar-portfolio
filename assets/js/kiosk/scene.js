@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { TOUCH_LABEL_QUERY, placeLabels } from './touch-labels.js';
+import { TOUCH_LABEL_QUERY, placeLabels, selectLabels } from './touch-labels.js';
 import { RACK_FACES } from './discs.js';
 import { coverDescriptor, drawCover } from './covers.js';
 import { lookDirection, turnLook } from './look.js';
@@ -94,7 +94,7 @@ export async function createKioskScene({
   container.appendChild(screenLayer);
 
   const touchLabels = document.createElement('div');
-  touchLabels.className = 'kiosk-touch-labels';
+  touchLabels.className = 'kiosk-touch-labels is-moving';
   touchLabels.setAttribute('role', 'group');
   touchLabels.setAttribute('aria-label', 'Объекты ларька');
   touchLabels.hidden = true;
@@ -103,6 +103,8 @@ export async function createKioskScene({
   let labelEntries = [];
   let labelStamp = '';
   let labelCheckAt = 0;
+  let labelPose = '';
+  let labelSettledAt = 0;
   const refreshLabels = () => { labelStamp = ''; labelCheckAt = 0; };
   touchInput.addEventListener('change', refreshLabels);
   document.fonts.ready.then(refreshLabels);
@@ -116,7 +118,9 @@ export async function createKioskScene({
       button.className = 'kiosk-touch-label';
       button.dataset.action = 'kiosk-pick';
       button.dataset.node = entry.node;
-      button.textContent = entry.label;
+      const caption = document.createElement('span');
+      caption.textContent = entry.label;
+      button.appendChild(caption);
       button.hidden = true;
       touchLabels.appendChild(button);
       const bounds = new THREE.Box3().setFromObject(object);
@@ -130,7 +134,7 @@ export async function createKioskScene({
           samples.push(point);
         }
       }
-      return [{ ...entry, object, button, samples: samples.map(point => object.worldToLocal(point)) }];
+      return [{ ...entry, object, button, caption, samples: samples.map(point => object.worldToLocal(point)) }];
     });
     refreshLabels();
   }
@@ -381,12 +385,28 @@ export async function createKioskScene({
     const hidden = !touchInput.matches || Boolean(flight) || Boolean(screens[current])
       || Boolean(document.querySelector('.screen-flat, #contact-card, .kiosk-note'));
     touchLabels.hidden = hidden;
-    if (hidden || now < labelCheckAt) return;
-    labelCheckAt = now + 120;
+    if (hidden) {
+      labelPose = '';
+      touchLabels.classList.add('is-moving');
+      return;
+    }
     const stamp = [current, ...camera.position.toArray(), ...camera.quaternion.toArray(), camera.fov,
       canvas.clientWidth, canvas.clientHeight, rack?.rotation.y]
-      .map(value => typeof value === 'number' ? value.toFixed(3) : value).join(',');
-    if (stamp === labelStamp) return;
+      .map(value => typeof value === 'number' ? value.toFixed(2) : value).join(',');
+    // Keep labels still instead of chasing the camera and hopping between
+    // alternate anchors. Fade back in once the gesture/damping has settled.
+    if (stamp !== labelPose || down) {
+      labelPose = stamp;
+      labelSettledAt = now + 260;
+      touchLabels.classList.add('is-moving');
+      return;
+    }
+    if (now < labelSettledAt || now < labelCheckAt) return;
+    labelCheckAt = now + 120;
+    if (stamp === labelStamp) {
+      touchLabels.classList.remove('is-moving');
+      return;
+    }
     labelStamp = stamp;
     root.updateMatrixWorld(true);
     camera.updateMatrixWorld();
@@ -415,9 +435,9 @@ export async function createKioskScene({
         const y = (1 - labelPoint.y) * rect.height / 2;
         const picked = pick(rect.left + x, rect.top + y);
         if (picked !== entry.node && !(entry.node === 'hs_showcase' && picked?.startsWith('slot_'))) continue;
-        entry.button.textContent = /^hs_(backdoor|doorway)$/.test(entry.node) && current === 'inside'
+        entry.caption.textContent = /^hs_(backdoor|doorway)$/.test(entry.node) && current === 'inside'
           ? 'Выйти на улицу' : entry.label;
-        // Measure without flashing: the layer is hidden until the first layout.
+        // Measure in the same synchronous pass, before the browser paints.
         entry.button.hidden = false;
         candidates.push({ ...entry, x, y, width: entry.button.offsetWidth, height: entry.button.offsetHeight });
         entry.button.hidden = true;
@@ -425,7 +445,8 @@ export async function createKioskScene({
         break;
       }
     }
-    const placed = placeLabels(candidates, { width: rect.width, bottom: footerTop - rect.top - 8 });
+    const selected = selectLabels(candidates, { width: rect.width, height: rect.height, preset: current });
+    const placed = placeLabels(selected, { width: rect.width, bottom: footerTop - rect.top - 8 });
     for (const entry of placed) {
       const { button, x, y, anchorX, anchorY, width, height } = entry;
       button.style.transform = `translate(${x}px, ${y}px)`;
@@ -435,6 +456,7 @@ export async function createKioskScene({
       button.style.setProperty('--stem-angle', `${Math.atan2(dy, dx)}rad`);
       button.hidden = false;
     }
+    touchLabels.classList.remove('is-moving');
   }
 
   let movingDisc = null;

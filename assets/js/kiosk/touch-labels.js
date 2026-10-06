@@ -2,6 +2,15 @@
 // than a laptop, and a tablet with a trackpad still has a touchscreen.
 export const TOUCH_LABEL_QUERY = '(hover: none), (any-pointer: coarse)';
 
+export function selectLabels(items, { width, height, preset }) {
+  const priority = node => preset === 'home'
+    ? ({ hs_rack: 0, hs_showcase: 1 }[node] ?? 2) : 0;
+  const score = item => priority(item.node) * width * height
+    + (item.x - width / 2) ** 2 + (item.y - height * 0.48) ** 2;
+  return items.filter(item => !(preset === 'rack' && item.node === 'hs_rack'))
+    .slice().sort((a, b) => score(a) - score(b)).slice(0, width <= 600 ? 2 : 3);
+}
+
 export function placeLabels(items, { width, bottom, margin = 8, gap = 6 }) {
   const placed = [];
   for (const item of items) {
