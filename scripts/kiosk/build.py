@@ -17,6 +17,7 @@ import bpy  # noqa: E402
 import goods  # noqa: E402
 import interior  # noqa: E402
 import kiosk  # noqa: E402
+import rack  # noqa: E402
 import street  # noqa: E402
 from lib import empty  # noqa: E402
 from dims import RACK  # noqa: E402
@@ -37,6 +38,18 @@ CAMERAS = {
     'flyer': ((-1.79, -1.93, 1.55), (-1.938, -1.108, 1.55)),
 }
 
+# Waypoints for walking between the street and the inside: round the kiosk
+# (between the rack and the lamp post on the left, wide of the terminal on
+# the right) and in through the back door. See assets/js/kiosk/routes.js.
+PATH = {
+    'front_left': (-2.9, -2.9, 1.5),
+    'side_left': (-2.9, 1.2, 1.65),
+    'front_right': (3.9, -1.6, 1.6),
+    'side_right': (3.9, 0.9, 1.65),
+    'door_out': (0.6, 2.5, 1.6),
+    'door_in': (0.6, 0.45, 1.6),
+}
+
 
 def build():
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -44,10 +57,13 @@ def build():
     kiosk.build(materials)
     goods.build(materials)
     interior.build(materials)
+    rack.build(materials)
     street.build(materials)
     for name, (cam, target) in CAMERAS.items():
         empty(f'cam_{name}', cam)
         empty(f'tgt_{name}', target)
+    for name, point in PATH.items():
+        empty(f'path_{name}', point)
 
 
 def export():

@@ -88,13 +88,53 @@ test('the revised cat has a smooth continuous tail, sleeping face and tucked paw
   for (const name of ['cat_body', 'cat_head', 'cat_tail', 'cat_eye_left', 'cat_eye_right', 'cat_paw_left', 'cat_paw_right']) assert.ok(all.has(name), name);
 });
 
-test('a cola can sits by the bin and the terminal has orange paint and wear', () => {
+test('the terminal has orange paint and wear', () => {
   const json = gltf();
-  assert.ok(names().has('cola_can'));
-  assert.ok(names().has('cola_label'));
   assert.ok(names().has('terminal_wear'));
   const paint = json.materials.find(mat => mat.name === 'terminal_orange');
   assert.ok(paint, 'orange paint');
   const [r, g, b] = paint.pbrMetallicRoughness.baseColorFactor;
   assert.ok(r > g * 2 && g > b * 2);
+});
+
+test('the street rack is a real spinner: base, sheet core with trays, lit header', () => {
+  const all = names();
+  for (const name of ['rack_base', 'hs_rack', 'rack_header', 'bulb_rack']) assert.ok(all.has(name), name);
+  for (let face = 0; face < RACK_FACES; face += 1) assert.ok(all.has(`rack_header_text_${face}`), `header side ${face}`);
+});
+
+test('a 0.33 l can stands on the bin rim and its twin on the counter', () => {
+  const nodes = gltf().nodes;
+  for (const name of ['cola_can_bin', 'cola_can_counter']) {
+    const can = nodes.find(node => node.name === name);
+    assert.ok(can, name);
+    assert.ok(nodes.some(node => node.name === `${name}_label`), `${name} has its lettering`);
+  }
+  const counter = nodes.find(node => node.name === 'cola_can_counter');
+  assert.ok(Math.abs(counter.translation[0]) < 1.4 && Math.abs(counter.translation[2]) < 0.9, 'inside the kiosk');
+});
+
+test('no real brand names in the scene', () => {
+  const json = gltf();
+  const labels = [...json.nodes, ...json.meshes, ...json.materials].map(item => item.name.toLowerCase());
+  for (const brand of ['coca', 'pepsi', 'fanta', 'sprite', 'qiwi', 'sony', 'samsung']) {
+    assert.ok(!labels.some(name => name.includes(brand)), brand);
+  }
+});
+
+test('the TV and the player are dark plastic', () => {
+  const json = gltf();
+  const plastic = json.materials.find(mat => mat.name === 'tv_plastic');
+  assert.ok(plastic, 'tv_plastic material');
+  assert.ok(Math.max(...plastic.pbrMetallicRoughness.baseColorFactor.slice(0, 3)) < 0.06);
+  const tv = json.nodes.find(node => node.name === 'hs_tv');
+  const used = json.meshes[tv.mesh].primitives.map(primitive => json.materials[primitive.material].name);
+  assert.deepEqual(used, ['tv_plastic']);
+});
+
+test('the walk round the kiosk has its waypoints', () => {
+  const all = names();
+  for (const name of ['front_left', 'side_left', 'front_right', 'side_right', 'door_out', 'door_in']) {
+    assert.ok(all.has(`path_${name}`), name);
+  }
 });

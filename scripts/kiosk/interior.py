@@ -1,16 +1,16 @@
 """Inside the kiosk: the seller's counter, chair with a sweater, ribbed
 heater, stock shelves and boxes, crates, wall clock, calendar, poster, a
-jacket on a hook, hanging bulbs, the TV on a DVD player, the DVD rack with
-32 discs, and the radio."""
+jacket on a hook, hanging bulbs, the TV on a DVD player, a can of cola and
+the radio. The DVD rack stands on the street (rack.py)."""
 
 import math
 import random
 
 import cat
 
-from dims import (CHAIR, DOOR_L, HD, HW, PLINTH, RACK, RACK_FACES, RACK_POCKETS, RACK_ROW_STEP,
-                  RACK_TOP_ROW, TOP, TV, W)
-from lib import Merge, box, cylinder, empty, screen, text, material
+from can import build_can
+from dims import CHAIR, DOOR_L, HD, HW, PLINTH, TOP, TV, W
+from lib import Merge, box, cylinder, screen
 
 COUNTER_Y = -0.60
 COUNTER_TOP = PLINTH + 0.9
@@ -73,14 +73,14 @@ def _room(M, rng):
 
 def _tv(M):
     tx, ty, tz = TV
-    tv = box('hs_tv', (0.36, 0.42, 0.34), (tx, ty, tz), M['device'])
+    tv = box('hs_tv', (0.36, 0.42, 0.34), (tx, ty, tz), M['tv_plastic'])
     box('tv_screen', (0.02, 0.32, 0.24), (0.19, 0.0, 0.01), M['screen'], parent=tv)
     parts = Merge('tv_details')
     parts.box((0.42, 0.62, 0.03), (0.0, 0.0, -0.25), M['wood'])                    # wall shelf
     parts.bar((0.0, 0.0, 0.17), (-0.06, -0.18, 0.45), 0.008, M['frame'])           # rabbit ears
     parts.bar((0.0, 0.0, 0.17), (-0.06, 0.18, 0.45), 0.008, M['frame'])
     parts.finish(parent=tv)
-    player = box('dvd_player', (0.34, 0.32, 0.055), (tx, ty, tz - 0.205), M['device'])
+    player = box('dvd_player', (0.34, 0.32, 0.055), (tx, ty, tz - 0.205), M['tv_plastic'])
     tray = Merge('dvd_player_details')
     tray.box((0.005, 0.2, 0.012), (0.171, -0.02, 0.0), M['ink'])                    # disc tray
     tray.box((0.005, 0.03, 0.01), (0.171, 0.12, 0.0), M['screen'])                  # display
@@ -88,41 +88,12 @@ def _tv(M):
     screen('screen_tv', (tx + 0.202, ty, tz + 0.01), 0.32, 0.24, rot_z=math.pi / 2)
 
 
-def _rack(M):
-    rack = empty('dvd_rack', (RACK[0], RACK[1], 0.0))
-    frame = Merge('hs_rack')
-    frame.cylinder(0.02, 1.62, (0.0, 0.0, 0.86), M['frame'], segments=10)
-    frame.box((0.5, 0.05, 0.04), (0.0, 0.0, 0.07), M['frame'])
-    frame.box((0.05, 0.5, 0.04), (0.0, 0.0, 0.07), M['frame'])
-    frame.box((0.3, 0.3, 0.03), (0.0, 0.0, 1.68), M['frame'])
-    for face in range(RACK_FACES):
-        angle = math.pi + face * math.pi / 2
-        out = (-math.sin(angle), math.cos(angle))
-        side = (math.cos(angle), math.sin(angle))
-        for z in (1.55, 0.5):
-            frame.bar((0.0, 0.0, z), (out[0] * 0.18, out[1] * 0.18, z), 0.01, M['frame'])
-        for row in range(RACK_POCKETS // 2):
-            z = RACK_TOP_ROW - row * RACK_ROW_STEP
-            frame.bar((out[0] * 0.2 - side[0] * 0.16, out[1] * 0.2 - side[1] * 0.16, z - 0.09),
-                      (out[0] * 0.2 + side[0] * 0.16, out[1] * 0.2 + side[1] * 0.16, z - 0.09), 0.008, M['frame'])
-            for col in range(2):
-                lateral = (col - 0.5) * 0.15
-                index = face * RACK_POCKETS + row * 2 + col
-                box(f'disc_{index}', (0.135, 0.014, 0.19),
-                    (out[0] * 0.18 + side[0] * lateral, out[1] * 0.18 + side[1] * lateral, z),
-                    M['goods'], parent=rack, rot_z=angle)
-    frame.finish(parent=rack)
-    box('rack_header', (0.56, 0.025, 0.16), (0, -0.23, 1.72), M['paper'], parent=rack)
-    text('rack_header_text', 'ВСЕ ПРОЕКТЫ', (0, -0.246, 1.72), 0.050, M['ink'], parent=rack, curve_resolution=4)
-    cylinder('bulb_rack', 0.022, 0.055, (RACK[0], RACK[1] - 0.30, 1.91), M['bulb'])
-
-
 def build(M):
     rng = random.Random(5)
     _room(M, rng)
     _tv(M)
-    _rack(M)
     cat.build(M)
+    build_can('cola_can_counter', (0.62, COUNTER_Y + 0.05, COUNTER_TOP + 0.01), math.pi - 0.5, M)  # label to the seller
 
     radio = box('hs_radio', (0.36, 0.14, 0.2), (0.9, COUNTER_Y, COUNTER_TOP + 0.1), M['device'])
     radio_parts = Merge('radio_details')

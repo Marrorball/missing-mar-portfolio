@@ -8,6 +8,7 @@ import random
 import bpy
 
 from dims import BILLBOARD, BILLBOARD_FACE, HD, HW, LAMP_POST, TERMINAL, TOP
+from can import build_can
 from geometry import catenary, tree_segments
 from lib import Merge, box, empty, screen, text, material, link
 
@@ -109,7 +110,7 @@ def _bench_and_bin(M):
     bin_ = Merge('bin')
     bin_.cylinder(0.2, 0.6, (0.0, 0.0, 0.3), M['device'], top=0.24, segments=14)
     bin_.cylinder(0.25, 0.04, (0.0, 0.0, 0.6), M['frame'], segments=14)
-    bin_.blob((0.4, 0.4, 0.1), (0.0, 0.0, 0.62), M['snow'])
+    bin_.blob((0.4, 0.4, 0.1), (0.0, 0.0, 0.62), M['snow'], 18, 8, True)
     bin_.finish((1.9, -1.9, 0.0))
 
 
@@ -193,33 +194,6 @@ def _terminal(M):
     lamp.finish()
 
 
-def _cola(M):
-    red = material('cola_red', (0.68, 0.016, 0.025), emission=0.10, roughness=0.35, metallic=0.25)
-    print_ink = material('cola_print', (0.98, 0.96, 0.91), emission=0.12)
-    silver = material('cola_silver', (0.62, 0.66, 0.69), roughness=0.25, metallic=0.8)
-    can = empty('cola_can', (2.025, -2.035, 0.67), rot_z=0.24)
-    body = Merge('cola_body')
-    body.cylinder(0.065, 0.205, (0, 0, 0.115), red, segments=40)
-    for z in (0.018, 0.211):
-        body.cylinder(0.061, 0.018, (0, 0, z), silver, segments=40)
-        body.cylinder(0.0655, 0.005, (0, 0, z + 0.006), silver, segments=40)
-    body.finish(parent=can)
-    tab = Merge('cola_pull_tab')
-    tab.blob((0.025, 0.045, 0.005), (0, 0, 0.225), silver, 20, 10, True)
-    tab.blob((0.010, 0.019, 0.006), (0, 0.004, 0.227), M['ink'], 16, 8, True)
-    tab.finish(parent=can)
-    label = text('cola_label', 'Coca-Cola', (0, -0.067, 0.12), 0.025, print_ink, parent=can,
-                 font_path='/System/Library/Fonts/Supplemental/Brush Script.ttf', curve_resolution=3, extrusion=0.0002)
-    # Wrap the lettering to the cylindrical surface instead of floating on a card.
-    for vertex in label.data.vertices:
-        dx = vertex.co.x
-        vertex.co.y += 0.065 - math.sqrt(max(0.0001, 0.065 ** 2 - dx ** 2))
-    wave = Merge('cola_wave')
-    wave.polyline([(-0.045 + i * 0.0075, -math.sqrt(0.065 ** 2 - (-0.045 + i * 0.0075) ** 2) - 0.001,
-                    0.06 + 0.009 * math.sin(i * 0.5)) for i in range(13)], 0.003, print_ink)
-    wave.finish(parent=can)
-
-
 def build(M):
     rng = random.Random(13)
     _snow(M, rng)
@@ -229,4 +203,4 @@ def build(M):
     _billboard(M)
     _blocks(M, rng)
     _terminal(M)
-    _cola(M)
+    build_can('cola_can_bin', (2.065, -2.038, 0.62), 0.24, M)
