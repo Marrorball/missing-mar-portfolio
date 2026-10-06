@@ -17,9 +17,9 @@ SLOT_LEVEL = 1.30                  # the shelf that carries the hits
 SLOT_COUNT = 8
 SLOT_XS = tuple(-1.2 + index * (2.4 / (SLOT_COUNT - 1)) for index in range(SLOT_COUNT))
 
-CHAIR = (-0.3, 0.25)
+CHAIR = (0.25, 0.10)
 TV = (-1.22, 0.3, 1.75)            # centre of the TV body, screen faces +X
-RACK = (0.6, 0.25)                 # DVD rack, visible through the back door
+RACK = (-2.35, -1.85)              # street display, ahead of the left shutter
 RACK_FACES, RACK_POCKETS = 4, 8
 RACK_TOP_ROW, RACK_ROW_STEP = 1.43, 0.27
 

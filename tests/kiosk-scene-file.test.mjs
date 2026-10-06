@@ -64,3 +64,21 @@ test('light anchors come from the model', () => {
     assert.ok(all.has(node), node);
   }
 });
+
+test('the rack stands outside in front of the left shutter, clear of the doorway', () => {
+  const nodes = gltf().nodes;
+  const rack = nodes.find(node => node.name === 'dvd_rack');
+  assert.ok(rack.translation[0] < -1.8, 'rack must be beside the kiosk');
+  assert.ok(rack.translation[2] > 1.5, 'rack must be in front of the shutter');
+  const camera = nodes.find(node => node.name === 'cam_rack');
+  assert.ok(camera.translation[2] > rack.translation[2], 'view from the street');
+});
+
+test('the curled cat has a bed inside and does not obstruct the back entrance', () => {
+  const nodes = gltf().nodes;
+  const bed = nodes.find(node => node.name === 'cat_bed');
+  const cat = nodes.find(node => node.name === 'hs_cat');
+  assert.ok(bed && cat, 'bed and ginger cat exported');
+  assert.ok(cat.translation[0] < -0.5 && Math.abs(cat.translation[2]) < 1);
+  assert.ok(cat.translation[1] > 0.12 && cat.translation[1] < 0.5);
+});

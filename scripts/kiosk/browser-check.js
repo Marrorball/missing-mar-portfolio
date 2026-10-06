@@ -1,0 +1,131 @@
+// Run with Playwright MCP browser_run_code_unsafe(filename: this file).
+async (page) => {
+  const base = 'http://localhost:5173/missing-mar-portfolio/';
+  const out = '/Users/mar/Documents/ChatGPT/des/missing-mar-portfolio/docs/superpowers/qa/kiosk-continuation';
+  const checks = [];
+  const assert = (value, label) => {
+    if (!value) throw new Error(label);
+    checks.push(label);
+  };
+  const ready = async () => {
+    await page.locator('.kiosk-loading').waitFor({ state: 'detached' });
+    await page.waitForFunction(() => window.__kiosk);
+    await page.evaluate(() => document.fonts.ready);
+  };
+  const shot = name => page.screenshot({ path: `${out}/${name}.png`, scale: 'css' });
+  const hit = name => page.evaluate(name => {
+    const k = window.__kiosk;
+    const n = k.scene.getObjectByName(name);
+    const p = n.getWorldPosition(k.camera.position.clone()).project(k.camera);
+    const x = (p.x + 1) * innerWidth / 2;
+    const y = (1 - p.y) * innerHeight / 2;
+    return { x, y, name: k.pick(x, y) };
+  }, name);
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(base);
+  await ready();
+  await shot('desktop-home');
+  await page.getByRole('button', { name: 'Внутрь', exact: true }).click();
+  await page.waitForTimeout(1300);
+  const cat = await hit('hs_cat');
+  assert(cat.name === 'hs_cat', 'cat is visible and clickable inside');
+  await page.mouse.click(cat.x, cat.y);
+  await page.locator('.kiosk-note').filter({ hasText: 'Рыжий' }).waitFor();
+  await shot('desktop-inside');
+  await page.keyboard.press('Escape');
+  assert(await page.locator('.kiosk-back').count() === 0, 'Escape exits the room');
+  await page.getByRole('button', { name: 'Проекты', exact: true }).click();
+  await page.waitForTimeout(1300);
+  const disc = await hit('disc_0');
+  assert(disc.name === 'disc_0', 'street rack disc is unobstructed');
+  await shot('desktop-rack');
+  await page.getByRole('button', { name: 'Следующая сторона' }).click();
+  await page.waitForTimeout(700);
+  const graphic = await hit('disc_8');
+  assert(graphic.name === 'disc_8', 'spun graphic face is clickable');
+  await shot('desktop-rack-graphic');
+  await page.mouse.click(graphic.x, graphic.y);
+  await page.waitForFunction(() => !!window.__kiosk.scene.getObjectByName('playing_disc'));
+  checks.push('selection creates a moving DVD');
+  await page.locator('.screen-tv.is-on').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => !window.__kiosk.scene.getObjectByName('playing_disc'));
+  checks.push('DVD disappears into the player');
+  await shot('desktop-tv');
+  const before = page.url();
+  await page.getByRole('button', { name: 'Следующий канал' }).click();
+  await page.waitForURL(url => url.href !== before);
+  checks.push('remote changes the project channel');
+  await page.getByRole('button', { name: 'Выключить и вернуться к ларьку' }).click();
+  await page.getByRole('link', { name: 'Обо мне', exact: true }).first().click();
+  await page.locator('.screen-billboard.is-on').waitFor({ state: 'visible' });
+  await shot('desktop-about');
+  await page.getByRole('link', { name: 'Прайс', exact: true }).click();
+  await page.locator('.screen-billboard h1').filter({ hasText: 'Прайс' }).waitFor();
+  await page.locator('.screen-billboard.is-on').waitFor({ state: 'visible' });
+  assert(await page.evaluate(() => window.__kiosk.scene.getObjectByName('screen_billboard').children.every(n => Math.abs(n.rotation.y - 4 * Math.PI / 3) < 0.01)), 'all billboard slats turn to the price face');
+  await shot('desktop-price');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(1300);
+  await page.setViewportSize({ width: 900, height: 900 });
+  await page.waitForTimeout(200);
+  assert(await page.evaluate(() => window.__kiosk.camera.fov > 59), 'resize updates FOV without moving the camera');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(base);
+  await ready();
+  assert(await page.evaluate(() => !window.__kiosk.renderer.shadowMap.enabled), 'phone uses the light renderer');
+  assert(await page.evaluate(() => [...document.querySelectorAll('.kiosk-help button,.kiosk-help a')].every(n => n.getBoundingClientRect().height >= 44)), 'phone navigation targets are at least 44 px');
+  await shot('phone-home');
+  await page.getByRole('button', { name: 'Внутрь', exact: true }).click();
+  await page.waitForTimeout(1300);
+  await shot('phone-inside');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Проекты', exact: true }).click();
+  await page.waitForTimeout(1300);
+  const phoneDisc = await hit('disc_0');
+  assert(phoneDisc.name === 'disc_0', 'phone rack disc is unobstructed');
+  await shot('phone-rack');
+  await page.mouse.click(phoneDisc.x, phoneDisc.y);
+  await page.locator('.screen-flat h1').waitFor();
+  assert(await page.evaluate(() => document.querySelector('.screen-flat .screen-scroll').scrollWidth <= innerWidth), 'phone case fits without horizontal scrolling');
+  await shot('phone-tv');
+  await page.getByRole('button', { name: 'Выключить и вернуться к ларьку' }).click();
+  await page.locator('.kiosk-help [data-action="contacts-card"]').click();
+  assert(await page.locator('#contact-card a').count() === 3, 'contact card exposes all three links');
+  await shot('phone-contacts');
+  await page.keyboard.press('Escape');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${base}#about`);
+  await ready();
+  assert(await page.evaluate(() => window.__kiosk.scene.getObjectByName('screen_billboard').children.every(n => Number.isFinite(n.rotation.y))), 'direct about route creates finite slat transforms');
+  await page.getByRole('link', { name: 'Прайс', exact: true }).click();
+  await page.locator('.screen-billboard h1').filter({ hasText: 'Прайс' }).waitFor();
+  assert(await page.evaluate(() => window.__kiosk.scene.getObjectByName('screen_billboard').children.every(n => Math.abs(n.rotation.y - 4 * Math.PI / 3) < 0.01)), 'reduced motion changes the billboard instantly');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Проекты', exact: true }).click();
+  const stillDisc = await hit('disc_0');
+  await page.mouse.click(stillDisc.x, stillDisc.y);
+  assert(await page.evaluate(() => !window.__kiosk.scene.getObjectByName('playing_disc')), 'reduced motion skips DVD flight');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto(`${base}#about`);
+  await ready();
+  await page.waitForTimeout(1200);
+  assert(await page.evaluate(() => window.__kiosk.scene.getObjectByName('screen_billboard').children.every(n => Number.isFinite(n.rotation.y))), 'direct about route works before and after font readiness');
+  await page.goto(base);
+  await ready();
+  const frames = await page.evaluate(() => new Promise(resolve => {
+    const start = performance.now();
+    let count = 0;
+    function frame(now) {
+      count += 1;
+      if (now - start >= 800) resolve(Math.round(count * 1000 / (now - start)));
+      else requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }));
+  return { checks, browserFramesPerSecond: frames, screenshots: out };
+}

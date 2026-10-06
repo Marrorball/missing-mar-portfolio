@@ -64,6 +64,7 @@ body.is-pointing .kiosk-stage canvas {
   background: transparent;
   font: 13px/1.2 var(--mono);
   white-space: nowrap;
+  min-height: 44px;
 }
 
 .kiosk-help a:hover,
@@ -146,6 +147,8 @@ body.is-pointing .kiosk-stage canvas {
     right: 12px;
     left: 12px;
     bottom: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     justify-content: space-between;
     transform: none;
   }
@@ -153,6 +156,7 @@ body.is-pointing .kiosk-stage canvas {
   .kiosk-help a,
   .kiosk-help button {
     padding: 12px 8px;
+    min-height: 44px;
     font-size: 12px;
   }
 }
@@ -172,6 +176,7 @@ body.is-pointing .kiosk-stage canvas {
   background: rgba(14, 18, 28, .8);
   border: 1px solid rgba(255, 255, 255, .14);
   font: 13px/1.2 var(--mono);
+  min-height: 44px;
 }
 
 .rack-controls {
@@ -196,8 +201,8 @@ body.is-pointing .kiosk-stage canvas {
 }
 
 .rack-controls button {
-  width: 42px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   color: #f3ecdf;
   background: transparent;
   font: 16px var(--mono);
@@ -268,4 +273,15 @@ body.is-pointing .kiosk-stage canvas {
 .contact-card button:focus-visible {
   outline: 2px solid #1c1408;
   outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .rack-controls { bottom: calc(116px + env(safe-area-inset-bottom)); }
+  .contact-card, .kiosk-note { bottom: calc(122px + env(safe-area-inset-bottom)); }
+  .kiosk-help { bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .kiosk-hint { width: calc(100vw - 32px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kiosk-hint { animation: none; }
 }

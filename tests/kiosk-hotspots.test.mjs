@@ -9,6 +9,7 @@ import {
   allowedIn,
   fitDistance,
   fitFov,
+  overviewScale,
   hotspotForNode,
   isPickable,
   pickHotspot,
@@ -24,6 +25,13 @@ const discs = [
 test('a slot or disc behind the see-through showcase glass wins over the glass', () => {
   assert.equal(pickHotspot(['hs_showcase', 'slot_0']), 'slot_0');
   assert.equal(pickHotspot(['hs_showcase', 'disc_9']), 'disc_9');
+});
+
+test('portrait overview keeps the kiosk large and backs off on very tall screens', () => {
+  assert.equal(overviewScale(40, 1.6), 1);
+  assert.equal(overviewScale(40, 1.2), 1);
+  assert.ok(overviewScale(40, 390 / 844) <= 1.1);
+  assert.ok(overviewScale(40, 280 / 1000) > 1.5);
 });
 
 test('the glass itself is picked when nothing pickable is behind it', () => {

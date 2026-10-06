@@ -19,16 +19,17 @@ import interior  # noqa: E402
 import kiosk  # noqa: E402
 import street  # noqa: E402
 from lib import empty  # noqa: E402
+from dims import RACK  # noqa: E402
 from palette import make_materials  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'assets', 'kiosk', 'kiosk.glb')
 
 CAMERAS = {
-    'home': ((3.4, -7.2, 2.1), (0.0, 0.0, 1.4)),
+    'home': ((3.4, -8.5, 2.5), (-0.35, -0.2, 1.4)),
     'showcase': ((0.3, -3.0, 1.65), (0.0, -0.9, 1.5)),
-    'inside': ((1.15, 0.8, 1.6), (-0.3, 0.0, 1.4)),
-    'rack': ((0.6, 1.75, 1.2), (0.6, 0.25, 1.05)),
+    'inside': ((1.10, 0.20, 1.65), (-0.55, -0.02, 0.90)),
+    'rack': ((RACK[0], RACK[1] - 3.0, 1.3), (RACK[0], RACK[1], 1.03)),
     'tv': ((-0.42, 0.3, 1.76), (-1.02, 0.3, 1.76)),
     'billboard': ((0.0, 1.4, 4.2), (0.0, 6.0, 4.2)),
     'terminal': ((3.0, -1.35, 1.25), (3.0, -0.6, 1.225)),

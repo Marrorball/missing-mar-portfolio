@@ -86,6 +86,7 @@ export function addLights(scene, root, quality) {
 
   const inside = ['bulb_0', 'bulb_1', 'bulb_2'].map(name => point(scene, root, name, { color: WARM, intensity: 2.2, distance: 5 }));
   point(scene, root, 'bulb_outside', { color: WARM, intensity: 1.6, distance: 4 });
+  point(scene, root, 'bulb_rack', { color: WARM, intensity: 0.30, distance: 3 });
   // the showcase light over the shelves, so the goods face the street lit
   point(scene, root, 'light_window', { color: WARM, intensity: 2.4, distance: 2.6, drop: 0.02 });
   spot(scene, root, 'light_window', 'light_window_target', { color: WARM, intensity: 32, distance: 9, angle: 0.9, shadow: quality.shadows });

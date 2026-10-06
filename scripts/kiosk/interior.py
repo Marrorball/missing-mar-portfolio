@@ -8,9 +8,9 @@ import random
 
 from dims import (CHAIR, DOOR_L, HD, HW, PLINTH, RACK, RACK_FACES, RACK_POCKETS, RACK_ROW_STEP,
                   RACK_TOP_ROW, TOP, TV, W)
-from lib import Merge, box, cylinder, empty, screen
+from lib import Merge, box, cylinder, empty, screen, text, material
 
-COUNTER_Y = -0.42
+COUNTER_Y = -0.60
 COUNTER_TOP = PLINTH + 0.9
 
 
@@ -45,9 +45,9 @@ def _room(M, rng):
         room.box((0.03, 0.26, 2.0 - PLINTH), (x, HD - 0.18, (PLINTH + 2.0) / 2), M['wood'])
 
     for k, (w, h) in enumerate(((0.5, 0.35), (0.42, 0.3), (0.34, 0.26))):
-        room.box((w, 0.4, h), (-1.12, 0.05, PLINTH + h / 2 + sum((0.35, 0.3, 0.26)[:k])), M['cardboard'])
+        room.box((w, 0.3, h), (-1.12, 0.73, PLINTH + h / 2 + sum((0.35, 0.3, 0.26)[:k])), M['cardboard'])
     for k in range(3):
-        room.box((0.4, 0.3, 0.28), (1.2, 0.55, PLINTH + 0.14 + k * 0.29),
+        room.box((0.4, 0.3, 0.28), (-0.15, 0.73, PLINTH + 0.14 + k * 0.29),
                  rng.choice((M['goods_palette'][0], M['goods_palette'][3])))
 
     room.cylinder(0.12, 0.03, (-HW + 0.08, -0.02, 2.1), M['paper'], segments=20, rot=(0.0, math.pi / 2, 0.0))
@@ -94,7 +94,7 @@ def _rack(M):
     frame.box((0.05, 0.5, 0.04), (0.0, 0.0, 0.07), M['frame'])
     frame.box((0.3, 0.3, 0.03), (0.0, 0.0, 1.68), M['frame'])
     for face in range(RACK_FACES):
-        angle = face * math.pi / 2
+        angle = math.pi + face * math.pi / 2
         out = (-math.sin(angle), math.cos(angle))
         side = (math.cos(angle), math.sin(angle))
         for z in (1.55, 0.5):
@@ -110,6 +110,40 @@ def _rack(M):
                     (out[0] * 0.18 + side[0] * lateral, out[1] * 0.18 + side[1] * lateral, z),
                     M['goods'], parent=rack, rot_z=angle)
     frame.finish(parent=rack)
+    box('rack_header', (0.56, 0.025, 0.16), (0, -0.23, 1.72), M['paper'], parent=rack)
+    text('rack_header_text', 'ДИСКИ', (0, -0.246, 1.72), 0.075, M['ink'], parent=rack)
+    cylinder('bulb_rack', 0.022, 0.055, (RACK[0], RACK[1] - 0.30, 1.91), M['bulb'])
+
+
+def _cat(M):
+    # A warm quilt beside the heater, clear of the chair and back entrance.
+    x, y = -0.82, 0.03
+    bed = Merge('cat_bed')
+    bed.blob((0.69, 0.48, 0.095), (0, 0, 0), M['fabric'])
+    for dx in (-0.22, 0, 0.22):
+        bed.bar((dx, -0.18, 0.015), (dx, 0.18, 0.015), 0.012, M['paper'])
+    bed.finish((x, y, PLINTH + 0.045))
+    ginger = material('cat_ginger', (0.78, 0.31, 0.075))
+    cream = material('cat_cream', (0.94, 0.77, 0.49))
+    stripe = material('cat_stripes', (0.40, 0.15, 0.04))
+    pink = material('cat_nose', (0.57, 0.25, 0.20))
+    cat = Merge('hs_cat')
+    cat.blob((0.50, 0.35, 0.24), (0.01, 0.025, 0.06), ginger)
+    cat.blob((0.22, 0.20, 0.19), (-0.16, -0.105, 0.035), ginger)
+    cat.blob((0.15, 0.075, 0.08), (-0.16, -0.187, 0.003), cream)
+    for dx in (-0.065, 0.065):
+        cat.cylinder(0.057, 0.105, (-0.16 + dx, -0.075, 0.14), ginger, top=0, segments=3)
+        cat.bar((-0.16 + dx - 0.025, -0.194, 0.041), (-0.16 + dx + 0.016, -0.197, 0.029), 0.009, stripe)
+    cat.blob((0.032, 0.022, 0.025), (-0.16, -0.222, 0.007), pink)
+    # Thick tail wraps around the outside of the curled body, tip by the paws.
+    for index in range(20):
+        angle = 0.2 + index * 4.5 / 19
+        cat.blob((0.092, 0.085, 0.09), (0.245 * math.cos(angle), 0.16 * math.sin(angle), 0.017),
+                 stripe if index in (3, 7, 11, 15) else ginger)
+    cat.blob((0.12, 0.075, 0.065), (-0.04, -0.17, -0.006), cream)
+    for dx in (-0.04, 0.065, 0.16):
+        cat.bar((dx, -0.04, 0.169), (dx + 0.02, 0.06, 0.169), 0.016, stripe)
+    cat.finish((x, y, PLINTH + 0.12), rot_z=math.pi)
 
 
 def build(M):
@@ -117,6 +151,7 @@ def build(M):
     _room(M, rng)
     _tv(M)
     _rack(M)
+    _cat(M)
 
     radio = box('hs_radio', (0.36, 0.14, 0.2), (0.9, COUNTER_Y, COUNTER_TOP + 0.1), M['device'])
     radio_parts = Merge('radio_details')

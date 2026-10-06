@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RACK_FACES } from './discs.js';
+import { coverDescriptor, drawCover } from './covers.js';
 import {
   PRESETS,
   SCREENS,
@@ -10,6 +11,7 @@ import {
   fitDistance,
   fitFov,
   isPickable,
+  overviewScale,
   pickHotspot,
   presetLimits
 } from './hotspots.js';
@@ -48,7 +50,6 @@ export async function createKioskScene({
   onRackFace = () => {}
 }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -57,6 +58,8 @@ export async function createKioskScene({
   const forced = new URLSearchParams(window.location.search).get('quality');
   const quality = QUALITY[forced in QUALITY ? forced : qualityTier({ width: window.innerWidth, cores: navigator.hardwareConcurrency || 8 })];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pixelRatio = Math.min(window.devicePixelRatio, quality.bloom ? 2 : 1.25);
+  renderer.setPixelRatio(pixelRatio);
   container.appendChild(renderer.domElement);
   const canvas = renderer.domElement;
 
@@ -135,7 +138,49 @@ export async function createKioskScene({
   setupShadows(renderer, root, quality);
   const snow = addSnow(scene, quality.flakes, { moving: !reducedMotion });
   const composer = createComposer(renderer, scene, camera, container.clientWidth, container.clientHeight, quality);
-  composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  composer.setPixelRatio(pixelRatio);
+
+  const artworkTextures = new Map();
+  const artworkMaterials = [];
+  const artworkPlanes = [];
+  let disposed = false;
+  function setProjectArt(projects, entries, categories) {
+    for (const project of projects) {
+      const descriptor = coverDescriptor(project, categories);
+      const paint = document.createElement('canvas');
+      paint.width = 256;
+      paint.height = 360;
+      const context = paint.getContext('2d');
+      drawCover(context, paint.width, paint.height, descriptor);
+      const texture = new THREE.CanvasTexture(paint);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+      artworkTextures.set(project.id, texture);
+      if (descriptor.image) {
+        const artwork = new Image();
+        artwork.onload = () => {
+          if (disposed) return;
+          drawCover(context, paint.width, paint.height, descriptor, artwork);
+          texture.needsUpdate = true;
+        };
+        artwork.src = descriptor.image;
+      }
+    }
+    for (const entry of entries) {
+      const node = root.getObjectByName(entry.node);
+      const texture = artworkTextures.get(entry.projectId);
+      if (!node || !texture) continue;
+      const disc = entry.node.startsWith('disc_');
+      const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.82, side: THREE.DoubleSide,
+        emissive: 0xffffff, emissiveMap: texture, emissiveIntensity: 0.06 });
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(disc ? 0.131 : 0.195, disc ? 0.185 : 0.274), material);
+      plane.position.z = disc ? -0.008 : 0.067;
+      if (disc) plane.rotation.y = Math.PI;
+      node.add(plane);
+      artworkMaterials.push(material);
+      artworkPlanes.push(plane);
+    }
+  }
 
   let hovered = null;
   function setHovered(name) {
@@ -161,6 +206,7 @@ export async function createKioskScene({
   function spinRack(step) {
     rackFace = (((rackFace + step) % RACK_FACES) + RACK_FACES) % RACK_FACES;
     rackTarget += -step * QUARTER;
+    if (reducedMotion && rack) rack.rotation.y = rackTarget;
     onRackFace(rackFace);
   }
   function snapRack() {
@@ -182,6 +228,33 @@ export async function createKioskScene({
       .map(hit => pickableNameOf(hit.object));
     const name = pickHotspot(names);
     return name && allowedIn(current, name) ? name : null;
+  }
+
+  let movingDisc = null;
+  function cancelDisc() {
+    if (!movingDisc) return;
+    scene.remove(movingDisc.mesh);
+    movingDisc.mesh.geometry.dispose();
+    movingDisc.mesh.material.dispose();
+    movingDisc = null;
+  }
+
+  function playDisc(nodeName) {
+    cancelDisc();
+    if (reducedMotion) return;
+    const source = root.getObjectByName(nodeName);
+    const player = root.getObjectByName('dvd_player');
+    const texture = source?.children.find(child => child.material?.map)?.material.map;
+    if (!source || !player || !texture) return;
+    root.updateMatrixWorld(true);
+    const from = source.getWorldPosition(new THREE.Vector3());
+    const to = player.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0.175, 0, 0));
+    const mesh = new THREE.Mesh(new THREE.RingGeometry(0.016, 0.115, 40),
+      new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide, roughness: 0.30, metalness: 0.35, emissive: 0xffffff, emissiveMap: texture, emissiveIntensity: 0.15 }));
+    mesh.name = 'playing_disc';
+    mesh.position.copy(from);
+    scene.add(mesh);
+    movingDisc = { mesh, from, to, start: performance.now() };
   }
 
   // A screen close-up: straight in front of the anchor, far enough back for
@@ -236,25 +309,32 @@ export async function createKioskScene({
     applyLimits(name);
     if (screens[name]) {
       sizeScreen(name);
-      showScreen(name);
+      if (name !== 'billboard' || !billboardMotion) showScreen(name);
     }
   }
 
   let flight = null;
   function focus(name, { instant = false } = {}) {
-    const view = screenView(name) || presets[name];
+    let view = screenView(name) || presets[name];
     if (!view) return;
+    if (name === 'home') {
+      const scale = overviewScale(presetLimits(name).fov, camera.aspect);
+      view = { target: view.target, position: view.position.clone().sub(view.target).multiplyScalar(scale).add(view.target) };
+    }
+    const fov = screens[name] ? SCREEN_FOV : fitFov(presetLimits(name).fov, camera.aspect);
     const alreadyThere = !flight && name === current
       && camera.position.distanceTo(view.position) < 1e-3
-      && controls.target.distanceTo(view.target) < 1e-3;
+      && controls.target.distanceTo(view.target) < 1e-3
+      && Math.abs(camera.fov - fov) < 1e-3;
     current = name;
+    if (name !== 'tv') cancelDisc();
+    if (name === 'home') turnBillboard(0);
     if (alreadyThere) {
       arrive(name); // e.g. switching channels: the TV stays on
       return;
     }
     showScreen(null);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const fov = screens[name] ? SCREEN_FOV : fitFov(presetLimits(name).fov, camera.aspect);
     if (instant || reduced) {
       flight = null;
       camera.fov = fov;
@@ -278,11 +358,12 @@ export async function createKioskScene({
     };
   }
 
-  function setPage(name, html, { switching = false } = {}) {
+  function setPage(name, html, { switching = false, boardFace = 1 } = {}) {
     const screen = screens[name];
     if (!screen) return;
     screen.scroller.innerHTML = html;
     screen.scroller.scrollTop = 0;
+    if (name === 'billboard') turnBillboard(boardFace);
     if (switching) {
       screen.element.classList.remove('is-switching');
       void screen.element.offsetWidth;
@@ -333,8 +414,33 @@ export async function createKioskScene({
   }
 
   // What the billboard shows when nobody is reading it: a printed ad.
+  const billboardSlats = [];
+  const billboardResources = [];
+  let billboardFace = 0;
+  let billboardMotion = null;
+  function turnBillboard(face) {
+    if (face === billboardFace) return;
+    billboardFace = face;
+    const target = face * Math.PI * 2 / 3;
+    if (reducedMotion || !billboardSlats.length) {
+      billboardSlats.forEach(slat => { slat.rotation.y = target; });
+      billboardMotion = null;
+      return;
+    }
+    showScreen(null);
+    billboardMotion = { start: performance.now(), from: billboardSlats.map(slat => slat.rotation.y), to: target };
+  }
+
   function setBillboardAd({ brand = 'missing mar', name = '', role = '' } = {}) {
-    paintAnchor('screen_billboard', (context, width, height) => {
+    const anchor = root.getObjectByName('screen_billboard');
+    if (!anchor) return;
+    const { width: boardWidth, height: boardHeight } = anchor.userData;
+    const paint = document.createElement('canvas');
+    paint.width = 1024;
+    paint.height = 512;
+    const context = paint.getContext('2d');
+    const width = paint.width;
+    const height = paint.height;
       context.fillStyle = '#efe7d4';
       context.fillRect(0, 0, width, height);
       context.fillStyle = '#17181c';
@@ -347,12 +453,60 @@ export async function createKioskScene({
       context.fillRect(width * 0.06, height * 0.82, width * 0.88, height * 0.012);
       context.font = `500 ${Math.round(height * 0.075)}px "IBM Plex Mono", monospace`;
       context.fillText('Обо мне →', width * 0.06, height * 0.93);
-    }, { transparent: false, lit: true, pickAs: 'hs_billboard' });
+    const texture = new THREE.CanvasTexture(paint);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    billboardResources.push(texture);
+    const faceTextures = [texture];
+    for (const title of [name.toUpperCase(), 'ПРАЙС']) {
+      const sheet = document.createElement('canvas');
+      sheet.width = 1024;
+      sheet.height = 512;
+      const ctx = sheet.getContext('2d');
+      ctx.fillStyle = '#efe7d4';
+      ctx.fillRect(0, 0, 1024, 512);
+      ctx.fillStyle = '#17181c';
+      ctx.font = '900 88px "Arial Black", Arial, sans-serif';
+      ctx.fillText(title, 60, 190, 900);
+      ctx.font = '500 40px "IBM Plex Mono", monospace';
+      ctx.fillText(title === 'ПРАЙС' ? 'Скоро здесь будет прайс на услуги' : role, 60, 300, 900);
+      ctx.fillRect(60, 390, 900, 6);
+      const map = new THREE.CanvasTexture(sheet);
+      map.colorSpace = THREE.SRGBColorSpace;
+      faceTextures.push(map);
+      billboardResources.push(map);
+    }
+    const count = 24;
+    const slatWidth = boardWidth / count;
+    const radius = slatWidth / Math.sqrt(3);
+    for (let index = 0; index < count; index += 1) {
+      const slat = new THREE.Group();
+      slat.position.set(-boardWidth / 2 + (index + 0.5) * slatWidth, 0, 0);
+      slat.rotation.y = billboardFace * Math.PI * 2 / 3;
+      for (let face = 0; face < 3; face += 1) {
+        const map = faceTextures[face].clone();
+        map.repeat.x = 1 / count;
+        map.offset.x = index / count;
+        map.needsUpdate = true;
+        const material = new THREE.MeshStandardMaterial({ map, roughness: 0.9, side: THREE.DoubleSide });
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(slatWidth * 0.975, boardHeight), material);
+        const angle = -face * Math.PI * 2 / 3;
+        plane.position.set(Math.sin(angle) * radius / 2, 0, Math.cos(angle) * radius / 2);
+        plane.rotation.y = angle;
+        plane.name = 'hs_billboard';
+        plane.receiveShadow = true;
+        slat.add(plane);
+        billboardResources.push(map, material, plane.geometry);
+      }
+      anchor.add(slat);
+      billboardSlats.push(slat);
+    }
+    renderer.shadowMap.needsUpdate = true;
   }
 
   let down = null;
   canvas.addEventListener('pointerdown', event => {
     down = { x: event.clientX, y: event.clientY, lastX: event.clientX };
+    canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener('pointermove', event => {
     if (down && current === 'rack' && rack) {
@@ -371,6 +525,7 @@ export async function createKioskScene({
     onHover(null, 0, 0);
   });
   canvas.addEventListener('pointerup', event => {
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
     if (!down) return;
     const moved = Math.hypot(event.clientX - down.x, event.clientY - down.y);
     down = null;
@@ -381,6 +536,10 @@ export async function createKioskScene({
     const name = pick(event.clientX, event.clientY);
     if (name) onPick(name);
   });
+  canvas.addEventListener('pointercancel', () => {
+    down = null;
+    if (current === 'rack' && rack) snapRack();
+  });
 
   const resize = () => {
     const width = container.clientWidth;
@@ -389,8 +548,11 @@ export async function createKioskScene({
     composer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    if (flight) return;
-    if (screens[current]) {
+    if (flight) {
+      focus(current, { instant: true });
+      return;
+    }
+    if (screens[current] || current === 'home') {
       focus(current, { instant: true });
     } else {
       camera.fov = fitFov(presetLimits(current).fov, camera.aspect);
@@ -401,7 +563,7 @@ export async function createKioskScene({
   observer.observe(container);
 
   // Dev server only: handles for profiling from the console.
-  if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera };
+  if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera, controls, pick };
 
   let lastFrame = 0;
   renderer.setAnimationLoop(() => {
@@ -422,6 +584,31 @@ export async function createKioskScene({
       controls.update();
     }
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * 0.15;
+    if (billboardMotion) {
+      let complete = true;
+      billboardSlats.forEach((slat, index) => {
+        const t = THREE.MathUtils.clamp((performance.now() - billboardMotion.start - index * 18) / 450, 0, 1);
+        slat.rotation.y = THREE.MathUtils.lerp(billboardMotion.from[index], billboardMotion.to, easeInOutCubic(t));
+        if (t < 1) complete = false;
+      });
+      if (complete) {
+        billboardMotion = null;
+        if (!flight && current === 'billboard') showScreen('billboard');
+      }
+    }
+    if (movingDisc) {
+      const t = Math.min((performance.now() - movingDisc.start) / FLIGHT_MS, 1);
+      const k = easeInOutCubic(t);
+      movingDisc.mesh.position.lerpVectors(movingDisc.from, movingDisc.to, k);
+      movingDisc.mesh.position.y += Math.sin(Math.PI * k) * 0.55;
+      movingDisc.mesh.quaternion.copy(camera.quaternion);
+      if (t > 0.65) {
+        const horizontal = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
+        movingDisc.mesh.quaternion.slerp(horizontal, (t - 0.65) / 0.35);
+      }
+      movingDisc.mesh.scale.setScalar(1 - Math.max(0, (t - 0.85) / 0.15));
+      if (t === 1) cancelDisc();
+    }
     const now = performance.now() / 1000;
     const dt = Math.min(now - (lastFrame || now), 0.1);
     lastFrame = now;
@@ -437,10 +624,19 @@ export async function createKioskScene({
     setPage,
     setWallText,
     setBillboardAd,
+    setProjectArt,
+    playDisc,
+    cancelDisc,
     pageScroller: name => screens[name]?.scroller || null,
     setHits: hits => showOnly(/^slot_\d+$/, hits),
     setDiscs: discs => showOnly(/^disc_\d+$/, discs),
     dispose() {
+      disposed = true;
+      cancelDisc();
+      artworkTextures.forEach(texture => texture.dispose());
+      artworkMaterials.forEach(material => material.dispose());
+      artworkPlanes.forEach(plane => plane.geometry.dispose());
+      billboardResources.forEach(resource => resource.dispose());
       observer.disconnect();
       renderer.setAnimationLoop(null);
       controls.dispose();

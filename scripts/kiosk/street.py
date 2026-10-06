@@ -83,7 +83,7 @@ def _bench_and_bin(M):
     for z in (0.65, 0.8):
         bench.box((1.7, 0.03, 0.09), (0.0, 0.22, z), M['wood'])
     bench.blob((1.5, 0.36, 0.07), (0.0, 0.0, 0.48), M['snow'])
-    bench.finish((-2.5, -2.8, 0.0))
+    bench.finish((-4.3, -2.8, 0.0))
 
     bin_ = Merge('bin')
     bin_.cylinder(0.2, 0.6, (0.0, 0.0, 0.3), M['device'], top=0.24, segments=14)

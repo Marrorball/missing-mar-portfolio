@@ -17,6 +17,7 @@ test('the help bar sends projects to the rack, about to the billboard, contacts 
   assert.match(html, /href="#about">Обо мне</);
   assert.match(html, /data-action="contacts-card" aria-expanded="false" aria-controls="contact-card">Контакты</);
   assert.match(html, /data-action="kiosk-help"/);
+  assert.match(html, /data-action="kiosk-focus" data-preset="inside">Внутрь</);
 });
 
 test('the contact card opens links in one click and offers copying', () => {

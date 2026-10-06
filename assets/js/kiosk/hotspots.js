@@ -25,6 +25,7 @@ export const HOTSPOTS = {
   hs_rack: { label: 'Все диски', action: { type: 'focus', preset: 'rack' } },
   hs_tv: { label: 'Телевизор', action: { type: 'route', hash: '#catalog' } },
   hs_radio: { label: 'Радио', action: { type: 'note', text: 'Радио пока молчит.' } },
+  hs_cat: { label: 'Рыжий спит', action: { type: 'note', text: 'Рыжий греется у обогревателя. Тс-с, пусть спит.' } },
   hs_sign_away: {
     label: 'Отошёл',
     action: { type: 'note', text: 'Марат отошёл: ищет команду. Контакты — на терминале справа.' }
@@ -41,10 +42,10 @@ export const ROUTE_PRESETS = {
   contact: 'flyer'
 };
 
-const OUTSIDE = { fov: 40, minDistance: 1.2, maxDistance: 9, minPolarAngle: 0.45, maxPolarAngle: 1.52 };
+const OUTSIDE = { fov: 40, minDistance: 1.2, maxDistance: 17, minPolarAngle: 0.45, maxPolarAngle: 1.52 };
 // Inside, the camera stands in the back corner: a wide lens and a short leash
 // so turning around never pushes it through a wall.
-const INSIDE = { fov: 62, minDistance: 0.4, maxDistance: 1.8, minPolarAngle: 1.0, maxPolarAngle: 1.75, azimuthSpan: 0.6 };
+const INSIDE = { fov: 72, minDistance: 1.65, maxDistance: 1.95, minPolarAngle: 1.05, maxPolarAngle: 1.85, azimuthSpan: 0.32 };
 const CLOSE_UP = { fov: 40, locked: true };
 
 const DESIGN_ASPECT = 1.6;
@@ -56,6 +57,14 @@ export function fitFov(fov, aspect) {
   if (aspect >= DESIGN_ASPECT) return fov;
   const half = Math.atan(Math.tan((fov * Math.PI) / 360) * (DESIGN_ASPECT / aspect));
   return Math.min((half * 360) / Math.PI, MAX_FOV);
+}
+
+export function overviewScale(fov, aspect) {
+  const requested = Math.tan(fov * Math.PI / 360) * DESIGN_ASPECT / aspect;
+  const actual = Math.tan(fitFov(fov, aspect) * Math.PI / 360);
+  // Portrait screens give the kiosk more of their width than the desktop
+  // composition; only very tall screens need to retreat further.
+  return Math.max(1, requested / actual * (aspect < 0.8 ? 0.6 : 1));
 }
 
 // Distance at which a width×height screen fills `fill` of the view.

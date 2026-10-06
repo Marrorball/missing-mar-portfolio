@@ -38,7 +38,8 @@ const state = {
   faces: [],
   preset: 'home',
   rackFace: 0,
-  channel: null
+  channel: null,
+  pendingDisc: null
 };
 
 const header = document.querySelector('#site-header');
@@ -114,6 +115,7 @@ function rackTitle(face) {
 }
 
 function chromeFor(name) {
+  if (name === 'inside') return renderBackButton();
   if (!LOCKED_PRESETS.includes(name)) return '';
   if (name === 'rack') return renderBackButton() + renderRackControls(rackTitle(state.rackFace));
   if (name === 'tv') return renderBackButton() + renderRemote();
@@ -122,6 +124,10 @@ function chromeFor(name) {
 
 // Moves the camera and swaps the close-up chrome.
 function focusPreset(name, options) {
+  if (!state.kiosk && name === 'rack') {
+    window.location.hash = '#catalog';
+    return;
+  }
   state.preset = name;
   state.kiosk?.focus(name, options);
   document.querySelector('#kiosk-closeup-slot').innerHTML = chromeFor(name);
@@ -150,6 +156,10 @@ function screenScroller() {
 }
 
 function goHome() {
+  if (!state.kiosk) {
+    window.location.hash = '#catalog';
+    return;
+  }
   if (window.location.hash && window.location.hash !== '#') {
     window.location.hash = '';
     return;
@@ -166,6 +176,7 @@ function runAction(node) {
   const spot = hotspotForNode(node, state);
   if (!spot) return;
   const { action } = spot;
+  if (/^(slot|disc)_\d+$/.test(node)) state.pendingDisc = node;
   if (action.type === 'route') window.location.hash = action.hash;
   if (action.type === 'note') showNote(action.text);
   if (action.type === 'focus') {
@@ -216,7 +227,8 @@ function changeChannel(step) {
 
 function scrollScreen(step) {
   const scroller = screenScroller();
-  scroller?.scrollBy({ top: step * scroller.clientHeight * 0.8, behavior: 'smooth' });
+  scroller?.scrollBy({ top: step * scroller.clientHeight * 0.8,
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
 }
 
 function renderRoute() {
@@ -224,6 +236,9 @@ function renderRoute() {
   const route = parseRoute(window.location.hash);
   const { site, resume, projects } = state.bundle;
   const previous = state.channel;
+  const pendingDisc = state.pendingDisc;
+  state.pendingDisc = null;
+  state.kiosk?.cancelDisc();
   state.channel = null;
 
   if (route.view === 'project') {
@@ -234,6 +249,7 @@ function renderRoute() {
     }
     const project = projects[index];
     state.channel = project.id;
+    if (pendingDisc) state.kiosk?.playDisc(pendingDisc);
     openScreen('tv', renderTvChannel(project, { index, category: getCategory(project.category).title }), {
       switching: previous !== null && previous !== project.id
     });
@@ -249,13 +265,13 @@ function renderRoute() {
 
   if (route.view === 'about') {
     const page = getPage('about') || { id: 'about', title: 'Обо мне', content: '' };
-    openScreen('billboard', renderAboutBoard(site, resume, page));
+    openScreen('billboard', renderAboutBoard(site, resume, page), { boardFace: 1 });
     announce('Обо мне');
     return;
   }
 
   if (route.view === 'price') {
-    openScreen('billboard', renderPriceBoard());
+    openScreen('billboard', renderPriceBoard(), { boardFace: 2 });
     announce('Прайс');
     return;
   }
@@ -300,6 +316,7 @@ async function mountKiosk() {
     state.kiosk.setHits(state.hits);
     state.kiosk.setDiscs(state.discs);
     document.fonts.ready.then(() => {
+      state.kiosk.setProjectArt(state.bundle.projects, [...state.hits, ...state.discs], state.bundle.site.categories);
       state.kiosk.setWallText(['ПИШИТЕ:', ...contactLinks(state.bundle.site.contacts)
         .filter(link => link.kind !== 'behance')
         .map(link => (link.kind === 'telegram' ? `TG ${link.value}` : link.value))]);
@@ -313,6 +330,7 @@ async function mountKiosk() {
   } catch (error) {
     console.error(error);
     state.kiosk = null;
+    document.querySelector('.kiosk-help [data-preset="inside"]').hidden = true;
     loading.innerHTML = '';
     showNote('Ларёк не открылся на этом устройстве. Вот всё списком.');
     if (parseRoute(window.location.hash).view === 'home') window.location.hash = '#catalog';
@@ -344,7 +362,7 @@ document.addEventListener('keydown', event => {
   if (event.target.closest?.('input, textarea')) return;
   if (event.key === 'Escape') {
     if (document.querySelector('#contact-card')) toggleContactCard(false);
-    else if (LOCKED_PRESETS.includes(state.preset) || !flatView.hidden) goHome();
+    else if (state.preset !== 'home' || !flatView.hidden) goHome();
     return;
   }
   const horizontal = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0;

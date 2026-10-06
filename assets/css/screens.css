@@ -190,7 +190,7 @@
 }
 
 .tv-remote button {
-  height: 34px;
+  height: 44px;
   color: #e9e9e4;
   background: #3a3b40;
   border-radius: 6px;
@@ -237,6 +237,7 @@
   color: #17181c;
   border: 2px solid #17181c;
   font-weight: 700;
+  min-height: 44px;
 }
 
 .board-tabs a[aria-current="page"],
@@ -507,7 +508,7 @@
   .tv-remote {
     top: auto;
     right: 50%;
-    bottom: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
     grid-template-columns: repeat(6, auto);
     width: auto;
     padding: 8px;
@@ -545,4 +546,10 @@
     padding-right: 18px;
     padding-left: 18px;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kiosk-screens .screen-page.is-on,
+  .screen-tv.is-switching::before { animation: none; }
+  .screen-tv.is-switching::before { display: none; }
 }
