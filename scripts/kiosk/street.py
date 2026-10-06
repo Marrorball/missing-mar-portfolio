@@ -6,6 +6,8 @@ import math
 import random
 
 import bpy
+import bmesh
+from mathutils import Matrix
 
 from dims import BILLBOARD, BILLBOARD_FACE, HD, HW, LAMP_POST, TERMINAL, TOP
 from can import build_can
@@ -61,12 +63,38 @@ def _snow(M, rng):
     drifts.finish()
     footprints = Merge('snow_footprints')
     pressed = material('snow_pressed', (0.61, 0.64, 0.69), roughness=0.98)
-    for step in range(16):
-        t = step / 15
-        px, py = 0.15 + 1.6 * t + (-0.11 if step % 2 else 0.11), -1.6 - 4.2 * t
-        footprints.blob((0.12, 0.24, 0.005), (px, py, 0.008), pressed, 12, 8, True)
-        footprints.blob((0.09, 0.085, 0.005), (px, py + 0.12, 0.008), pressed, 10, 6, True)
-    footprints.finish()
+    # Travel starts in the street and ends at the kiosk/rack/terminal.
+    # The small heel is behind the broad toe, oriented along each curved trail.
+    trails = (
+        ((1.75, -5.8), (.80, -3.4), (.15, -1.6), 16, 1.0),
+        ((-4.65, -4.4), (-3.1, -3.8), (-2.35, -2.4), 7, .94),
+        ((4.65, -4.6), (3.5, -3.5), (3.0, -1.45), 8, 1.04),
+    )
+    # Local seed keeps unrelated street props unchanged when these trails change.
+    steps_rng = random.Random(61)
+    for start, control, end, count, scale in trails:
+        for step in range(count):
+            t = step / (count - 1)
+            u = 1 - t
+            px = u*u*start[0] + 2*u*t*control[0] + t*t*end[0]
+            py = u*u*start[1] + 2*u*t*control[1] + t*t*end[1]
+            dx = 2*u*(control[0]-start[0]) + 2*t*(end[0]-control[0])
+            dy = 2*u*(control[1]-start[1]) + 2*t*(end[1]-control[1])
+            length = math.hypot(dx, dy)
+            dx, dy = dx/length, dy/length
+            offset = (.095 if step % 2 else -.095) + steps_rng.uniform(-.012,.012)
+            px, py = px + dy*offset, py - dx*offset
+            angle = math.atan2(-dx, dy) + steps_rng.uniform(-.075,.075)
+            old = set(footprints.bm.verts)
+            footprints.blob((.12*scale, .24*scale, .005), (0, 0, .008), pressed, 10, 6, True)
+            footprints.blob((.09*scale, .085*scale, .005), (0, -.12*scale, .008), pressed, 8, 6, True)
+            verts = [v for v in footprints.bm.verts if v not in old]
+            bmesh.ops.transform(footprints.bm, verts=verts,
+                                matrix=Matrix.Translation((px,py,0)) @ Matrix.Rotation(angle,4,'Z'))
+    tracks = footprints.finish()
+    tracks['trail_count'] = len(trails)
+    tracks['step_count'] = sum(trail[3] for trail in trails)
+
 
 
 def _lamp_and_wires(M):
