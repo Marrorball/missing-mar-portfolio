@@ -9,7 +9,6 @@ const FILES = [
   'three.core.js',
   'addons/controls/OrbitControls.js',
   'addons/loaders/GLTFLoader.js',
-  'addons/renderers/CSS3DRenderer.js',
   'addons/utils/BufferGeometryUtils.js',
   'addons/utils/SkeletonUtils.js'
 ];

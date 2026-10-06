@@ -12,6 +12,8 @@ Spec: `docs/superpowers/specs/2026-10-06-kiosk-portfolio-design.md` («Экра�
 
 Code blocks preceded by `<!-- file: path -->` are complete file contents.
 
+> **As built (2026-10-06):** pages inside a `CSS3DRenderer` context render in Chrome but never receive clicks (verified with `elementsFromPoint`; scaling the CSS scene ×1000 did not help). Because every screen close-up looks at its screen head-on, the page is now a plain 2D layer laid exactly over the screen's rectangle (`.kiosk-screens`). Task 1 was reverted; the file blocks below are the shipped code. Close-up chrome lives in `.kiosk-chrome` above full-screen pages, the TV stays on when switching channels, and the OSD has its own backing.
+
 ---
 
 ## File map
@@ -593,7 +595,6 @@ git commit -m "feat: flyer page anchor and marker contacts on the shutter"
 ```js
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { CSS3DObject, CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RACK_FACES } from './discs.js';
 import {
@@ -647,12 +648,13 @@ export async function createKioskScene({
   container.appendChild(renderer.domElement);
   const canvas = renderer.domElement;
 
-  // Pages sit in a CSS3D layer above the canvas; only the pages themselves
-  // take the mouse, everything else falls through to the scene.
-  const cssRenderer = new CSS3DRenderer();
-  cssRenderer.setSize(container.clientWidth, container.clientHeight);
-  cssRenderer.domElement.className = 'kiosk-css3d';
-  container.appendChild(cssRenderer.domElement);
+  // A close-up always looks at its screen head-on, so the screen shows up as
+  // a centred rectangle and the page can be a plain 2D layer laid exactly on
+  // it. (Pages inside a CSS3D context render in Chrome but ignore clicks.)
+  // Only the pages take the mouse; everything else falls through.
+  const screenLayer = document.createElement('div');
+  screenLayer.className = 'kiosk-screens';
+  container.appendChild(screenLayer);
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(SKY);
@@ -695,12 +697,15 @@ export async function createKioskScene({
     const scroller = document.createElement('div');
     scroller.className = 'screen-scroll';
     element.appendChild(scroller);
-    const object = new CSS3DObject(element);
-    anchor.getWorldPosition(object.position);
-    anchor.getWorldQuaternion(object.quaternion);
-    object.visible = false;
-    scene.add(object);
-    screens[preset] = { anchor, object, element, scroller, width: anchor.userData.width, height: anchor.userData.height };
+    screenLayer.appendChild(element);
+    screens[preset] = {
+      center: anchor.getWorldPosition(new THREE.Vector3()),
+      normal: new THREE.Vector3(0, 0, 1).applyQuaternion(anchor.getWorldQuaternion(new THREE.Quaternion())),
+      element,
+      scroller,
+      width: anchor.userData.width,
+      height: anchor.userData.height
+    };
   }
 
   const highlight = new Map();
@@ -770,29 +775,28 @@ export async function createKioskScene({
   function screenView(name) {
     const screen = screens[name];
     if (!screen) return null;
-    const target = screen.anchor.getWorldPosition(new THREE.Vector3());
-    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(screen.anchor.getWorldQuaternion(new THREE.Quaternion()));
     const distance = fitDistance(screen.width, screen.height, SCREEN_FOV, camera.aspect, SCREEN_FILL);
-    return { position: target.clone().addScaledVector(normal, distance), target };
+    return { position: screen.center.clone().addScaledVector(screen.normal, distance), target: screen.center.clone() };
   }
 
-  // One CSS pixel of the page = one pixel on the monitor, so text stays sharp.
+  // The page covers exactly the screen's rectangle on the monitor.
   function sizeScreen(name) {
     const screen = screens[name];
-    const distance = camera.position.distanceTo(screen.object.position);
+    const distance = camera.position.distanceTo(screen.center);
     const visible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(SCREEN_FOV / 2));
-    const heightPx = (screen.height / visible) * container.clientHeight;
-    const widthPx = heightPx * (screen.width / screen.height);
-    screen.element.style.width = `${Math.round(widthPx)}px`;
-    screen.element.style.height = `${Math.round(heightPx)}px`;
-    screen.object.scale.setScalar(screen.height / Math.round(heightPx));
+    const height = Math.round((screen.height / visible) * container.clientHeight);
+    const width = Math.round(height * (screen.width / screen.height));
+    Object.assign(screen.element.style, {
+      width: `${width}px`,
+      height: `${height}px`,
+      left: `${Math.round((container.clientWidth - width) / 2)}px`,
+      top: `${Math.round((container.clientHeight - height) / 2)}px`
+    });
   }
 
   function showScreen(name) {
     for (const [key, screen] of Object.entries(screens)) {
-      const on = key === name;
-      screen.object.visible = on;
-      screen.element.classList.toggle('is-on', on);
+      screen.element.classList.toggle('is-on', key === name);
     }
   }
 
@@ -826,7 +830,14 @@ export async function createKioskScene({
   function focus(name, { instant = false } = {}) {
     const view = screenView(name) || presets[name];
     if (!view) return;
+    const alreadyThere = !flight && name === current
+      && camera.position.distanceTo(view.position) < 1e-3
+      && controls.target.distanceTo(view.target) < 1e-3;
     current = name;
+    if (alreadyThere) {
+      arrive(name); // e.g. switching channels: the TV stays on
+      return;
+    }
     showScreen(null);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const fov = screens[name] ? SCREEN_FOV : fitFov(presetLimits(name).fov, camera.aspect);
@@ -931,7 +942,6 @@ export async function createKioskScene({
     const width = container.clientWidth;
     const height = container.clientHeight;
     renderer.setSize(width, height, false);
-    cssRenderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     if (flight) return;
@@ -964,7 +974,6 @@ export async function createKioskScene({
     }
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * 0.15;
     renderer.render(scene, camera);
-    cssRenderer.render(scene, camera);
   });
 
   return {
@@ -981,7 +990,7 @@ export async function createKioskScene({
       controls.dispose();
       renderer.dispose();
       canvas.remove();
-      cssRenderer.domElement.remove();
+      screenLayer.remove();
     }
   };
 }
@@ -1076,11 +1085,15 @@ function isFlat() {
 function drawShell() {
   homeView.innerHTML = `<div class="kiosk-stage" id="kiosk-stage"></div>
     <div class="kiosk-label" id="kiosk-label" hidden></div>
+    <div id="kiosk-loading-slot">${renderLoading(0)}</div>
+    ${renderHelpBar()}`;
+  // Notes, the way back, the remote and the contact card float above
+  // everything, including full-screen pages on phones.
+  document.body.insertAdjacentHTML('beforeend', `<div class="kiosk-chrome">
     <div id="kiosk-note-slot"></div>
     <div id="kiosk-closeup-slot"></div>
     <div id="contact-card-slot"></div>
-    <div id="kiosk-loading-slot">${renderLoading(0)}</div>
-    ${renderHelpBar()}`;
+  </div>`);
 }
 
 function hotspotEntries() {
@@ -1390,21 +1403,28 @@ bootstrapPortfolio();
 /* Pages that live on objects in the scene: TV, billboard, terminal, flyer.
    On phones and without 3D the same pages fill the viewport (.screen-flat). */
 
-.kiosk-css3d {
+.kiosk-screens {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
-.screen-page {
-  position: relative;
+.kiosk-screens .screen-page {
+  position: absolute;
+  display: none;
   overflow: hidden;
-  opacity: 0;
-  transition: opacity .35s ease;
+  pointer-events: auto;
 }
 
-.screen-page.is-on {
-  opacity: 1;
+.kiosk-screens .screen-page.is-on {
+  display: block;
+  animation: screen-on .35s ease-out both;
+}
+
+@keyframes screen-on {
+  from { opacity: 0; filter: brightness(2.2); }
+  to { opacity: 1; filter: none; }
 }
 
 .screen-scroll {
@@ -1461,8 +1481,10 @@ bootstrapPortfolio();
 .tv-osd {
   position: sticky;
   z-index: 1;
-  top: 0;
-  margin: -8px 0 16px;
+  top: -30px;
+  margin: -30px -40px 16px;
+  padding: 22px 40px 8px;
+  background: linear-gradient(#0b0f0d 75%, rgba(11, 15, 13, 0));
   color: #7dff8f;
   font-size: 15px;
   letter-spacing: .12em;
@@ -1632,6 +1654,13 @@ bootstrapPortfolio();
   grid-template-columns: 220px 1fr;
   gap: 28px;
   align-items: start;
+}
+
+/* Owner-authored text on the billboard is printed ink, not the light text of
+   the dark site theme. */
+.board-page .rich-content,
+.board-page .rich-content * {
+  color: inherit;
 }
 
 .board-about img {
@@ -1865,9 +1894,15 @@ bootstrapPortfolio();
   padding-top: 70px;
 }
 
-#kiosk-closeup-slot .kiosk-back,
-#kiosk-closeup-slot .rack-controls {
-  z-index: 12;
+.kiosk-chrome {
+  position: fixed;
+  z-index: 11;
+  inset: 0;
+  pointer-events: none;
+}
+
+.kiosk-chrome > div > * {
+  pointer-events: auto;
 }
 
 @media (max-width: 760px) {
@@ -1902,6 +1937,13 @@ bootstrapPortfolio();
   .tv-page,
   .board-page,
   .terminal-page {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .tv-osd {
+    margin-right: -18px;
+    margin-left: -18px;
     padding-right: 18px;
     padding-left: 18px;
   }
