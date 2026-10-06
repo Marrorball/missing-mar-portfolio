@@ -277,71 +277,214 @@
   text-shadow: 2px 2px 0 #000;
 }
 
+/* end credits */
 .tv-end {
-  margin: 44px 0 0;
-  color: rgba(255, 255, 255, .45);
-  font: 400 14px var(--pt-mono);
-  letter-spacing: .1em;
+  margin: 64px 0 0;
   text-align: center;
+}
+
+.tv-end p {
+  margin: 0;
+  color: rgba(255, 255, 255, .45);
+  font: 400 13px var(--pt-mono);
+  letter-spacing: .1em;
   text-transform: uppercase;
 }
 
-/* the owner's case blocks, written for the old site, dressed for the TV */
+.tv-end .tv-end-title {
+  margin-bottom: 8px;
+  color: #fff;
+  font: 700 44px/1 var(--pt-narrow);
+  letter-spacing: .32em;
+  text-shadow: 0 0 14px rgba(255, 255, 255, .35);
+}
+
+/* The owner's case, written for the old site, plays as tape: no web cards.
+   Text runs as subtitles over the picture, each block is a shot with its
+   counter, the facts sit in the player's INFO overlay and every picture is a
+   frame with a VHS timecode (wrapped in pages.js). */
+.tv-section { counter-reset: shot; }
+
 .tv-page .rich-content p,
 .tv-page .cs-text {
-  max-width: 62ch;
+  max-width: 58ch;
   margin: 0;
-  color: #eef0f5;
-  font: 18px/1.55 var(--pt-sans);
+  color: #fff;
+  font: 400 19px/1.5 var(--pt-sans);
+  text-shadow: 0 0 2px #000, 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
 }
 
 .tv-page .rich-content p + p { margin-top: 10px; }
 
 .tv-page .cs-section {
-  margin: 0 0 12px;
-  padding: 12px 16px 14px;
-  background: rgba(255, 255, 255, .045);
+  margin: 0 0 22px;
+  padding: 0;
+  background: none;
   border: 0;
-  border-left: 3px solid var(--subtitle);
+  counter-increment: shot;
 }
 
-.tv-page .cs-section-title {
-  margin-bottom: 6px;
-  color: #fff;
-  font: 700 19px/1.15 var(--pt-narrow);
-  letter-spacing: .03em;
-  text-transform: uppercase;
+.tv-page .cs-section::before {
+  content: 'КАДР ' counter(shot, decimal-leading-zero);
+  display: block;
+  margin-bottom: 4px;
+  color: var(--osd);
+  font: 400 12px var(--pt-mono);
+  letter-spacing: .14em;
+  opacity: .75;
 }
+
+/* subtitles for the hard of hearing put the speaker in brackets */
+.tv-page .cs-section-title {
+  margin-bottom: 4px;
+  color: var(--subtitle);
+  font: 700 17px/1.2 var(--pt-narrow);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.tv-page .cs-section-title::before { content: '['; }
+.tv-page .cs-section-title::after { content: ']'; }
 
 .tv-page .cs-ico { display: none; }
 
 .tv-page .cs-row-2 {
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 28px;
+  max-width: 640px;
+  padding: 8px 16px 10px;
+  background: rgba(0, 0, 0, .55);
+  border: 1px solid rgba(109, 255, 122, .35);
+}
+
+.tv-page .cs-row-2::before {
+  content: 'ИНФОРМАЦИЯ';
+  grid-column: 1 / -1;
+  padding: 2px 0 4px;
+  color: var(--osd);
+  font: 400 12px var(--pt-mono);
+  letter-spacing: .16em;
+  text-shadow: 0 0 6px rgba(109, 255, 122, .6);
 }
 
 .tv-page .cs-card {
-  padding: 10px 12px;
-  background: rgba(4, 7, 18, .6);
-  border: 1px solid rgba(255, 255, 255, .14);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, .16);
 }
 
 .tv-page .cs-card-title {
-  margin-bottom: 4px;
+  margin: 0;
   color: var(--subtitle);
-  font: 700 12px var(--pt-narrow);
-  letter-spacing: .16em;
+  font: 400 13px var(--pt-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
 }
 
 .tv-page .cs-card-text {
   color: #fff;
-  font: 16px/1.35 var(--pt-sans);
+  font: 400 16px/1.3 var(--pt-sans);
+  text-align: right;
 }
 
-.tv-page .rich-content img,
-.tv-page .cs-section img {
-  border: 0;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, .15);
+.tv-page .rich-content ul {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tv-page .rich-content li {
+  color: #fff;
+  font: 400 18px/1.5 var(--pt-sans);
+  text-shadow: 1px 1px 0 #000;
+}
+
+.tv-page .rich-content li::before {
+  content: '▸ ';
+  color: var(--subtitle);
+}
+
+/* a frame of tape: rounded like the picture tube, scanlines, a timecode */
+.tv-frame {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0;
+  overflow: hidden;
+  background: #05070f;
+  border-radius: 14px / 11px;
+  box-shadow: 0 0 0 3px #000, 0 0 0 4px rgba(255, 255, 255, .1), 0 0 30px rgba(120, 150, 255, .14);
+}
+
+.tv-frame img {
+  display: block;
+  max-width: 100%;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none;
+  filter: contrast(1.06) saturate(1.15);
+}
+
+.tv-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, .16) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, .45));
+  pointer-events: none;
+}
+
+/* a logo the owner set on its own backdrop: the backdrop is the frame */
+.tv-page .rich-content [style*="background"] {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px / 11px !important;
+  box-shadow: 0 0 0 3px #000, 0 0 0 4px rgba(255, 255, 255, .1), 0 0 30px rgba(120, 150, 255, .14);
+  counter-increment: none;
+}
+
+.tv-page .rich-content [style*="background"]::before { content: none; }
+
+.tv-page .rich-content [style*="background"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, .12) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, .35));
+  pointer-events: none;
+}
+
+.tv-page .rich-content [style*="background"] .tv-frame {
+  position: static;
+  margin: 0 auto;
+  overflow: visible;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.tv-page .rich-content [style*="background"] .tv-frame::after { content: none; }
+
+.tv-frame-osd {
+  position: absolute;
+  z-index: 1;
+  top: 8px;
+  right: 12px;
+  color: #fff;
+  font: 400 14px var(--pt-mono);
+  letter-spacing: .06em;
+  text-shadow: 0 0 3px #000, 0 0 6px #000;
 }
 
 /* ---------- TV guide: Teletext page 100 ---------- */
@@ -497,45 +640,51 @@
 
 .screen-billboard .screen-scroll { scrollbar-color: rgba(27, 26, 23, .5) transparent; }
 
-/* In the scene the poster is paper under three lamps, not a lit screen: it
-   is brightest under the lamps along the top and falls off below, with a
-   winter's worth of wear. The layer multiplies, so ink stays black and only
-   the paper dims and dirties. */
+/* Keep the print and its lighting in one blending group. Decorative layers
+   stay fixed to the physical sheet while the readable content scrolls. */
+.kiosk-screens .screen-billboard {
+  isolation: isolate;
+}
+
+.kiosk-screens .screen-billboard.is-on {
+  animation: none;
+}
+
+.kiosk-screens .screen-billboard .screen-scroll {
+  z-index: 0;
+}
+
+/* Three pools of warm lamp light, cool ambient light below and contact
+   shadows from the steel rim. Lamp centres match the 4.8 m model: ±1.6 m. */
 .kiosk-screens .screen-billboard::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 2;
   mix-blend-mode: multiply;
+  box-shadow:
+    inset 0 10px 13px -3px rgba(8, 10, 16, .65),
+    inset 9px 0 14px -5px rgba(8, 10, 16, .48),
+    inset -9px 0 14px -5px rgba(8, 10, 16, .48),
+    inset 0 -7px 12px -4px rgba(8, 10, 16, .48);
   background:
-    /* scuffs and a couple of scratches */
-    linear-gradient(162deg, transparent 47%, rgba(80, 66, 46, .32) 50%, transparent 53%) 13% 76% / 130px 22px no-repeat,
-    linear-gradient(171deg, transparent 47%, rgba(80, 66, 46, .26) 50%, transparent 53%) 71% 19% / 90px 12px no-repeat,
-    linear-gradient(155deg, transparent 46%, rgba(80, 66, 46, .22) 50%, transparent 54%) 92% 64% / 70px 20px no-repeat,
-    /* grime: damp at the bottom edge, a few smudges */
-    radial-gradient(ellipse 9% 7% at 8% 88%, rgba(110, 92, 64, .35), transparent 70%),
-    radial-gradient(ellipse 6% 10% at 57% 93%, rgba(110, 92, 64, .3), transparent 70%),
-    radial-gradient(ellipse 5% 4% at 84% 41%, rgba(110, 92, 64, .22), transparent 70%),
-    radial-gradient(ellipse 4% 6% at 33% 22%, rgba(110, 92, 64, .16), transparent 70%),
-    linear-gradient(transparent 82%, rgba(120, 104, 80, .28)),
-    /* the three lamps */
-    radial-gradient(ellipse 24% 95% at 20% -12%, #fff 0%, rgba(255, 255, 255, 0) 100%),
-    radial-gradient(ellipse 24% 95% at 50% -12%, #fff 0%, rgba(255, 255, 255, 0) 100%),
-    radial-gradient(ellipse 24% 95% at 80% -12%, #fff 0%, rgba(255, 255, 255, 0) 100%),
-    linear-gradient(#d0cdcf, #a5a4b0);
+    radial-gradient(ellipse 23% 80% at 16.67% -8%, #f8ebce 0%, rgba(248,235,206,.65) 30%, rgba(248,235,206,0) 100%),
+    radial-gradient(ellipse 23% 80% at 50% -8%, #fff0d2 0%, rgba(255,240,210,.65) 30%, rgba(255,240,210,0) 100%),
+    radial-gradient(ellipse 23% 80% at 83.33% -8%, #f5e5c7 0%, rgba(245,229,199,.65) 30%, rgba(245,229,199,0) 100%),
+    linear-gradient(#aaa9b2 0%, #9295a5 55%, #80869b 100%);
 }
 
-/* rubbed, sun-faded patches in the paper itself, under the ink */
+/* Shared with the 3D texture: fibres, damp edges and small corner creases. */
 .kiosk-screens .screen-billboard::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  mix-blend-mode: screen;
-  background:
-    radial-gradient(ellipse 7% 9% at 24% 61%, rgba(255, 250, 238, .35), transparent 70%),
-    radial-gradient(ellipse 10% 6% at 66% 79%, rgba(255, 250, 238, .3), transparent 70%),
-    radial-gradient(ellipse 5% 8% at 93% 18%, rgba(255, 250, 238, .3), transparent 70%);
+  z-index: 1;
+  mix-blend-mode: multiply;
+  background-image: var(--billboard-wear, none);
+  background-size: 100% 100%;
 }
 
 /* the sheets on the shutters catch only a little light, like their paint */

@@ -37,6 +37,22 @@ test('a TV channel shows the project under its channel number', () => {
   assert.match(html, /href="https:\/\/www\.behance\.net\/gallery\/1" target="_blank" rel="noreferrer"/);
 });
 
+test('on the TV the case plays as tape: frames with a timecode, no emoji', () => {
+  const html = renderTvChannel({
+    id: 'a',
+    title: 'A',
+    sections: [
+      { label: 'Обложка', content: '<div class="cs-section"><img src="/a.png" style="max-width:260px"><a class="behance-btn">🎨 Смотреть</a></div>' },
+      { label: 'Решение', content: '<p><img src="/b.png"></p>' }
+    ]
+  });
+  assert.match(html, /<span class="tv-frame"><img src="\/a\.png" style="max-width:260px"><span class="tv-frame-osd" aria-hidden="true">▶ 00:01:17 SP<\/span><\/span>/);
+  assert.match(html, /▶ 00:02:17 SP/, 'each scene counts its own frames');
+  assert.doesNotMatch(html, /🎨/);
+  assert.match(html, /class="behance-btn"> Смотреть/);
+  assert.match(html, /<p class="tv-end-title">Конец<\/p>/);
+});
+
 test('unsafe Behance links never reach the TV', () => {
   assert.doesNotMatch(renderTvChannel({ id: 'a', title: 'A', behance: 'javascript:alert(1)' }), /Behance/);
 });

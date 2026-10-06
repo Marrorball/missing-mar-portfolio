@@ -26,6 +26,19 @@ function externalAttrs(link) {
   return link.kind === 'email' ? '' : ' target="_blank" rel="noreferrer"';
 }
 
+const EMOJI = /\p{Extended_Pictographic}\uFE0F?/gu;
+
+// The owner's case HTML as it plays on the TV: emoji (a web habit) dropped,
+// every picture a frame of tape with a VHS timecode in the corner.
+function onTape(html = '', scene = 1) {
+  let shot = 0;
+  return html.replace(EMOJI, '').replace(/<img\b[^>]*>/g, image => {
+    shot += 1;
+    const seconds = String((shot * 17) % 60).padStart(2, '0');
+    return `<span class="tv-frame">${image}<span class="tv-frame-osd" aria-hidden="true">▶ 00:${String(scene).padStart(2, '0')}:${seconds} SP</span></span>`;
+  });
+}
+
 // A DVD title menu on the CRT: the project is the film, its case sections
 // are the scenes, picked from the chapter list like on a pirate disc.
 export function renderTvChannel(project = {}, { index = 0, category = '' } = {}) {
@@ -50,9 +63,12 @@ export function renderTvChannel(project = {}, { index = 0, category = '' } = {})
     ${sections.map((section, number) => `<section class="tv-section" data-chapter-section="${number + 1}">
       <p class="tv-scene">Сцена ${number + 1}</p>
       <h2>${escapeHtml(plainLabel(section.label || ''))}</h2>
-      <div class="rich-content">${section.content || ''}</div>
+      <div class="rich-content">${onTape(section.content, number + 1)}</div>
     </section>`).join('')}
-    <p class="tv-end">Конец · CH+ — следующий канал</p>
+    <footer class="tv-end">
+      <p class="tv-end-title">Конец</p>
+      <p>CH+ — следующий канал · МЕНЮ — телепрограмма</p>
+    </footer>
   </article>`;
 }
 
