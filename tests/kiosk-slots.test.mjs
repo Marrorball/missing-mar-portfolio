@@ -1,36 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SLOT_COUNT, assignSlots, productFor } from '../assets/js/kiosk/slots.js';
+import { SLOT_COUNT, assignHits } from '../assets/js/kiosk/slots.js';
 
-const projects = Array.from({ length: 10 }, (_, index) => ({
-  id: `p${index}`,
-  title: `Project ${index}`,
-  category: index % 2 ? 'graphic' : 'uxui'
-}));
+test('the showcase shows featured projects in featured order', () => {
+  const hits = assignHits([
+    { id: 'a', title: 'A', featured: true, featuredOrder: 20 },
+    { id: 'b', title: 'B' },
+    { id: 'c', title: 'C', shortLabel: 'CC', featured: true, featuredOrder: 10 }
+  ]);
+  assert.deepEqual(hits, [
+    { node: 'slot_0', projectId: 'c', title: 'CC' },
+    { node: 'slot_1', projectId: 'a', title: 'A' }
+  ]);
+});
 
-test('fills the eight shelf slots in content order and lists the rest as overflow', () => {
-  const { placed, overflow } = assignSlots(projects);
+test('at most eight hits, none when nothing is featured', () => {
+  const many = Array.from({ length: 12 }, (_, index) => ({ id: `p${index}`, title: `P${index}`, featured: true, featuredOrder: index }));
   assert.equal(SLOT_COUNT, 8);
-  assert.equal(placed.length, 8);
-  assert.deepEqual(placed[0], { slot: 'slot_0', projectId: 'p0', title: 'Project 0', product: 'box' });
-  assert.equal(placed[7].slot, 'slot_7');
-  assert.deepEqual(overflow, ['p8', 'p9']);
-});
-
-test('leaves later slots empty when there are fewer projects', () => {
-  const { placed, overflow } = assignSlots([{ id: 'a', title: 'A' }]);
-  assert.equal(placed.length, 1);
-  assert.deepEqual(overflow, []);
-});
-
-test('uses the short label on the price tag when there is one', () => {
-  const { placed } = assignSlots([{ id: 'a', title: 'Long title', shortLabel: 'SHORT' }]);
-  assert.equal(placed[0].title, 'SHORT');
-});
-
-test('explicit packaging wins, otherwise the category decides, otherwise a box', () => {
-  assert.equal(productFor({ product: 'dvd', category: 'uxui' }), 'dvd');
-  assert.equal(productFor({ product: 'spaceship', category: 'graphic' }), 'magazine');
-  assert.equal(productFor({ category: 'uxui' }), 'box');
-  assert.equal(productFor({}), 'box');
+  assert.equal(assignHits(many).length, 8);
+  assert.equal(assignHits(many)[7].node, 'slot_7');
+  assert.deepEqual(assignHits([{ id: 'x', title: 'X' }]), []);
 });
