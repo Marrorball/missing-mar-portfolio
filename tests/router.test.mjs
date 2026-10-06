@@ -18,3 +18,10 @@ test('falls back to home for unknown routes and serializes safe ids', () => {
   );
 });
 
+
+test('parses and serializes the kiosk catalog and price routes', () => {
+  assert.deepEqual(parseRoute('#catalog'), { view: 'catalog', id: '' });
+  assert.deepEqual(parseRoute('#price'), { view: 'price', id: '' });
+  assert.equal(routeToHash({ view: 'catalog' }), '#catalog');
+  assert.equal(routeToHash({ view: 'price' }), '#price');
+});
