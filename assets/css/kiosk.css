@@ -169,6 +169,20 @@ body.is-pointing .kiosk-stage canvas {
   box-shadow: -20px 0 60px rgba(0, 0, 0, .45);
 }
 
+/* The portfolio views were drawn for a full page; inside the side panel they
+   get one column and calmer headings. Stage 4 restyles them properly. */
+.overlay-panel .about-layout {
+  grid-template-columns: 1fr;
+}
+
+.overlay-panel .about-layout > img {
+  max-width: 320px;
+}
+
+.overlay-panel .view-header h1 {
+  font-size: clamp(32px, 4vw, 52px);
+}
+
 .catalog-list {
   margin: 0;
   padding: 0 var(--page-pad) 64px;

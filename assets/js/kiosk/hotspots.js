@@ -24,8 +24,21 @@ export const ROUTE_PRESETS = {
   price: 'pricelist'
 };
 
-const OUTSIDE = { minDistance: 1.2, maxDistance: 9, minPolarAngle: 0.45, maxPolarAngle: 1.52 };
-const INSIDE = { minDistance: 0.4, maxDistance: 1.6, minPolarAngle: 1.0, maxPolarAngle: 1.75, azimuthSpan: 1.6 };
+const OUTSIDE = { fov: 40, minDistance: 1.2, maxDistance: 9, minPolarAngle: 0.45, maxPolarAngle: 1.52 };
+// Inside, the camera stands in the back corner: a wide lens and a short leash
+// so turning around never pushes it through a wall.
+const INSIDE = { fov: 62, minDistance: 0.4, maxDistance: 1.6, minPolarAngle: 1.0, maxPolarAngle: 1.75, azimuthSpan: 0.6 };
+
+const DESIGN_ASPECT = 1.6;
+const MAX_FOV = 75;
+
+// Presets are framed for a 16:10 screen. On narrower screens the vertical
+// field of view opens up so the kiosk keeps (most of) its width in frame.
+export function fitFov(fov, aspect) {
+  if (aspect >= DESIGN_ASPECT) return fov;
+  const half = Math.atan(Math.tan((fov * Math.PI) / 360) * (DESIGN_ASPECT / aspect));
+  return Math.min((half * 360) / Math.PI, MAX_FOV);
+}
 
 export function presetLimits(preset) {
   return preset === 'inside' ? INSIDE : OUTSIDE;

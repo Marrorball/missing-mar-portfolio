@@ -5,6 +5,7 @@ import {
   PRESETS,
   ROUTE_PRESETS,
   hotspotForNode,
+  fitFov,
   isPickable,
   pickHotspot,
   presetLimits
@@ -59,4 +60,15 @@ test('inside the kiosk the camera is held much closer than outside', () => {
   assert.ok(presetLimits('inside').maxDistance < presetLimits('home').minDistance * 2);
   assert.equal(presetLimits('showcase'), presetLimits('home'));
   assert.ok(presetLimits('home').maxPolarAngle < Math.PI / 2);
+});
+
+test('inside the kiosk the lens is wider so the cramped room reads', () => {
+  assert.ok(presetLimits('inside').fov > presetLimits('home').fov);
+});
+
+test('a portrait screen widens the lens so the kiosk still fits across', () => {
+  assert.equal(fitFov(40, 1.6), 40);
+  assert.equal(fitFov(40, 2.4), 40);
+  const portrait = fitFov(40, 390 / 844);
+  assert.ok(portrait > 60 && portrait <= 90, String(portrait));
 });

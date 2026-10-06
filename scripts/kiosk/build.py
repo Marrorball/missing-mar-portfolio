@@ -30,9 +30,9 @@ CAMERAS = {
     'home': ((3.4, -7.2, 2.1), (0.0, 0.0, 1.4)),
     'showcase': ((0.3, -3.0, 1.65), (0.0, -0.9, 1.5)),
     'flyer': ((-1.7, -3.1, 1.65), (-1.94, -1.11, 1.55)),
-    'terminal': ((2.9, -2.9, 1.5), (2.15, -0.75, 1.2)),
+    'terminal': ((3.7, -2.7, 1.5), (3.0, -0.55, 1.2)),
     'pricelist': ((-0.75, -2.2, 1.3), (-0.9, -0.95, 1.12)),
-    'inside': ((0.75, 0.6, 1.55), (-0.4, -0.2, 1.25)),
+    'inside': ((1.15, 0.8, 1.6), (0.1, -0.1, 1.35)),
 }
 
 _materials = {}
@@ -163,7 +163,7 @@ def build():
     box('kiosk_back_left', (door_l + hw, WALL, wall_h), ((door_l - hw) / 2, back_y, wall_z), paint)
     box('kiosk_back_right', (hw - door_r, WALL, wall_h), ((door_r + hw) / 2, back_y, wall_z), paint)
     box('kiosk_back_top', (door_r - door_l, WALL, TOP - door_top), ((door_l + door_r) / 2, back_y, (door_top + TOP) / 2), paint)
-    hinge = empty('door_hinge', (door_r, hd, 0.0), rot_z=math.radians(-70))
+    hinge = empty('door_hinge', (door_r, hd, 0.0), rot_z=math.radians(-115))
     box('hs_backdoor', (door_r - door_l, 0.05, door_top - PLINTH), (-(door_r - door_l) / 2, 0.03, (PLINTH + door_top) / 2), paint_dark, parent=hinge)
 
     # roof and sign
@@ -172,7 +172,10 @@ def build():
     text('kiosk_sign_text', 'У МАРАТА', (0.0, -hd - 0.16, TOP + 0.38), 0.34, ink)
 
     # serving window, the away sign and the price list behind the glass
-    box('kiosk_window_frame', (0.6, 0.08, 0.46), (0.0, -hd - 0.03, 1.18), frame)
+    window_y = -hd - 0.03
+    box('kiosk_window_top', (0.64, 0.06, 0.04), (0.0, window_y, 1.41), frame)
+    for side, x in (('l', -0.3), ('r', 0.3)):
+        box(f'kiosk_window_{side}', (0.04, 0.06, 0.46), (x, window_y, 1.18), frame)
     box('kiosk_counter_shelf', (0.7, 0.25, 0.04), (0.0, -hd - 0.12, GLASS_LOW + 0.02), wood)
     box('hs_sign_away', (0.3, 0.01, 0.18), (0.0, -hd + 0.06, 1.2), away)
     box('hs_pricelist', (0.3, 0.01, 0.36), (-0.9, -hd + 0.06, 1.12), paper)
@@ -215,7 +218,7 @@ def build():
     cylinder('bulb_outside', 0.05, 0.1, (0.0, -hd - 0.15, TOP - 0.05), bulb)
 
     # payment terminal beside the kiosk
-    terminal = box('hs_terminal', (0.62, 0.45, 1.75), (2.15, -0.55, 0.875), device)
+    terminal = box('hs_terminal', (0.62, 0.45, 1.75), (3.0, -0.35, 0.875), device)
     box('terminal_screen', (0.45, 0.02, 0.32), (0.0, -0.235, 0.35), screen, parent=terminal)
 
     for name, (cam, target) in CAMERAS.items():

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { PRESETS, isPickable, pickHotspot, presetLimits } from './hotspots.js';
+import { PRESETS, fitFov, isPickable, pickHotspot, presetLimits } from './hotspots.js';
 
 const SKY = 0x1b2a4a;
 const HOVER = 0x4a3210;
@@ -127,13 +127,18 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
   }
 
   let flight = null;
+  let current = 'home';
   function focus(name, { instant = false } = {}) {
     const preset = presets[name];
     if (!preset) return;
+    current = name;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const fov = fitFov(presetLimits(name).fov, camera.aspect);
     if (instant || reduced) {
       flight = null;
       controls.enabled = true;
+      camera.fov = fov;
+      camera.updateProjectionMatrix();
       camera.position.copy(preset.position);
       controls.target.copy(preset.target);
       applyLimits(name);
@@ -145,8 +150,10 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
       start: performance.now(),
       from: camera.position.clone(),
       fromTarget: controls.target.clone(),
+      fromFov: camera.fov,
       to: preset.position,
-      toTarget: preset.target
+      toTarget: preset.target,
+      toFov: fov
     };
   }
 
@@ -178,6 +185,7 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
     const height = container.clientHeight;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
+    if (!flight) camera.fov = fitFov(presetLimits(current).fov, camera.aspect);
     camera.updateProjectionMatrix();
   };
   const observer = new ResizeObserver(resize);
@@ -189,6 +197,8 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
       const k = easeInOutCubic(t);
       camera.position.lerpVectors(flight.from, flight.to, k);
       controls.target.lerpVectors(flight.fromTarget, flight.toTarget, k);
+      camera.fov = THREE.MathUtils.lerp(flight.fromFov, flight.toFov, k);
+      camera.updateProjectionMatrix();
       camera.lookAt(controls.target);
       if (t === 1) {
         const { name } = flight;

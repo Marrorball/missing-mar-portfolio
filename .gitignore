@@ -7,3 +7,4 @@ dist/
 scripts/__pycache__/
 concepts/
 .claude/
+.playwright-mcp/
