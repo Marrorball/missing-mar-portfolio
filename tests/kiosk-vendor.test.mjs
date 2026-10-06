@@ -9,6 +9,10 @@ const FILES = [
   'three.core.js',
   'addons/controls/OrbitControls.js',
   'addons/loaders/GLTFLoader.js',
+  'addons/postprocessing/EffectComposer.js',
+  'addons/postprocessing/RenderPass.js',
+  'addons/postprocessing/UnrealBloomPass.js',
+  'addons/postprocessing/OutputPass.js',
   'addons/utils/BufferGeometryUtils.js',
   'addons/utils/SkeletonUtils.js'
 ];
