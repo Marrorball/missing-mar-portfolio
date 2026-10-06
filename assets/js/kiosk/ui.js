@@ -52,24 +52,13 @@ export function renderHotspotButtons(entries = []) {
   return `<div class="kiosk-a11y">${entries.map(entry => `<button type="button" data-action="kiosk-pick" data-node="${escapeHtml(entry.node)}">${escapeHtml(entry.label)}</button>`).join('')}</div>`;
 }
 
-export function renderCatalogView(projects = []) {
-  return `<article class="portfolio-view catalog-view" data-view="catalog">
-    <header class="view-header">
-      <a class="back-link" href="#">${BACK_ICON}К ларьку</a>
-      <h1>Весь товар</h1>
-    </header>
-    <ol class="catalog-list">
-      ${projects.map(project => `<li><a href="#project/${encodeURIComponent(project.id)}"><span>${escapeHtml(project.title || '')}</span><small>${escapeHtml(project.year || '')}</small></a></li>`).join('')}
-    </ol>
-  </article>`;
-}
-
-export function renderPriceView() {
-  return `<article class="portfolio-view price-view" data-view="price">
-    <header class="view-header">
-      <a class="back-link" href="#">${BACK_ICON}К ларьку</a>
-      <h1>Прайс</h1>
-      <p class="view-summary">Скоро здесь будет прайс на услуги.</p>
-    </header>
-  </article>`;
+export function renderRemote() {
+  return `<div class="tv-remote" role="group" aria-label="Пульт">
+    <button type="button" data-action="tv-off" aria-label="Выключить и вернуться к ларьку">ВЫКЛ</button>
+    <button type="button" data-action="tv-channel" data-step="1" aria-label="Следующий канал">CH+</button>
+    <button type="button" data-action="tv-channel" data-step="-1" aria-label="Предыдущий канал">CH−</button>
+    <button type="button" data-action="tv-scroll" data-step="-1" aria-label="Листать вверх">▲</button>
+    <button type="button" data-action="tv-scroll" data-step="1" aria-label="Листать вниз">▼</button>
+    <button type="button" data-action="tv-menu">МЕНЮ</button>
+  </div>`;
 }

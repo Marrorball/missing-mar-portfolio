@@ -2,14 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   renderBackButton,
-  renderCatalogView,
   renderContactCard,
   renderHelpBar,
   renderHotspotButtons,
   renderLoading,
   renderNote,
-  renderPriceView,
-  renderRackControls
+  renderRackControls,
+  renderRemote
 } from '../assets/js/kiosk/ui.js';
 
 test('the help bar sends projects to the rack, about to the billboard, contacts to the card', () => {
@@ -40,19 +39,18 @@ test('close-ups get a way back and the rack gets its spin controls', () => {
   assert.match(rack, /UX\/UI &lt;3/);
 });
 
-test('the catalog lists every project with an encoded link and escaped title', () => {
-  const html = renderCatalogView([
-    { id: 'учи ру', title: 'Учи.ру <b>', year: '2026' },
-    { id: 'kortex', title: 'KORTEX', year: '2025' }
-  ]);
-  assert.match(html, /href="#project\/%D1%83%D1%87%D0%B8%20%D1%80%D1%83"/);
-  assert.match(html, /Учи\.ру &lt;b&gt;/);
-  assert.equal((html.match(/<li>/g) || []).length, 2);
-});
-
 test('hotspot buttons, loading, note and price render readable text', () => {
   assert.match(renderHotspotButtons([{ node: 'disc_0', label: 'A&B' }]), /data-node="disc_0">A&amp;B<\/button>/);
   assert.match(renderLoading(41.6), /42%/);
   assert.match(renderNote('a < b'), /a &lt; b/);
-  assert.match(renderPriceView(), /Прайс/);
+});
+
+test('the TV remote switches, scrolls, opens the guide and turns off', () => {
+  const html = renderRemote();
+  assert.match(html, /data-action="tv-channel" data-step="1"/);
+  assert.match(html, /data-action="tv-channel" data-step="-1"/);
+  assert.match(html, /data-action="tv-scroll" data-step="-1"/);
+  assert.match(html, /data-action="tv-scroll" data-step="1"/);
+  assert.match(html, /data-action="tv-menu"/);
+  assert.match(html, /data-action="tv-off"/);
 });
