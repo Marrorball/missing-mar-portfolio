@@ -24,4 +24,6 @@ test('parses and serializes the kiosk catalog and price routes', () => {
   assert.deepEqual(parseRoute('#price'), { view: 'price', id: '' });
   assert.equal(routeToHash({ view: 'catalog' }), '#catalog');
   assert.equal(routeToHash({ view: 'price' }), '#price');
+  assert.deepEqual(parseRoute('#pricelist'), { view: 'pricelist', id: '' });
+  assert.equal(routeToHash({ view: 'pricelist' }), '#pricelist');
 });

@@ -77,6 +77,9 @@ def build(M):
     header.box((side + 0.02, side + 0.02, 0.02), (0.0, 0.0, header_z - height / 2 - 0.01), M['frame'])
     header.cylinder(0.035, 0.03, (0.0, 0.0, header_z + height / 2 + 0.035), M['frame'], segments=12)
     header.finish(parent=stand)
+    snow = Merge('rack_snow')
+    snow.blob((side + 0.05, side + 0.05, 0.07), (0.0, 0.0, header_z + height / 2 + 0.03), M['snow'], 18, 8, True)
+    snow.finish(parent=stand)
     for face, angle, out, at in _faces():
         # text faces -Y unturned; face 0 looks down -Y, the others follow round
         text(f'rack_header_text_{face}', 'ВСЕ ПРОЕКТЫ', at(side / 2 + 0.004, 0.0, header_z), 0.038,

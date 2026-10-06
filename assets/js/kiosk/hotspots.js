@@ -21,6 +21,7 @@ export const HOTSPOTS = {
   hs_flyer: { label: 'Контакты', action: { type: 'route', hash: '#contact' } },
   hs_billboard: { label: 'Обо мне', action: { type: 'route', hash: '#about' } },
   hs_pricelist: { label: 'Прайс', action: { type: 'route', hash: '#price' } },
+  hs_fullprice: { label: 'Полный прайс', action: { type: 'route', hash: '#pricelist' } },
   hs_terminal: { label: 'Терминал', action: { type: 'focus', preset: 'terminal' } },
   hs_backdoor: { label: 'Заглянуть внутрь', action: { type: 'focus', preset: 'inside' } },
   hs_rack: { label: 'Все проекты', action: { type: 'focus', preset: 'rack' } },
@@ -40,6 +41,7 @@ export const ROUTE_PRESETS = {
   catalog: 'tv',
   about: 'billboard',
   price: 'price',
+  pricelist: 'billboard',
   contact: 'flyer'
 };
 
@@ -117,7 +119,7 @@ const CLOSE_UP_TARGETS = {
   billboard: /^hs_billboard$/,
   terminal: /^hs_terminal$/,
   flyer: /^hs_flyer$/,
-  price: /^hs_pricelist$/
+  price: /^hs_(pricelist|fullprice)$/
 };
 
 export function allowedIn(preset, name) {

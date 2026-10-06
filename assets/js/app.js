@@ -9,12 +9,13 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
+  renderPriceBoard,
   renderPriceSheet,
   renderTerminalScreen,
   renderTvChannel,
   renderTvGuide
 } from './kiosk/pages.js';
-import { drawFlyer, drawPriceSheet } from './kiosk/paper.js';
+import { drawFlyer, drawPriceNote, drawPriceSheet } from './kiosk/paper.js';
 import { isInside } from './kiosk/routes.js';
 import { assignHits } from './kiosk/slots.js';
 import { drawTeletext } from './kiosk/teletext.js';
@@ -354,6 +355,12 @@ function showRoute() {
     return;
   }
 
+  if (route.view === 'pricelist') {
+    openScreen('billboard', renderPriceBoard(), { boardFace: 2 });
+    announce('Полный прайс');
+    return;
+  }
+
   if (route.view === 'price') {
     openScreen('price', renderPriceSheet());
     announce('Прайс');
@@ -403,6 +410,7 @@ async function paintSheets() {
     name: owner.name, role: owner.role, location: owner.location, links, photo
   }), 'hs_flyer');
   state.kiosk?.paintSheet('screen_price', drawPriceSheet, 'hs_pricelist');
+  state.kiosk?.paintSheet('note_fullprice', drawPriceNote, 'hs_fullprice');
   state.kiosk?.setTvPicture((context, width, height) => drawTeletext(context, width, height,
     projects.map((project, index) => ({ number: channelNumber(index), title: project.title || '' }))));
 }

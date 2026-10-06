@@ -190,5 +190,22 @@ export function drawPriceSheet(context, width, height) {
   centred(context, 'прайс на услуги.', width / 2, 110.5 * u, 92 * u);
   context.fillStyle = INK;
   font(context, 700, 4.2 * u, NARROW);
-  centred(context, 'ОБО МНЕ — НА ЩИТЕ ЗА ЛАРЬКОМ', width / 2, 130 * u, 92 * u);
+  centred(context, 'ПОЛНЫЙ ПРАЙС — НА ЩИТЕ →', width / 2, 130 * u, 92 * u);
+}
+
+// The little note taped under the price list: the full list is on the
+// billboard behind the kiosk.
+export function drawPriceNote(context, width, height) {
+  const u = width / 100;
+  paper(context, width, height);
+  context.fillStyle = 'rgba(228, 216, 176, 0.85)';
+  context.fillRect(40 * u, 0, 20 * u, 6 * u);
+  context.fillStyle = RED;
+  context.fillRect(0, 0, 2.4 * u, height);
+  context.fillStyle = INK;
+  font(context, 700, 15 * u, NARROW);
+  centred(context, 'ПОЛНЫЙ ПРАЙС', width / 2, 17 * u, 90 * u);
+  context.fillStyle = RED;
+  font(context, 700, 7 * u, NARROW);
+  centred(context, 'НА ЩИТЕ ЗА ЛАРЬКОМ →', width / 2, 33 * u, 90 * u);
 }

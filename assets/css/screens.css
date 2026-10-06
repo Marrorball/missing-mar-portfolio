@@ -497,6 +497,42 @@
 
 .screen-billboard .screen-scroll { scrollbar-color: rgba(27, 26, 23, .5) transparent; }
 
+/* In the scene the poster is paper under three lamps, not a lit screen: it
+   is brightest under the lamps along the top and falls off below, and the
+   24 turning slats leave their cuts (the same count as in scene.js). The
+   layer multiplies, so ink stays black and only the paper dims. */
+.kiosk-screens .screen-billboard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(20, 20, 30, .45) 0 1.5px,
+      rgba(0, 0, 0, .07) 1.5px,
+      transparent .9%,
+      transparent 3.1%,
+      rgba(0, 0, 0, .1) 4.1667%),
+    radial-gradient(ellipse 24% 95% at 20% -12%, #fff 0%, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(ellipse 24% 95% at 50% -12%, #fff 0%, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(ellipse 24% 95% at 80% -12%, #fff 0%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(#d0cdcf, #a5a4b0);
+}
+
+/* the sheets on the shutters catch only a little light, like their paint */
+.kiosk-screens .screen-flyer::after,
+.kiosk-screens .screen-price::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background:
+    radial-gradient(ellipse 90% 70% at 30% 10%, #fff 0%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(170deg, #c3c2cb, #9c9eae);
+}
+
 .board-page {
   padding: 20px 34px 40px;
   font: 17px/1.45 var(--pt-sans);
@@ -660,6 +696,52 @@
 
 .board-resume li {
   margin-bottom: 6px;
+}
+
+/* the full price list: blank rows in two columns until there are prices */
+.board-price { position: relative; }
+
+.board-price .board-stamp {
+  top: 70px;
+  right: 40px;
+}
+
+.board-price-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 44px;
+  margin-top: 10px;
+}
+
+.board-price-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board-price-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  padding-top: 14px;
+  font: 700 22px var(--pt-narrow);
+}
+
+.board-price-list .price-item {
+  flex: 0 0 48%;
+  height: 1em;
+  border-bottom: 2px solid var(--print-ink);
+}
+
+.board-price-list .price-dots {
+  flex: 1;
+  border-bottom: 3px dotted rgba(27, 26, 23, .45);
+}
+
+.board-price-note {
+  margin: 22px 0 0;
+  color: var(--poster-red);
+  font: italic 400 18px var(--pt-sans);
 }
 
 /* ---------- terminal: an orange payment terminal ---------- */
@@ -1075,6 +1157,8 @@
   .board-photo {
     max-width: 240px;
   }
+
+  .board-price-columns { grid-template-columns: 1fr; }
 
   .board-page h1 { font-size: 52px; }
   .tv-page h1 { font-size: 42px; }

@@ -4,6 +4,7 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
+  renderPriceBoard,
   renderPriceSheet,
   renderTerminalScreen,
   renderTvChannel,
@@ -64,7 +65,7 @@ test('the billboard shows who Marat is, with tabs for about and price', () => {
     { id: 'about', title: 'Обо мне', content: '' }
   );
   assert.match(html, /href="#about" aria-current="page">Обо мне/);
-  assert.match(html, /href="#price">Прайс/);
+  assert.match(html, /href="#pricelist">Прайс/);
   assert.match(html, /Марат &lt;Д&gt;/);
   assert.match(html, /Product Designer · Москва/);
   assert.match(html, /Био/);
@@ -77,7 +78,11 @@ test('the billboard shows who Marat is, with tabs for about and price', () => {
 test('the price sheet is printed with blanks, and generic pages fit the billboard', () => {
   assert.match(renderPriceSheet(), /<h1>Прайс<\/h1>/);
   assert.match(renderPriceSheet(), /Скоро здесь будет.*прайс на услуги/s);
-  assert.match(renderPriceSheet(), /href="#about"/);
+  assert.match(renderPriceSheet(), /href="#pricelist">Полный прайс/);
+  const board = renderPriceBoard();
+  assert.match(board, /href="#pricelist" aria-current="page">Прайс/);
+  assert.match(board, /Скоро здесь будет полный прайс/);
+  assert.equal(board.match(/— ₽/g).length, 12, 'a full sheet of blank rows');
   assert.match(renderPageBoard({ title: 'Пресса', content: '<p>x</p>' }), /Пресса.*<p>x<\/p>/s);
 });
 

@@ -70,7 +70,7 @@ test('hits and discs open their project, empty pockets nothing', () => {
 });
 
 test('every route view and every focus action points at a known camera preset', () => {
-  for (const view of ['home', 'project', 'about', 'contact', 'page', 'catalog', 'price']) {
+  for (const view of ['home', 'project', 'about', 'contact', 'page', 'catalog', 'price', 'pricelist']) {
     assert.ok(PRESETS.includes(ROUTE_PRESETS[view]), view);
   }
   for (const spot of Object.values(HOTSPOTS)) {
@@ -133,6 +133,12 @@ test('the price list is its own sheet on the right shutter, read up close', () =
   assert.equal(hotspotForNode('hs_pricelist').action.hash, '#price');
   assert.equal(allowedIn('price', 'hs_pricelist'), true);
   assert.equal(allowedIn('price', 'hs_flyer'), false);
+});
+
+test('the note under the price list leads to the full list on the billboard', () => {
+  assert.equal(hotspotForNode('hs_fullprice').action.hash, '#pricelist');
+  assert.equal(ROUTE_PRESETS.pricelist, 'billboard');
+  assert.equal(allowedIn('price', 'hs_fullprice'), true);
 });
 
 test('contacts live on the flyer, the terminal is a place to walk to', () => {

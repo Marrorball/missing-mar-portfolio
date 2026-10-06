@@ -142,6 +142,13 @@ test('the price sheet hangs on the right shutter, the flyer is printed on the sh
   assert.ok(anchor.extras.width >= 0.4, 'readable from the street');
   assert.equal(parentOf('screen_price').name, 'hs_pricelist');
   assert.ok(!names().has('flyer_title'), 'no extruded title poking through the printed flyer');
+  assert.equal(parentOf('hs_fullprice').name, 'shutter_right_hinge', 'the full-price note hangs under the sheet');
+  assert.equal(parentOf('note_fullprice').name, 'hs_fullprice');
+});
+
+test('snow lies on the rack and the terminal like on the roof', () => {
+  const all = names();
+  assert.ok(all.has('rack_snow') && all.has('terminal_snow'));
 });
 
 test('the walk round the kiosk has its waypoints', () => {

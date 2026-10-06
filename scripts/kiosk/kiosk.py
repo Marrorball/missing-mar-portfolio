@@ -11,6 +11,7 @@ from geometry import grille_segments
 from lib import Merge, box, cylinder, empty, screen, text
 
 SHEET = (0.4, 0.5625)    # flyer and price list: big enough to read from the street, 32:45
+NOTE = (0.3, 0.13)       # the «полный прайс» note under the price list
 ADS = ('СДАМ\nКВАРТИРУ', 'РЕМОНТ\nКОМПЬЮТЕРОВ', 'КУПЛЮ ВОЛОСЫ\nДОРОГО')
 
 
@@ -124,8 +125,8 @@ def _shutters(M):
                 continue  # the flyer lives here
             if side == 'left' and abs(x - 0.45) < 0.3 and z < 1.25:
                 continue  # marker contacts live here
-            if side == 'right' and (abs(x + 0.5) < 0.32 and abs(z - 1.55) < 0.42 or z > 1.85):
-                continue  # the price sheet and the three ads live here
+            if side == 'right' and (abs(x + 0.5) < 0.32 or z > 1.85):
+                continue  # the price sheet, its note and the three ads live here
             depth = 0.024 + index * 0.0006
             posters.box((w, 0.004, h), (x, depth, z), rng.choice(M['posters']), rot=(0.0, rng.uniform(-0.12, 0.12), 0.0))
             if rng.random() < 0.4:
@@ -146,6 +147,10 @@ def _shutters(M):
             # the price list, mirroring the flyer on the other shutter
             prices = box('hs_pricelist', (SHEET[0], 0.006, SHEET[1]), (-0.5, 0.026, 1.55), M['paper'], parent=hinge)
             screen('screen_price', (0.0, 0.0035, 0.0), *SHEET, rot_z=math.pi, parent=prices)
+            # «полный прайс» note taped a little crooked under the sheet
+            note = box('hs_fullprice', (NOTE[0], 0.005, NOTE[1]), (-0.5, 0.027, 1.12), M['paper'], parent=hinge)
+            note.rotation_euler[1] = -0.05
+            screen('note_fullprice', (0.0, 0.003, 0.0), *NOTE, rot_z=math.pi, parent=note)
 
 
 def _roof_and_lamp(M):

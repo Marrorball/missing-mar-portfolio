@@ -598,8 +598,8 @@ export async function createKioskScene({
   // A printed sheet on a shutter (flyer, price list), lit like paper. The
   // page laid over it in a close-up has the same layout.
   function paintSheet(name, draw, pickAs) {
-    // a little glow, as if the street lamp caught it, so it reads at night
-    return paintAnchor(name, draw, { transparent: false, lit: true, glow: 0.35, pickAs });
+    // only a touch of glow, as if a little of the street light caught it
+    return paintAnchor(name, draw, { transparent: false, lit: true, glow: 0.08, pickAs });
   }
 
   // The TV is dark until someone steps into the kiosk, then it blinks and

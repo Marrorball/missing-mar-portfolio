@@ -192,6 +192,10 @@ def _terminal(M):
     lamp.bar((tx, ty - 0.15, 1.98), (tx, ty - 0.57, 2.06), 0.012, M['frame'])
     lamp.box((0.12, 0.06, 0.025), (tx, ty - 0.57, 2.045), M['bulb'])
     lamp.finish()
+    snow = Merge('terminal_snow')
+    snow.blob((0.72, 0.54, 0.09), (tx, ty, 1.975), M['snow'], 18, 8, True)
+    snow.blob((0.15, 0.08, 0.035), (tx, ty - 0.57, 2.065), M['snow'], 12, 6, True)
+    snow.finish()
 
 
 def build(M):

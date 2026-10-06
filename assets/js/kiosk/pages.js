@@ -83,7 +83,7 @@ export function renderTvGuide(projects = [], categories = []) {
 function boardTabs(active) {
   return `<nav class="board-tabs" aria-label="Билборд">
     <a href="#about"${active === 'about' ? ' aria-current="page"' : ''}>Обо мне</a>
-    <a href="#price"${active === 'price' ? ' aria-current="page"' : ''}>Прайс</a>
+    <a href="#pricelist"${active === 'pricelist' ? ' aria-current="page"' : ''}>Прайс</a>
   </nav>`;
 }
 
@@ -125,6 +125,23 @@ export function renderAboutBoard(site = {}, resume = {}, page = {}) {
       <p class="board-stamp" aria-hidden="true">Ищу<br>работу</p>
     </div>
     ${resumeBlocks(resume)}
+  </article>`;
+}
+
+// The full price list on the billboard: a printed sheet of blank rows until
+// there are services and prices to put in.
+export function renderPriceBoard() {
+  const blank = '<li><span class="price-item"></span><span class="price-dots"></span><b>— ₽</b></li>';
+  return `<article class="board-page board-price">
+    ${boardTabs('pricelist')}
+    <h1>Прайс</h1>
+    <p class="board-role">Дизайн у Мара · полный список услуг</p>
+    <p class="board-stamp" aria-hidden="true">Скоро</p>
+    <div class="board-price-columns" aria-hidden="true">
+      <ul class="board-price-list">${blank.repeat(PRICE_ROWS)}</ul>
+      <ul class="board-price-list">${blank.repeat(PRICE_ROWS)}</ul>
+    </div>
+    <p class="board-price-note">Скоро здесь будет полный прайс на услуги.</p>
   </article>`;
 }
 
@@ -184,6 +201,6 @@ export function renderPriceSheet() {
     <p class="price-sheet-bar">Дизайн у Мара · услуги</p>
     <ul class="price-sheet-rows" aria-hidden="true">${blank.repeat(PRICE_ROWS)}</ul>
     <p class="price-sheet-note"><span>Скоро здесь будет</span> <span>прайс на услуги.</span></p>
-    <a class="price-sheet-about" href="#about">Обо мне — на щите за ларьком</a>
+    <a class="price-sheet-about" href="#pricelist">Полный прайс — на щите →</a>
   </article>`;
 }
