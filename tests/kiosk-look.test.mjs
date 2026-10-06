@@ -17,3 +17,9 @@ test('looking at the floor and ceiling remains finite and normalized', () => {
     assert.ok(Math.abs(Math.hypot(...direction) - 1) < 1e-12);
   }
 });
+
+test('inside, dragging turns the view the same way as the orbit outside', () => {
+  // grab-the-world: dragging right brings what is on the right towards the centre
+  assert.ok(turnLook({ yaw: 0, pitch: 0 }, 100, 0).yaw > 0);
+  assert.ok(turnLook({ yaw: 0, pitch: 0 }, -100, 0).yaw < 0);
+});
