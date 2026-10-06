@@ -43,3 +43,13 @@ test('Pages CMS config parses and exposes the intended content files', () => {
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(result.stdout.trim(), 'Pages CMS OK');
 });
+
+test('the local admin stays off the published GitHub Pages site', () => {
+  const ruby = String.raw`
+    require 'yaml'
+    config = YAML.safe_load(File.read('_config.yml'))
+    abort 'admin published' unless config.fetch('exclude').include?('admin')
+  `;
+  const result = spawnSync('ruby', ['-e', ruby], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+});

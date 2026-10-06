@@ -1,0 +1,5 @@
+# GitHub Pages builds this repo with Jekyll. The local admin (admin/, served
+# by scripts/admin-plugin.mjs under Vite) can't save anything on Pages, so it
+# stays off the published site.
+exclude:
+  - admin
