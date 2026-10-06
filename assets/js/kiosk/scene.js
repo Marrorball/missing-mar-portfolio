@@ -13,8 +13,9 @@ import {
   pickHotspot,
   presetLimits
 } from './hotspots.js';
+import { addLights, addSky, addSnow, createComposer, flicker, setupShadows, weatherMaterials } from './atmosphere.js';
+import { QUALITY, qualityTier } from './weather.js';
 
-const SKY = 0x1b2a4a;
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
 const QUARTER = Math.PI / 2;
@@ -50,6 +51,10 @@ export async function createKioskScene({
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  const quality = QUALITY[qualityTier({ width: window.innerWidth, cores: navigator.hardwareConcurrency || 8 })];
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   container.appendChild(renderer.domElement);
   const canvas = renderer.domElement;
 
@@ -62,12 +67,6 @@ export async function createKioskScene({
   container.appendChild(screenLayer);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(SKY);
-  scene.fog = new THREE.Fog(SKY, 18, 90);
-  scene.add(new THREE.HemisphereLight(0xaac4ff, 0x2a2a33, 1.6));
-  const warm = new THREE.PointLight(0xffb259, 8, 6, 1.4);
-  warm.position.set(0, 2.1, 0);
-  scene.add(warm);
 
   const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.05, 160);
   const controls = new OrbitControls(camera, canvas);
@@ -127,6 +126,14 @@ export async function createKioskScene({
     if (!highlight.has(name)) highlight.set(name, []);
     highlight.get(name).push(object.material);
   });
+
+  weatherMaterials(root);
+  const sky = addSky(scene);
+  const flickering = addLights(scene, root, quality);
+  setupShadows(renderer, root, quality);
+  const snow = addSnow(scene, quality.flakes, { moving: !reducedMotion });
+  const composer = createComposer(renderer, scene, camera, container.clientWidth, container.clientHeight, quality);
+  composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   let hovered = null;
   function setHovered(name) {
@@ -281,34 +288,64 @@ export async function createKioskScene({
     }
   }
 
-  function setWallText(lines) {
-    const anchor = root.getObjectByName('wall_contacts');
-    if (!anchor || !lines.length) return;
+  // Paints a canvas onto a Blender anchor (marker on the shutter, the ad on
+  // the billboard). `draw(context, width, height)` works in canvas pixels.
+  // `pickAs` lets a painted surface answer clicks for the object it covers.
+  function paintAnchor(name, draw, { transparent = true, lit = false, pickAs = '' } = {}) {
+    const anchor = root.getObjectByName(name);
+    if (!anchor) return;
     const { width, height } = anchor.userData;
     const paint = document.createElement('canvas');
     paint.width = 1024;
     paint.height = Math.round(1024 * (height / width));
-    const context = paint.getContext('2d');
-    context.fillStyle = '#121418';
-    context.textBaseline = 'top';
-    const lineHeight = paint.height / (lines.length + 0.4);
-    lines.forEach((line, index) => {
-      context.save();
-      context.translate(36, 18 + index * lineHeight);
-      context.rotate(-0.025 + index * 0.012);
-      context.font = `${index === 0 ? 700 : 500} ${Math.round(lineHeight * 0.72)}px "IBM Plex Mono", monospace`;
-      context.fillText(line, 0, 0);
-      context.restore();
-    });
+    draw(paint.getContext('2d'), paint.width, paint.height);
     const texture = new THREE.CanvasTexture(paint);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const marker = new THREE.Mesh(
-      new THREE.PlaneGeometry(width, height),
-      new THREE.MeshBasicMaterial({ map: texture, transparent: true })
-    );
-    marker.name = 'wall_contacts_text';
-    marker.position.z = 0.002;
-    anchor.add(marker);
+    texture.anisotropy = 4;
+    const material = lit
+      ? new THREE.MeshStandardMaterial({ map: texture, transparent, roughness: 0.9 })
+      : new THREE.MeshBasicMaterial({ map: texture, transparent });
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+    plane.name = pickAs || `${name}_paint`;
+    plane.position.z = 0.002;
+    plane.receiveShadow = true;
+    anchor.add(plane);
+    renderer.shadowMap.needsUpdate = true;
+  }
+
+  function setWallText(lines) {
+    if (!lines.length) return;
+    paintAnchor('wall_contacts', (context, width, height) => {
+      const lineHeight = height / (lines.length + 0.4);
+      context.fillStyle = '#121418';
+      context.textBaseline = 'top';
+      lines.forEach((line, index) => {
+        context.save();
+        context.translate(36, 18 + index * lineHeight);
+        context.rotate(-0.025 + index * 0.012);
+        context.font = `${index === 0 ? 700 : 500} ${Math.round(lineHeight * 0.72)}px "IBM Plex Mono", monospace`;
+        context.fillText(line, 0, 0);
+        context.restore();
+      });
+    }, { lit: true });
+  }
+
+  // What the billboard shows when nobody is reading it: a printed ad.
+  function setBillboardAd({ brand = 'missing mar', name = '', role = '' } = {}) {
+    paintAnchor('screen_billboard', (context, width, height) => {
+      context.fillStyle = '#efe7d4';
+      context.fillRect(0, 0, width, height);
+      context.fillStyle = '#17181c';
+      context.textBaseline = 'alphabetic';
+      context.font = `900 ${Math.round(height * 0.26)}px "Arial Black", "Helvetica Neue", Arial, sans-serif`;
+      context.fillText(brand, width * 0.06, height * 0.44);
+      context.font = `700 ${Math.round(height * 0.09)}px "IBM Plex Mono", monospace`;
+      context.fillText(name.toUpperCase(), width * 0.06, height * 0.62);
+      context.fillText(role, width * 0.06, height * 0.74);
+      context.fillRect(width * 0.06, height * 0.82, width * 0.88, height * 0.012);
+      context.font = `500 ${Math.round(height * 0.075)}px "IBM Plex Mono", monospace`;
+      context.fillText('Обо мне →', width * 0.06, height * 0.93);
+    }, { transparent: false, lit: true, pickAs: 'hs_billboard' });
   }
 
   let down = null;
@@ -347,6 +384,7 @@ export async function createKioskScene({
     const width = container.clientWidth;
     const height = container.clientHeight;
     renderer.setSize(width, height, false);
+    composer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     if (flight) return;
@@ -360,6 +398,7 @@ export async function createKioskScene({
   const observer = new ResizeObserver(resize);
   observer.observe(container);
 
+  let lastFrame = 0;
   renderer.setAnimationLoop(() => {
     if (flight) {
       const t = Math.min((performance.now() - flight.start) / FLIGHT_MS, 1);
@@ -378,7 +417,13 @@ export async function createKioskScene({
       controls.update();
     }
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * 0.15;
-    renderer.render(scene, camera);
+    const now = performance.now() / 1000;
+    const dt = Math.min(now - (lastFrame || now), 0.1);
+    lastFrame = now;
+    sky.position.copy(camera.position);
+    snow.update(dt, now);
+    if (!reducedMotion) flicker(flickering, now);
+    composer.render();
   });
 
   return {
@@ -386,6 +431,7 @@ export async function createKioskScene({
     spinRack,
     setPage,
     setWallText,
+    setBillboardAd,
     pageScroller: name => screens[name]?.scroller || null,
     setHits: hits => showOnly(/^slot_\d+$/, hits),
     setDiscs: discs => showOnly(/^disc_\d+$/, discs),

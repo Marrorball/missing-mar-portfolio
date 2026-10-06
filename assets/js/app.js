@@ -303,6 +303,8 @@ async function mountKiosk() {
       state.kiosk.setWallText(['ПИШИТЕ:', ...contactLinks(state.bundle.site.contacts)
         .filter(link => link.kind !== 'behance')
         .map(link => (link.kind === 'telegram' ? `TG ${link.value}` : link.value))]);
+      const owner = state.bundle.site.owner || {};
+      state.kiosk.setBillboardAd({ brand: owner.brandName, name: owner.name, role: owner.role });
     });
     focusPreset(ROUTE_PRESETS[parseRoute(window.location.hash).view] || 'home', { instant: true });
     renderRoute();
