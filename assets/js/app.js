@@ -15,6 +15,7 @@ import {
   renderTvChannel,
   renderTvGuide
 } from './kiosk/pages.js';
+import { drawGraffiti } from './kiosk/graffiti.js';
 import { drawFlyer, drawPriceSheet } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
 import { isInside } from './kiosk/routes.js';
@@ -424,6 +425,9 @@ async function paintSheets() {
   }), 'hs_flyer');
   state.kiosk?.paintSheet('screen_price', drawPriceSheet, 'hs_pricelist');
   state.kiosk?.paintNotices();
+  for (const side of ['right', 'left']) {
+    state.kiosk?.paintDecal(`graffiti_${side}`, (context, width, height) => drawGraffiti(context, width, height, side));
+  }
   state.kiosk?.setTvPicture((context, width, height) => drawTeletext(context, width, height,
     projects.map((project, index) => ({ number: channelNumber(index), title: project.title || '' }))));
 }

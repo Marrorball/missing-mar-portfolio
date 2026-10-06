@@ -32,7 +32,8 @@ function recorder() {
       drawImage: (...args) => images.push(args),
       getImageData: (x, y, w, h) => ({ data: new Uint8ClampedArray(Math.max(1, w * h) * 4) }),
       createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
-      createRadialGradient: () => ({ addColorStop: () => {} })
+      createRadialGradient: () => ({ addColorStop: () => {} }),
+      createLinearGradient: () => ({ addColorStop: () => {} })
     }, { get: (target, key) => (key in target ? target[key] : noop), set: () => true })
   };
 }
@@ -100,4 +101,13 @@ test('street notices: the 2000s classics, packed into one atlas without overlaps
   const { context, texts } = recorder();
   drawNotice(context, 220, 300, 3, { torn: true, seed: 5 });
   assert.ok(texts.includes('ПОХУДЕЙ СЕЙЧАС!'));
+});
+
+test('graffiti on both walls draws without trouble', async () => {
+  const { drawGraffiti } = await import('../assets/js/kiosk/graffiti.js');
+  for (const side of ['right', 'left']) {
+    const { context, texts } = recorder();
+    drawGraffiti(context, 1024, 580, side);
+    assert.ok(texts.includes(side === 'right' ? 'ЦОЙ ЖИВ' : 'ЗДЕСЬ БЫЛ ВАСЯ'));
+  }
 });

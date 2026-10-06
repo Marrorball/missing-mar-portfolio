@@ -15,7 +15,8 @@ SHELF_Y = -HD + 0.2                # centre line of the showcase shelves
 SHELF_LEVELS = (0.98, 1.30, 1.62, 1.94)
 SLOT_LEVEL = 1.30                  # the shelf that carries the hits
 SLOT_COUNT = 8
-SLOT_XS = tuple(-1.2 + index * (2.4 / (SLOT_COUNT - 1)) for index in range(SLOT_COUNT))
+# four each side of the serving window, which stays clear for trade
+SLOT_XS = tuple(-(0.45 + index * 0.8 / 3) for index in (3, 2, 1, 0)) + tuple(0.45 + index * 0.8 / 3 for index in range(4))
 
 CHAIR = (0.25, 0.10)
 TV = (-1.22, 0.3, 1.75)            # centre of the TV body, screen faces +X

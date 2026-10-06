@@ -6,7 +6,7 @@ crisps, croutons and sunflower seeds hanging from the rail."""
 import random
 import props
 
-from dims import GLASS_HIGH, GLASS_LOW, HW, SHELF_LEVELS, SHELF_Y, SLOT_LEVEL, SLOT_XS, W
+from dims import GLASS_HIGH, GLASS_LOW, HW, SHELF_LEVELS, SHELF_Y, SLOT_LEVEL, SLOT_XS, W, WINDOW_L, WINDOW_R, WINDOW_TOP
 from lib import Merge, box
 
 SHELF_DEPTH = 0.3
@@ -78,23 +78,33 @@ def build(M):
     goods = Merge('goods_fill')
     tags = Merge('price_tags')
     inner_w = W - 0.24
+    window = (WINDOW_L - 0.04, WINDOW_R + 0.04)
     for index, level in enumerate(SHELF_LEVELS):
-        shelves.box((inner_w, SHELF_DEPTH, SHELF_THICK), (0.0, SHELF_Y, level), M['wood'])
+        in_window = level < WINDOW_TOP   # the serving window: nothing across it
+        if in_window:
+            for left, right in ((X_MIN - 0.04, window[0]), (window[1], X_MAX + 0.04)):
+                shelves.box((right - left, SHELF_DEPTH, SHELF_THICK), ((left + right) / 2, SHELF_Y, level), M['wood'])
+        else:
+            shelves.box((inner_w, SHELF_DEPTH, SHELF_THICK), (0.0, SHELF_Y, level), M['wood'])
         base = level + SHELF_THICK / 2
         if index + 1 < len(SHELF_LEVELS):
             ceiling = SHELF_LEVELS[index + 1] - SHELF_THICK / 2 - 0.01
         else:
             ceiling = base + 0.09   # the top shelf stays low: crisps hang above it
         max_h = min(0.26, ceiling - base)
-        skip = [(x - 0.13, x + 0.13) for x in SLOT_XS] if level == SLOT_LEVEL else ()
+        skip = [(x - 0.13, x + 0.13) for x in SLOT_XS] if level == SLOT_LEVEL else []
+        clear = [window] if in_window else []
         back, front = SHELF_MIX[index]
         # the counter (top at 1.02 m, reaching y -0.77) covers the back of the
         # lowest shelf: nothing stands there, or it would grow out of the counter
         if back and level >= COUNTER_TOP_BELOW:
-            _fill_row(goods, rng, SHELF_Y + 0.07, base, max_h, kinds, back, once=('lolly',))
-        _fill_row(goods, rng, SHELF_Y - 0.07, base, max_h, kinds, front, skip)
+            _fill_row(goods, rng, SHELF_Y + 0.07, base, max_h, kinds, back, clear, once=('lolly',))
+        _fill_row(goods, rng, SHELF_Y - 0.07, base, max_h, kinds, front, sorted(skip + clear))
         x = X_MIN + 0.05
         while x < X_MAX:
+            if in_window and window[0] - 0.03 < x < window[1] + 0.03:
+                x += 0.1
+                continue
             tags.box((0.055, 0.004, 0.032), (x, SHELF_Y - SHELF_DEPTH / 2 - 0.006, level + 0.005),
                      rng.choice((M['paper'], M['goods_palette'][1])), rot=(0.0, rng.uniform(-0.1, 0.1), 0.0))
             x += rng.uniform(0.16, 0.3)

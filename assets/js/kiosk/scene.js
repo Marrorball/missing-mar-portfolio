@@ -20,7 +20,7 @@ import {
   presetLimits
 } from './hotspots.js';
 import { addLights, addSky, addSnow, createComposer, flicker, setupShadows, weatherMaterials } from './atmosphere.js';
-import { QUALITY, qualityTier, tvWarmUp } from './weather.js';
+import { QUALITY, qualityTier, signTail, tvWarmUp } from './weather.js';
 import { drawPosterWear } from './poster.js';
 import { drawNeighbour } from './neighbours.js';
 import { drawNotice, packNotices } from './notices.js';
@@ -244,6 +244,20 @@ export async function createKioskScene({
     root.traverse(object => {
       if (pattern.test(object.name)) object.visible = used.has(object.name);
     });
+  }
+
+  // «ТА» at the end of the sign is on tired bulbs (see signTail).
+  let signTailMaterial = null;
+  root.traverse(object => {
+    if (object.isMesh && object.material.name === 'sign_glow_tail') signTailMaterial = object.material;
+  });
+  const signGlow = signTailMaterial?.emissiveIntensity ?? 0;
+  const signColour = signTailMaterial?.color.clone();
+  function burnSign(now) {
+    if (!signTailMaterial || reducedMotion) return;
+    const level = signTail(now);
+    signTailMaterial.emissiveIntensity = signGlow * level;
+    signTailMaterial.color.copy(signColour).multiplyScalar(0.35 + 0.65 * level);
   }
 
   // The cat breathes in its sleep and shivers a little when it purrs.
@@ -647,6 +661,17 @@ export async function createKioskScene({
     return paintAnchor(name, draw, { transparent: false, lit: true, glow: 0.08, pickAs });
   }
 
+  // Paint sprayed on a wall: lit like the wall, see-through around it.
+  function paintDecal(name, draw) {
+    const plane = paintAnchor(name, draw, { transparent: true, lit: true });
+    if (plane) {
+      plane.material.depthWrite = false;
+      plane.material.polygonOffset = true;
+      plane.material.polygonOffsetFactor = -2;
+    }
+    return plane;
+  }
+
   // The small notices all over the shutters: one atlas, one mesh, paper lit
   // like the shutter paint (call once the fonts are in).
   const noticeResources = [];
@@ -738,11 +763,18 @@ export async function createKioskScene({
       const lineHeight = height / (lines.length + 0.4);
       context.fillStyle = '#121418';
       context.textBaseline = 'top';
+      // the whole address has to fit on the wall, gmail.com included
+      let size = Math.round(lineHeight * 0.72);
+      const fits = () => lines.every((line, index) => {
+        context.font = `${index === 0 ? 700 : 500} ${size}px "IBM Plex Mono", monospace`;
+        return context.measureText(line).width <= width - 72;
+      });
+      while (size > 12 && !fits()) size -= 2;
       lines.forEach((line, index) => {
         context.save();
         context.translate(36, 18 + index * lineHeight);
         context.rotate(-0.025 + index * 0.012);
-        context.font = `${index === 0 ? 700 : 500} ${Math.round(lineHeight * 0.72)}px "IBM Plex Mono", monospace`;
+        context.font = `${index === 0 ? 700 : 500} ${size}px "IBM Plex Mono", monospace`;
         context.fillText(line, 0, 0);
         context.restore();
       });
@@ -1069,6 +1101,7 @@ export async function createKioskScene({
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * (1 - Math.exp(-elapsed * 10));
     updateTv(performance.now());
     breathe(performance.now() / 1000);
+    burnSign(performance.now() / 1000);
     lastFrame = now;
     sky.position.copy(camera.position);
     snow.update(dt, now);
@@ -1103,6 +1136,7 @@ export async function createKioskScene({
     focus,
     paintSheet,
     paintNotices,
+    paintDecal,
     setTvPicture,
     purr,
     snapshot,

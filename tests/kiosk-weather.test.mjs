@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { KIOSK_FOOTPRINT, QUALITY, SNOW_BOUNDS, flakePositions, flickerLevel, insideFootprint, qualityTier, tvWarmUp } from '../assets/js/kiosk/weather.js';
+import { KIOSK_FOOTPRINT, QUALITY, SNOW_BOUNDS, flakePositions, flickerLevel, insideFootprint, qualityTier, signTail, tvWarmUp } from '../assets/js/kiosk/weather.js';
+
+test('«ТА» on the sign mostly burns, and now and then gives out so it reads «МАРА»', () => {
+  const samples = Array.from({ length: 1400 }, (_, index) => signTail(index * 0.01));
+  const dark = samples.filter(level => level < 0.1).length / samples.length;
+  assert.ok(dark > 0.1 && dark < 0.35, `dark ${dark}`);
+  assert.equal(signTail(1), 1);
+  assert.ok(signTail(10) < 0.1);
+  assert.ok(samples.every(level => level >= 0 && level <= 1));
+});
 
 test('the TV blinks a couple of times when someone comes in, then stays on', () => {
   assert.equal(tvWarmUp(-1), 0, 'off until someone steps in');

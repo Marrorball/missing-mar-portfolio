@@ -36,6 +36,17 @@ export function flickerLevel(t) {
   return 0.55 + 0.45 * Math.abs(Math.sin(cycle * 37));
 }
 
+// The last two letters of «ДИЗАЙН У МАРАТА» are on tired bulbs: now and then
+// they stutter and go out for a few seconds, and the sign reads «МАРА».
+export function signTail(t) {
+  const cycle = t % 13.7;
+  if (cycle < 8.5) return 1;
+  if (cycle < 9.1) return Math.sin(cycle * 53) > 0.2 ? 1 : 0.05;
+  if (cycle < 11.6) return 0.03;
+  if (cycle < 11.9) return Math.sin(cycle * 71) > 0 ? 1 : 0.03;
+  return 1;
+}
+
 // A CRT coming on by itself: a couple of blinks, then the picture settles.
 // `ms` is the time since someone stepped into the kiosk; 0..1 brightness.
 export function tvWarmUp(ms) {

@@ -71,8 +71,36 @@ def _grille(M):
     grille.finish()
 
 
+def _light_letters(name, body, loc, size, tail):
+    """Glowing box letters; the last `tail` letters get their own material so
+    the site can let them give out like burnt bulbs. The split is measured:
+    everything right of where the shorter text ends belongs to the tail."""
+    import bpy
+    glow = material('sign_glow', (1.0, 0.8, 0.45), emission=4.0)
+    weak = material('sign_glow_tail', (1.0, 0.8, 0.45), emission=4.0)
+    obj = text(name, body, loc, size, glow, extrusion=0.012)
+    obj.data.materials.append(weak)
+    probe = text(f'{name}_probe', body[:-tail], loc, size, glow, extrusion=0.012)
+    head_width = max(v.co.x for v in probe.data.vertices) - min(v.co.x for v in probe.data.vertices)
+    probe_mesh = probe.data
+    bpy.data.objects.remove(probe, do_unlink=True)
+    bpy.data.meshes.remove(probe_mesh)
+    split = min(v.co.x for v in obj.data.vertices) + head_width + size * 0.05
+    for polygon in obj.data.polygons:
+        polygon.material_index = 1 if polygon.center.x > split else 0
+    return obj
+
+
+def _graffiti():
+    """Anchors for the street art sprayed on the side walls, painted by the
+    site (assets/js/kiosk/graffiti.js), just proud of the corrugation."""
+    screen('graffiti_right', (HW + 0.037, 0.0, 1.27), 1.85, 1.05, rot_z=math.pi / 2)
+    screen('graffiti_left', (-HW - 0.037, 0.08, 1.12), 1.6, 0.9, rot_z=-math.pi / 2)
+
+
 def _sign(M):
-    box('kiosk_signbox', (W + 0.2, 0.3, 0.55), (0.0, -HD, TOP + 0.38), M['sign'])
+    panel = material('sign_panel', (0.07, 0.075, 0.09), roughness=0.6)
+    box('kiosk_signbox', (W + 0.2, 0.3, 0.55), (0.0, -HD, TOP + 0.38), panel)
     trim = Merge('kiosk_signframe')
     y = -HD - 0.16
     for z in (TOP + 0.1, TOP + 0.66):
@@ -80,7 +108,8 @@ def _sign(M):
     for x in (-(W + 0.2) / 2, (W + 0.2) / 2):
         trim.box((0.04, 0.04, 0.6), (x, y, TOP + 0.38), M['frame'])
     trim.finish()
-    text('kiosk_sign_text', 'ДИЗАЙН У МАРА', (0.0, -HD - 0.16, TOP + 0.38), 0.255, M['ink'])
+    # «ДИЗАЙН У МАРАТА»; when the last two bulbs give out it reads «МАРА»
+    _light_letters('kiosk_sign_text', 'ДИЗАЙН У МАРАТА', (0.0, -HD - 0.165, TOP + 0.38), 0.23, tail=2)
     text('glass_tag', 'missing mar', (1.05, -HD - 0.012, GLASS_LOW + 0.12), 0.06, M['paper'], bold=False)
 
 
@@ -209,5 +238,6 @@ def build(M):
     _sign(M)
     _window(M)
     _shutters(M)
+    _graffiti()
     _roof_and_lamp(M)
     _back_door(M)

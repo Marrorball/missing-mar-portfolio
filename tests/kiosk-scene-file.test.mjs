@@ -177,6 +177,19 @@ test('the shutters carry a crowd of small notices instead of plain boxes and 3D 
   assert.ok(!nodes.some(node => /^ad_\d$|^posters_/.test(node.name)), 'old ads and poster boxes gone');
 });
 
+test('the serving window stays clear: no project slot stands in it', () => {
+  const nodes = gltf().nodes;
+  const slots = nodes.filter(node => /^slot_\d+$/.test(node.name));
+  assert.equal(slots.length, 8);
+  assert.ok(slots.every(slot => Math.abs(slot.translation[0]) > 0.4), 'the window spans x -0.3..0.3');
+});
+
+test('the sign is glowing letters, its last two on their own bulbs; graffiti on both sides', () => {
+  const json = gltf();
+  for (const name of ['sign_glow', 'sign_glow_tail']) assert.ok(json.materials.some(mat => mat.name === name), name);
+  for (const name of ['graffiti_left', 'graffiti_right']) assert.ok(json.nodes.some(node => node.name === name), name);
+});
+
 test('the walk round the kiosk has its waypoints', () => {
   const all = names();
   for (const name of ['front_left', 'side_left', 'front_right', 'side_right', 'door_out', 'doorway', 'door_in']) {
