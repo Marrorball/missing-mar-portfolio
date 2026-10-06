@@ -2,6 +2,7 @@
 import math
 from pathlib import Path
 import bpy
+from dims import WALL
 from lib import Merge, empty, material
 
 ROOT = Path(__file__).resolve().parents[2] / 'assets/kiosk'
@@ -332,16 +333,60 @@ def wall_details(M,hw):
         a=k*math.pi/6; r=.092
         clock.bar((x+.003,y+r*math.sin(a),z+r*math.cos(a)),(x+.003,y+(r-.012)*math.sin(a),z+(r-.012)*math.cos(a)),.003,M['ink'])
     clock.bar((x+.005,y,z),(x+.005,y-.064,z+.041),.004,M['ink']); clock.bar((x+.006,y,z),(x+.006,y+.027,z+.042),.006,M['ink']); clock.finish()
-    # hs_calendar answers a click with the photo's credit (CC BY-SA 3.0)
+    wall_calendar(hw)
+
+CALENDAR=(-.15,.30,1.93,.44)   # centre y, width, top, height of the sheet (0.30 x 0.44 m)
+
+def _sheet(batch, wall, mat, lift=0.0, drop=0.0, v0=0.0, uvs=True):
+    """A paper sheet hanging from its top edge: off the wall by the binding,
+    bowing out a little more towards the bottom, with a soft ripple."""
+    cy,width,top,height=CALENDAR; nu,nv=8,14
+    vertices=[]; coords=[]
+    for j in range(nv+1):
+        v=v0+(1-v0)*j/nv
+        for i in range(nu+1):
+            u=i/nu
+            off=.006+.010*v**1.6-lift+.0012*v*math.sin(u*math.pi*3+.6)
+            vertices.append((wall-off,cy+width/2-width*u,top-(height+drop)*v)); coords.append((u,1-v))
+    faces=[]
+    for j in range(nv):
+        for i in range(nu):
+            a=j*(nu+1)+i; faces.append((a,a+nu+1,a+nu+2,a+1))   # facing -X, into the kiosk
+    mesh(batch,vertices,faces,mat,coords if uvs else None,smooth=True)
+
+def wall_calendar(hw):
+    """June 2004 on the right wall, the way a wire-bound calendar really hangs:
+    one thin printed sheet on a nail, the rest of the year showing as an edge
+    of paper under it, twin wire loops through the punched holes and the
+    hanger in the notch. hs_calendar answers a click (hotspots.js)."""
+    wall=hw-WALL
+    cy,width,top,_=CALENDAR
     holder=empty('hs_calendar',(0,0,0))
-    calendar=Merge('calendar_print')
-    x=hw-.090
-    mesh(calendar,[(x,.04,1.427),(x,-.34,1.427),(x,-.34,1.665),(x,.04,1.665)],[(0,1,2,3)],textured('calendar_june_2004','calendar-june-2004.png'),[(0,0),(1,0),(1,1),(0,1)])
-    page=calendar.finish(parent=holder)
+    page=Merge('calendar_print')
+    _sheet(page,wall,textured('calendar_june_2004','calendar-june-2004.jpg'))
+    page=page.finish(parent=holder)
     page['year']=2004; page['month']=6; page['marked_day']=30
-    picture=Merge('calendar_concert_picture')
-    mesh(picture,[(x,.04,1.670),(x,-.34,1.670),(x,-.34,1.928),(x,.04,1.928)],[(0,1,2,3)],textured('calendar_tatu_photo','calendar-tatu.jpg'),[(0,0),(1,0),(1,1),(0,1)])
-    picture.finish(parent=holder)
+    binding=Merge('calendar_binding')
+    paper=material('calendar_paper',(.9,.89,.86))
+    for k in (1,2,3):   # July to December, a little lower and closer to the wall each
+        _sheet(binding,wall,paper,lift=.0007*k,drop=.0013*k,v0=.8,uvs=False)
+    wire=material('calendar_wire',(.62,.63,.66),roughness=.35,metallic=.7)
+    x=wall-.006
+    pitch=.0088
+    for k in range(int(width/pitch)):
+        y=cy+width/2-(k+.5)*pitch
+        if abs(y-cy)<.014: continue
+        for dy in (-.0012,.0012):   # twin loop: two strands per hole
+            ring(binding,(x,y+dy,top-.0025),.0055,.0006,wire,plane='XZ',start=.6,end=2*math.pi-.6,steps=10)
+    # the hanger hooks over a nail in the wall above the notch
+    nail=(wall-.004,cy,top+.03)
+    for side in (-1,1):
+        binding.bar((x-.004,cy+side*.012,top-.002),(nail[0]-.002,cy+side*.003,nail[2]+.002),.0013,wire)
+    binding.bar((nail[0]-.002,cy-.003,nail[2]+.002),(nail[0]-.002,cy+.003,nail[2]+.002),.0013,wire)
+    steel=material('calendar_nail',(.25,.25,.26),roughness=.5,metallic=.6)
+    binding.bar((wall,cy,nail[2]),(wall-.006,cy,nail[2]),.0015,steel)
+    binding.cylinder(.0035,.002,(wall-.007,cy,nail[2]),steel,segments=10,rot=(0,math.pi/2,0))
+    binding.finish(parent=holder)
 
 def soften(obj, amount=.014):
     bevel=obj.modifiers.new('softened_casing_edges','BEVEL'); bevel.width=amount; bevel.segments=3

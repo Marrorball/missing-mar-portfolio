@@ -32,8 +32,7 @@ export const HOTSPOTS = {
     label: 'Календарь',
     action: {
       type: 'note',
-      // the credit stays while the calendar photo is the CC BY-SA one
-      text: 'О, тридцатое июня — это мой день рождения! (фото: Дмитрий Азаров, CC BY-SA 3.0)'
+      text: 'О, тридцатое июня — это мой день рождения!'
     }
   },
   hs_sign_away: {

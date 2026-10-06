@@ -256,14 +256,19 @@ test('the calculator is flat with its display away from the seller and keys near
   assert.ok(display.min[2] > keys.max[2], 'screen at the front, keypad faces the seller');
 });
 
-test('the red calendar carries June 2004 day 30 and an embedded concert photo', () => {
+test('the wall calendar is one printed sheet hanging flush on a nail, no board behind it', () => {
   const json = gltf();
   const page = json.nodes.find(node => node.name === 'calendar_print');
   assert.deepEqual([page.extras.year, page.extras.month, page.extras.marked_day], [2004,6,30]);
-  assert.ok(json.nodes.some(node => node.name === 'calendar_concert_picture'));
-  for (const name of ['calendar_june_2004', 'calendar_tatu_photo']) {
-    const mat = json.materials.find(item => item.name === name);
-    const texture = json.textures[mat?.pbrMetallicRoughness?.baseColorTexture?.index];
-    assert.ok(texture && json.images[texture.source]?.bufferView !== undefined, `${name} embedded`);
-  }
+  assert.ok(json.nodes.some(node => node.name === 'calendar_binding'), 'wire binding, hanger and nail');
+  assert.ok(!json.nodes.some(node => node.name === 'calendar_concert_picture'), 'photo and dates share one sheet');
+  const mat = json.materials.find(item => item.name === 'calendar_june_2004');
+  const texture = json.textures[mat?.pbrMetallicRoughness?.baseColorTexture?.index];
+  assert.ok(texture && json.images[texture.source]?.bufferView !== undefined, 'printed sheet embedded');
+  // glTF is Y-up: Blender x stays x. The sheet hangs within 2 cm of the inner wall face (x = 1.44).
+  const accessor = json.accessors[json.meshes[page.mesh].primitives[0].attributes.POSITION];
+  assert.ok(accessor.max[0] < 1.44 && accessor.min[0] > 1.42, `sheet x ${accessor.min[0]}..${accessor.max[0]}`);
+  assert.ok(!json.materials.some(item => item.name === 'away') ||
+    !json.nodes.some(node => /^interior/.test(node.name) && json.meshes[node.mesh]?.primitives.some(
+      primitive => json.materials[primitive.material]?.name === 'away')), 'no coral board inside');
 });

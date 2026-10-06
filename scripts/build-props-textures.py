@@ -115,27 +115,64 @@ for y in range(256):
         if rng.random()<.23: d.point((x,y),fill='#84918a')
 blanket.save(OUT/'blanket-plaid.png',optimize=True)
 
-# A separate legible calendar grid; the concert photo panel remains a separate
-# image/mesh so month typography and dates are always deterministic.
+# The wall calendar, one printed sheet: the photo on top, then June 2004 laid
+# out the Russian way (weekdays down the side, weeks across), May and July in
+# small on the right, the punched holes for the wire binding along the top and
+# the notch for the hanger. 720 x 1056 px is the 0.30 x 0.44 m sheet.
 import calendar as calendar_dates
 import math
-cal=Image.new('RGB',(512,320),'#f5ecd5'); d=ImageDraw.Draw(cal)
-d.rectangle((0,0,511,319),outline='#a92f27',width=8)
-d.rectangle((0,0,512,60),fill='#a92f27'); centered(d,(256,31),'ИЮНЬ 2004',34,'#fff4dc')
-for col,t in enumerate(['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС']): centered(d,(45+col*70,84),t,22,'#a92f27')
-for row,week in enumerate(calendar_dates.monthcalendar(2004,6)):
-    for col,day in enumerate(week):
-        if not day: continue
-        x,y=45+col*70,126+row*39
-        centered(d,(x,y),str(day),30,'#ae2f26' if col>4 else '#382a24')
-        if day==30:
-            points=[]
-            for k in range(81):
-                a=2*math.pi*k/80; wobble=1.3*math.sin(a*3+.7)+.8*math.sin(a*7)
-                points.append((x+(28+wobble)*math.cos(a),y+(20+wobble)*math.sin(a)))
-            d.line(points,fill='#ca2926',width=4)
-            d.arc((x-29,y-22,x+28,y+21),210,290,fill='#c72a25',width=3)
-cal.save(OUT/'calendar-june-2004.png',optimize=True)
-photo=Image.open(OUT/'props-source/calendar-tatu.jpg').convert('RGB')
-photo.thumbnail((768,526))
-photo.save(OUT/'calendar-tatu.jpg',quality=88,optimize=True)
+CAL_W, CAL_H = 720, 1056
+WALL_PAINT = '#8f9ca3'          # the kiosk wall seen through the holes
+RED, INK, GREY = '#c8202a', '#2a2522', '#77706a'
+def face(name, size): return ImageFont.truetype(f'/System/Library/Fonts/Supplemental/{name}.ttf', size)
+cal = Image.new('RGB', (CAL_W, CAL_H), '#f8f6f0'); d = ImageDraw.Draw(cal)
+rng = random.Random(2004)
+for _ in range(9000):           # paper grain
+    x, y = rng.randrange(CAL_W), rng.randrange(CAL_H); d.point((x, y), fill='#ece8df')
+# wire-o holes every 8.8 mm, none where the hanger notch is
+pitch = CAL_W * 0.0088 / 0.30
+for k in range(int(CAL_W / pitch)):
+    x = (k + 0.5) * pitch
+    if abs(x - CAL_W / 2) < 34: continue
+    d.rounded_rectangle((x - 4, 12, x + 4, 24), 2, fill=WALL_PAINT)
+d.pieslice((CAL_W / 2 - 26, -26, CAL_W / 2 + 26, 26), 0, 180, fill=WALL_PAINT)
+# the photo, cropped from the top of the heads down to the belts
+photo = Image.open(OUT / 'props-source/calendar-tatu.jpg').convert('RGB')
+box = (36, 46, CAL_W - 36, 628)
+frame_w, frame_h = box[2] - box[0], box[3] - box[1]
+crop_w = 1040; crop_h = round(crop_w * frame_h / frame_w)
+photo = photo.crop((80, 60, 80 + crop_w, 60 + crop_h)).resize((frame_w, frame_h), Image.LANCZOS)
+cal.paste(photo, box[:2])
+d.text((box[2], box[3] + 6), 't.A.T.u.', font=face('Arial Italic', 15), fill=GREY, anchor='ra')
+d.text((40, 708), 'ИЮНЬ', font=face('Arial Bold', 60), fill=RED, anchor='ls')
+d.text((CAL_W - 40, 708), '2004', font=face('Arial Bold', 60), fill='#4a4440', anchor='rs')
+d.line((40, 724, CAL_W - 40, 724), fill=RED, width=3)
+DAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
+HOLIDAYS = {5: {1, 2, 9}, 6: {12}, 7: set()}
+def month(m, x0, y0, col, row, size, label_size, labels=True):
+    weeks = calendar_dates.monthcalendar(2004, m)
+    for r, name in enumerate(DAYS):
+        y = y0 + r * row
+        if labels:
+            d.text((x0, y), name, font=face('Arial Bold', label_size), fill=RED if r > 4 else GREY, anchor='lm')
+        for c, week in enumerate(weeks):
+            day = week[r]
+            if not day: continue
+            red = r > 4 or day in HOLIDAYS[m]
+            d.text((x0 + col * (c + 1.4), y), str(day), font=face('Arial Bold' if size > 20 else 'Arial', size),
+                   fill=RED if red else INK, anchor='rm')
+    return weeks
+weeks = month(6, 44, 760, 76, 41, 34, 22)
+# the 30th circled in red marker, a little lopsided
+c = next(c for c, week in enumerate(weeks) if 30 in week)
+x, y = 44 + 76 * (c + 1.4) - 18, 760 + 2 * 41
+points = []
+for k in range(91):
+    a = 2.15 * math.pi * k / 90 - 0.4; wobble = 1.4 * math.sin(a * 3 + .7) + .8 * math.sin(a * 7)
+    points.append((x + (32 + wobble + k * .05) * math.cos(a), y + (22 + wobble) * math.sin(a)))
+d.line(points, fill='#d4232a', width=4, joint='curve')
+d.line((476, 744, 476, 1030), fill='#ddd6cb', width=2)
+for m, name, y0 in ((5, 'МАЙ', 750), (7, 'ИЮЛЬ', 902)):
+    d.text((500, y0), name, font=face('Arial Bold', 17), fill=RED, anchor='lm')
+    month(m, 500, y0 + 24, 27, 17.5, 14, 11)
+cal.save(OUT / 'calendar-june-2004.jpg', quality=90, optimize=True)
