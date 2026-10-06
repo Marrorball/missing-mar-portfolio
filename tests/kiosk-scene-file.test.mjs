@@ -132,6 +132,18 @@ test('the TV and the player are dark plastic', () => {
   assert.deepEqual(used, ['tv_plastic']);
 });
 
+test('the price sheet hangs on the right shutter, the flyer is printed on the sheet itself', () => {
+  const json = gltf();
+  const index = name => json.nodes.findIndex(node => node.name === name);
+  const parentOf = name => json.nodes.find(node => (node.children || []).includes(index(name)));
+  assert.equal(parentOf('hs_pricelist').name, 'shutter_right_hinge');
+  const anchor = json.nodes.find(node => node.name === 'screen_price');
+  assert.equal(anchor.extras.width / anchor.extras.height, 32 / 45, 'same proportions as the printed layout');
+  assert.ok(anchor.extras.width >= 0.4, 'readable from the street');
+  assert.equal(parentOf('screen_price').name, 'hs_pricelist');
+  assert.ok(!names().has('flyer_title'), 'no extruded title poking through the printed flyer');
+});
+
 test('the walk round the kiosk has its waypoints', () => {
   const all = names();
   for (const name of ['front_left', 'side_left', 'front_right', 'side_right', 'door_out', 'doorway', 'door_in']) {

@@ -8,7 +8,7 @@ export function renderHelpBar() {
     <a href="#about">Обо мне</a>
     <button type="button" data-action="contacts-card" aria-expanded="false" aria-controls="contact-card">Контакты</button>
     <button type="button" data-action="kiosk-help">Как тут ходить?</button>
-    <button type="button" data-action="kiosk-focus" data-preset="inside">Внутрь</button>
+    <button type="button" data-action="kiosk-inside">Внутрь</button>
   </nav>`;
 }
 

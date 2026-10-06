@@ -19,7 +19,7 @@ import {
   presetLimits
 } from './hotspots.js';
 import { addLights, addSky, addSnow, createComposer, flicker, setupShadows, weatherMaterials } from './atmosphere.js';
-import { QUALITY, qualityTier } from './weather.js';
+import { QUALITY, qualityTier, tvWarmUp } from './weather.js';
 
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
@@ -71,6 +71,7 @@ export async function createKioskScene({
   onPick = () => {},
   onRackFace = () => {},
   onEmptyClick = () => {},
+  onStreetClick = () => {},
   onArrive = () => {}
 }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -220,7 +221,10 @@ export async function createKioskScene({
     hovered = name;
     for (const [key, materials] of highlight) {
       for (const material of materials) {
-        if (material.emissive) material.emissive.setHex(key === name ? HOVER : 0x000000);
+        if (!material.emissive) continue;
+        // a painted sheet already glows by its own picture: brighten it instead
+        if (material.emissiveMap) material.emissiveIntensity = material.userData.glow * (key === name ? 2.4 : 1);
+        else material.emissive.setHex(key === name ? HOVER : 0x000000);
       }
     }
   }
@@ -562,9 +566,9 @@ export async function createKioskScene({
   // Paints a canvas onto a Blender anchor (marker on the shutter, the ad on
   // the billboard). `draw(context, width, height)` works in canvas pixels.
   // `pickAs` lets a painted surface answer clicks for the object it covers.
-  function paintAnchor(name, draw, { transparent = true, lit = false, pickAs = '' } = {}) {
+  function paintAnchor(name, draw, { transparent = true, lit = false, glow = 0, pickAs = '' } = {}) {
     const anchor = root.getObjectByName(name);
-    if (!anchor) return;
+    if (!anchor) return null;
     const { width, height } = anchor.userData;
     const paint = document.createElement('canvas');
     paint.width = 1024;
@@ -574,14 +578,56 @@ export async function createKioskScene({
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 4;
     const material = lit
-      ? new THREE.MeshStandardMaterial({ map: texture, transparent, roughness: 0.9 })
+      ? new THREE.MeshStandardMaterial({ map: texture, transparent, roughness: 0.9,
+        ...(glow && { emissive: 0xffffff, emissiveMap: texture, emissiveIntensity: glow }) })
       : new THREE.MeshBasicMaterial({ map: texture, transparent });
+    material.userData.glow = glow;
     const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
     plane.name = pickAs || `${name}_paint`;
     plane.position.z = 0.002;
     plane.receiveShadow = true;
     anchor.add(plane);
+    if (pickAs) {
+      if (!highlight.has(pickAs)) highlight.set(pickAs, []);
+      highlight.get(pickAs).push(material);
+    }
     renderer.shadowMap.needsUpdate = true;
+    return plane;
+  }
+
+  // A printed sheet on a shutter (flyer, price list), lit like paper. The
+  // page laid over it in a close-up has the same layout.
+  function paintSheet(name, draw, pickAs) {
+    // a little glow, as if the street lamp caught it, so it reads at night
+    return paintAnchor(name, draw, { transparent: false, lit: true, glow: 0.35, pickAs });
+  }
+
+  // The TV is dark until someone steps into the kiosk, then it blinks and
+  // comes on by itself with the channel list.
+  let tvPicture = null;
+  let tvOnSince = null;
+  function setTvPicture(draw) {
+    tvPicture = paintAnchor('screen_tv', draw, { transparent: false, pickAs: 'hs_tv' });
+    if (tvPicture) tvPicture.material.color.setScalar(0.03);
+  }
+  function updateTv(now) {
+    if (!tvPicture) return;
+    const inKiosk = withinWalls(camera.position);
+    if (!inKiosk) tvOnSince = null;
+    else tvOnSince ??= now;
+    const level = tvOnSince === null ? 0 : reducedMotion ? 1 : tvWarmUp(now - tvOnSince);
+    tvPicture.material.color.setScalar(0.03 + 1.2 * level);
+  }
+
+  // From inside, a click that lands on the street (through the door, the
+  // window, past the grille) means "out".
+  function towardStreet(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    pointer.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(pointer, camera);
+    const hit = raycaster.intersectObject(root, true).find(entry => isShown(entry.object)
+      && !entry.object.material?.transparent && entry.object.name !== 'kiosk_grille');
+    return !hit || !withinWalls(hit.point);
   }
 
   function setWallText(lines) {
@@ -758,6 +804,7 @@ export async function createKioskScene({
     const name = pick(event.clientX, event.clientY);
     if (name) onPick(name);
     else if (!flight && presetLimits(current).locked) onEmptyClick();
+    else if (!flight && current === 'inside' && towardStreet(event.clientX, event.clientY)) onStreetClick();
   });
   canvas.addEventListener('pointercancel', () => {
     down = null;
@@ -863,6 +910,7 @@ export async function createKioskScene({
     const elapsed = now - (lastFrame || now);
     const dt = Math.min(elapsed, 0.1);
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * (1 - Math.exp(-elapsed * 10));
+    updateTv(performance.now());
     lastFrame = now;
     sky.position.copy(camera.position);
     snow.update(dt, now);
@@ -878,6 +926,8 @@ export async function createKioskScene({
 
   return {
     focus,
+    paintSheet,
+    setTvPicture,
     snapshot,
     restore,
     spinRack,

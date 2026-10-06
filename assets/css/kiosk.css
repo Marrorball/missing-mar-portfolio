@@ -326,24 +326,8 @@ body.is-pointing .kiosk-stage canvas {
   outline-offset: 2px;
 }
 
-.kiosk-inside-hint {
-  position: fixed;
-  left: 50%;
-  bottom: 84px;
-  width: max-content;
-  max-width: calc(100vw - 32px);
-  padding: 8px 12px;
-  background: #fffbe9;
-  color: var(--tag-ink);
-  box-shadow: var(--tag-shadow);
-  font: 400 15px/1.4 'PT Sans', Arial, sans-serif;
-  text-align: center;
-  transform: translateX(-50%) rotate(-.8deg);
-}
-.kiosk-chrome .kiosk-inside-hint { pointer-events: none; }
 
 @media (max-width: 640px) {
-  .kiosk-inside-hint { bottom: calc(124px + env(safe-area-inset-bottom)); }
   .rack-controls { bottom: calc(116px + env(safe-area-inset-bottom)); }
   .contact-card, .kiosk-note { bottom: calc(122px + env(safe-area-inset-bottom)); }
   .kiosk-help { bottom: calc(12px + env(safe-area-inset-bottom)); }
@@ -356,12 +340,10 @@ body.is-pointing .kiosk-stage canvas {
 
 /* the remote and the rack's arrows wait until you get there */
 .tv-remote,
-.rack-controls,
-.kiosk-inside-hint { transition: opacity .3s; }
+.rack-controls { transition: opacity .3s; }
 
 body.is-travelling .tv-remote,
-body.is-travelling .rack-controls,
-body.is-travelling .kiosk-inside-hint {
+body.is-travelling .rack-controls {
   opacity: 0;
   pointer-events: none;
 }

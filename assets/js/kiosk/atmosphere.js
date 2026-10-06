@@ -8,6 +8,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { SNOW_BOUNDS, flakePositions, flickerLevel } from './weather.js';
 
 const WARM = 0xffb36b;     // ~2700K bulbs
+const TUBE = 0xfff1df;     // old fluorescent tubes, yellowed with age
 const SODIUM = 0xffa04a;   // street lamp
 const HORIZON = 0x464f7e;  // violet haze at the horizon, also the fog
 const SHADOW_RADIUS = 7;   // only things near the kiosk cast shadows
@@ -85,7 +86,7 @@ export function addLights(scene, root, quality) {
   moon.position.set(-8, 14, -6);
   scene.add(moon);
 
-  const inside = ['bulb_0', 'bulb_1', 'bulb_2'].map(name => point(scene, root, name, { color: WARM, intensity: 2.2, distance: 5 }));
+  const inside = ['tube_0', 'tube_1'].map(name => point(scene, root, name, { color: TUBE, intensity: 2.2, distance: 5, drop: 0.5 }));
   point(scene, root, 'bulb_outside', { color: WARM, intensity: 1.6, distance: 4 });
   // the bulb sits on the axis; its light hangs out over the street so the
   // face you look at is lit, not just grazed from above
@@ -99,8 +100,8 @@ export function addLights(scene, root, quality) {
     spot(scene, root, `light_billboard_${index}`, 'light_billboard_target', { color: 0xdfe6ff, intensity: 3.5, distance: 6, angle: 0.7 });
   }
 
-  // The flickering bulb gets its own material so the others stay steady.
-  const bulb = root.getObjectByName('bulb_1');
+  // The flickering tube gets its own material so the other stays steady.
+  const bulb = root.getObjectByName('tube_1');
   if (bulb?.isMesh) bulb.material = bulb.material.clone();
   return { light: inside[1], bulb, base: inside[1]?.intensity ?? 0 };
 }

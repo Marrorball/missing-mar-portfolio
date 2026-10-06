@@ -3,6 +3,7 @@
 // other value is escaped.
 import { escapeHtml } from '../render.js';
 import { channelNumber } from './channels.js';
+import { PRICE_ROWS, tearOffLines } from './paper.js';
 
 function httpsUrl(value = '') {
   try {
@@ -127,18 +128,6 @@ export function renderAboutBoard(site = {}, resume = {}, page = {}) {
   </article>`;
 }
 
-// The price sheet is printed with blanks until there are prices to put in.
-export function renderPriceBoard() {
-  const blank = '<li><span class="price-item"></span><span class="price-dots"></span><b>— ₽</b></li>';
-  return `<article class="board-page board-price">
-    ${boardTabs('price')}
-    <h1>Прайс</h1>
-    <p class="board-role">Дизайн у Мара · услуги</p>
-    <ul class="price-list" aria-hidden="true">${blank.repeat(5)}</ul>
-    <p class="price-note">Скоро здесь будет прайс на услуги.</p>
-  </article>`;
-}
-
 export function renderPageBoard(page = {}) {
   return `<article class="board-page">
     ${boardTabs('')}
@@ -164,20 +153,37 @@ export function renderTerminalScreen(links = []) {
   </article>`;
 }
 
+// Same layout as the sheet painted on the shutter (paper.js), so the page
+// lands on it without a jump.
 export function renderFlyer(links = [], owner = {}) {
   return `<article class="flyer-page">
     <span class="flyer-tape flyer-tape-left" aria-hidden="true"></span>
     <span class="flyer-tape flyer-tape-right" aria-hidden="true"></span>
     <h1>ПРОПАЛ ДИЗАЙНЕР</h1>
-    ${owner.profileImage ? `<img src="${escapeHtml(owner.profileImage)}" alt="${escapeHtml(owner.name || '')}">` : ''}
+    ${owner.profileImage ? `<img src="${escapeHtml(owner.profileImage)}" alt="${escapeHtml(owner.name || '')}">` : '<span class="flyer-photo" aria-hidden="true"></span>'}
     <p class="flyer-name">${escapeHtml(owner.name || '')}</p>
-    <p>${meta(owner.role, owner.location)}</p>
+    <p class="flyer-role">${meta(owner.role, owner.location)}</p>
     <p class="flyer-ask">Нашедшего просьба написать:</p>
     <ul class="flyer-contacts">
       ${links.map(link => `<li><a href="${escapeHtml(link.href)}"${externalAttrs(link)}>${escapeHtml(link.label)}: ${escapeHtml(link.value)}</a></li>`).join('')}
     </ul>
     <div class="flyer-tabs" aria-label="Оторвать контакт">
-      ${links.map(link => `<button type="button" data-action="copy-contact" data-value="${escapeHtml(link.value)}">${escapeHtml(link.value)}</button>`).join('')}
+      ${links.map(link => `<button type="button" data-action="copy-contact" data-value="${escapeHtml(link.value)}" aria-label="Скопировать ${escapeHtml(link.value)}">${tearOffLines(link.value).map(line => `<span>${escapeHtml(line)}</span>`).join('')}</button>`).join('')}
     </div>
+  </article>`;
+}
+
+// The price list taped to the right shutter, printed with blanks until there
+// are prices to put in (same layout as drawPriceSheet in paper.js).
+export function renderPriceSheet() {
+  const blank = '<li><span class="price-item"></span><span class="price-dots"></span><b>— ₽</b></li>';
+  return `<article class="price-sheet">
+    <span class="flyer-tape flyer-tape-left" aria-hidden="true"></span>
+    <span class="flyer-tape flyer-tape-right" aria-hidden="true"></span>
+    <h1>Прайс</h1>
+    <p class="price-sheet-bar">Дизайн у Мара · услуги</p>
+    <ul class="price-sheet-rows" aria-hidden="true">${blank.repeat(PRICE_ROWS)}</ul>
+    <p class="price-sheet-note"><span>Скоро здесь будет</span> <span>прайс на услуги.</span></p>
+    <a class="price-sheet-about" href="#about">Обо мне — на щите за ларьком</a>
   </article>`;
 }

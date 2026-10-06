@@ -36,6 +36,7 @@ CAMERAS = {
     'billboard': ((0.0, 1.4, 4.2), (0.0, 6.0, 4.2)),
     'terminal': ((3.0, -1.35, 1.25), (3.0, -0.6, 1.225)),
     'flyer': ((-1.79, -1.93, 1.55), (-1.938, -1.108, 1.55)),
+    'price': ((1.844, -1.931, 1.55), (1.988, -1.113, 1.55)),
 }
 
 # Waypoints for walking between the street and the inside: round the kiosk

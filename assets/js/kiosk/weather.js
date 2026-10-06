@@ -36,6 +36,18 @@ export function flickerLevel(t) {
   return 0.55 + 0.45 * Math.abs(Math.sin(cycle * 37));
 }
 
+// A CRT coming on by itself: a couple of blinks, then the picture settles.
+// `ms` is the time since someone stepped into the kiosk; 0..1 brightness.
+export function tvWarmUp(ms) {
+  if (ms < 0) return 0;
+  if (ms < 90) return 0.85;
+  if (ms < 200) return 0.08;
+  if (ms < 300) return 1;
+  if (ms < 420) return 0.15;
+  if (ms < 900) return Math.min(1, (0.55 + 0.45 * (ms - 420) / 480) * (0.88 + 0.12 * Math.sin(ms * 0.09)));
+  return 1;
+}
+
 export function qualityTier({ width, cores = 8 }) {
   return width <= 760 || cores <= 4 ? 'low' : 'high';
 }

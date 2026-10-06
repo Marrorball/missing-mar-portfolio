@@ -1,6 +1,6 @@
 """Inside the kiosk: the seller's counter, chair with a sweater, ribbed
 heater, stock shelves and boxes, crates, wall clock, calendar, poster, a
-jacket on a hook, hanging bulbs, the TV on a DVD player, a can of cola and
+jacket on a hook, fluorescent tubes on the ceiling, the TV on a DVD player, a can of cola and
 the radio. The DVD rack stands on the street (rack.py)."""
 
 import math
@@ -10,10 +10,11 @@ import cat
 
 from can import build_can
 from dims import CHAIR, DOOR_L, HD, HW, PLINTH, TOP, TV, W
-from lib import Merge, box, cylinder, screen
+from lib import Merge, box, material, screen
 
 COUNTER_Y = -0.60
 COUNTER_TOP = PLINTH + 0.9
+TUBES, TUBE_Y = (-0.72, 0.62), -0.1     # fluorescent fittings along the ceiling
 
 
 def _room(M, rng):
@@ -65,10 +66,23 @@ def _room(M, rng):
     room.box((0.22, 0.3, 0.02), (0.15, COUNTER_Y + 0.02, COUNTER_TOP + 0.01), M['goods_palette'][2])
     room.box((0.3, 0.22, 0.1), (-0.85, COUNTER_Y, COUNTER_TOP + 0.05), M['device'])
 
-    for index, (x, y) in enumerate(((-0.75, -0.2), (0.0, 0.1), (0.75, -0.2))):
-        room.bar((x, y, TOP), (x, y, TOP - 0.25), 0.008, M['ink'])
-        cylinder(f'bulb_{index}', 0.035, 0.08, (x, y, TOP - 0.29), M['bulb'])
     room.finish()
+
+
+def _tubes(M):
+    """Two ceiling fittings of the old-block kind, two bare fluorescent tubes
+    each. The site hangs a light on every tube_* (assets/js/kiosk/atmosphere.js)."""
+    glow = material('tube', (0.97, 0.98, 0.94), emission=1.8)
+    for index, x in enumerate(TUBES):
+        fitting = Merge(f'tube_fitting_{index}')
+        fitting.box((1.26, 0.2, 0.04), (x, TUBE_Y, TOP - 0.02), M['plastic_light'])
+        for side in (-0.6, 0.6):
+            fitting.box((0.035, 0.17, 0.05), (x + side, TUBE_Y, TOP - 0.055), M['plastic_light'])
+        fitting.finish()
+        tubes = Merge(f'tube_{index}')
+        for dy in (-0.05, 0.05):
+            tubes.cylinder(0.013, 1.16, (0.0, dy, 0.0), glow, segments=10, rot=(0.0, math.pi / 2, 0.0))
+        tubes.finish((x, TUBE_Y, TOP - 0.065))
 
 
 def _tv(M):
@@ -91,6 +105,7 @@ def _tv(M):
 def build(M):
     rng = random.Random(5)
     _room(M, rng)
+    _tubes(M)
     _tv(M)
     cat.build(M)
     build_can('cola_can_counter', (0.62, COUNTER_Y + 0.05, COUNTER_TOP + 0.01), math.pi - 0.5, M)  # label to the seller

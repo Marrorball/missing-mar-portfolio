@@ -1,7 +1,7 @@
 import { loadContent } from './content.js';
 import { renderLoadError } from './render.js';
 import { parseRoute } from './router.js';
-import { neighbourId } from './kiosk/channels.js';
+import { channelNumber, neighbourId } from './kiosk/channels.js';
 import { contactLinks } from './kiosk/contacts.js';
 import { assignDiscs } from './kiosk/discs.js';
 import { HOTSPOTS, LOCKED_PRESETS, ROUTE_PRESETS, hotspotForNode } from './kiosk/hotspots.js';
@@ -9,12 +9,15 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
-  renderPriceBoard,
+  renderPriceSheet,
   renderTerminalScreen,
   renderTvChannel,
   renderTvGuide
 } from './kiosk/pages.js';
+import { drawFlyer, drawPriceSheet } from './kiosk/paper.js';
+import { isInside } from './kiosk/routes.js';
 import { assignHits } from './kiosk/slots.js';
+import { drawTeletext } from './kiosk/teletext.js';
 import {
   renderBackButton,
   renderContactCard,
@@ -125,7 +128,7 @@ function rackTitle(face) {
 }
 
 function chromeFor(name) {
-  if (name === 'inside') return renderBackButton() + '<div class="kiosk-inside-hint">Тяни мышью или пальцем — осмотрись вокруг. Можно и стрелками.</div>';
+  if (name === 'inside') return renderBackButton();
   if (!LOCKED_PRESETS.includes(name)) return '';
   if (name === 'rack') return renderBackButton() + renderRackControls(rackTitle(state.rackFace));
   if (name === 'tv') return renderBackButton() + renderRemote();
@@ -146,6 +149,7 @@ function focusPreset(name, options) {
   }
   state.preset = name;
   state.hash = currentHash();
+  syncDoorButton();
   // no scene, no journey: the remote must not wait for an arrival that never comes
   document.body.classList.toggle('is-travelling', Boolean(state.kiosk));
   state.kiosk?.focus(name, options);
@@ -187,6 +191,19 @@ function goHome() {
   focusPreset('home');
 }
 
+// Inside, the help bar's «Внутрь» becomes the way out.
+function syncDoorButton() {
+  const button = document.querySelector('[data-action="kiosk-inside"]');
+  if (button) button.textContent = isInside(state.preset) ? 'Выйти' : 'Внутрь';
+}
+
+// Out of the kiosk: back to where you last stood outside, or the overview.
+function exitKiosk() {
+  while (state.trail.length && isInside(state.trail.at(-1).preset)) state.trail.pop();
+  if (state.trail.length) goBack();
+  else goHome();
+}
+
 // Steps back to where you stood before this close-up: the same spot and
 // angle for a free view, the same object (and page) for a close-up.
 function goBack() {
@@ -211,6 +228,7 @@ function arriveBack(entry) {
   }
   state.preset = entry.preset;
   state.hash = currentHash();
+  syncDoorButton();
   document.body.classList.add('is-travelling');
   state.kiosk.restore(entry.view);
   document.querySelector('#kiosk-closeup-slot').innerHTML = chromeFor(entry.preset);
@@ -337,7 +355,7 @@ function showRoute() {
   }
 
   if (route.view === 'price') {
-    openScreen('billboard', renderPriceBoard(), { boardFace: 2 });
+    openScreen('price', renderPriceSheet());
     announce('Прайс');
     return;
   }
@@ -364,6 +382,31 @@ function showRoute() {
   else focusPreset('home');
 }
 
+function loadImage(src) {
+  return new Promise(resolve => {
+    if (!src) return resolve(null);
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
+}
+
+// The flyer and the price list printed on the shutters, and the channel list
+// the TV shows when someone comes in.
+async function paintSheets() {
+  const { site, projects } = state.bundle;
+  const owner = site.owner || {};
+  const links = contactLinks(site.contacts);
+  const photo = await loadImage(owner.profileImage);
+  state.kiosk?.paintSheet('screen_flyer', (context, width, height) => drawFlyer(context, width, height, {
+    name: owner.name, role: owner.role, location: owner.location, links, photo
+  }), 'hs_flyer');
+  state.kiosk?.paintSheet('screen_price', drawPriceSheet, 'hs_pricelist');
+  state.kiosk?.setTvPicture((context, width, height) => drawTeletext(context, width, height,
+    projects.map((project, index) => ({ number: channelNumber(index), title: project.title || '' }))));
+}
+
 async function mountKiosk() {
   const loading = document.querySelector('#kiosk-loading-slot');
   try {
@@ -375,6 +418,7 @@ async function mountKiosk() {
       onHover: showLabel,
       onPick: runAction,
       onEmptyClick: goBack,
+      onStreetClick: exitKiosk,
       onArrive: () => document.body.classList.remove('is-travelling'),
       onRackFace: face => {
         state.rackFace = face;
@@ -387,8 +431,10 @@ async function mountKiosk() {
     // canvas lettering needs its faces loaded first (Cyrillic subsets too)
     Promise.all([
       document.fonts.ready,
-      ...['700 40px "PT Sans Narrow"', '400 40px "PT Sans"'].map(font => document.fonts.load(font, 'МАРАТ mar').catch(() => []))
+      ...['700 40px "PT Sans Narrow"', '400 40px "PT Sans"', 'italic 400 40px "PT Sans"', '400 40px "PT Mono"']
+        .map(font => document.fonts.load(font, 'МАРАТ mar').catch(() => []))
     ]).then(() => {
+      paintSheets();
       state.kiosk.setProjectArt(state.bundle.projects, [...state.hits, ...state.discs], state.bundle.site.categories);
       state.kiosk.setWallText(['ПИШИТЕ:', ...contactLinks(state.bundle.site.contacts)
         .filter(link => link.kind !== 'behance')
@@ -403,7 +449,7 @@ async function mountKiosk() {
   } catch (error) {
     console.error(error);
     state.kiosk = null;
-    document.querySelector('.kiosk-help [data-preset="inside"]').hidden = true;
+    document.querySelector('.kiosk-help [data-action="kiosk-inside"]').hidden = true;
     loading.innerHTML = '';
     showNote('Ларёк не открылся на этом устройстве. Вот всё списком.');
     if (parseRoute(window.location.hash).view === 'home') window.location.hash = '#catalog';
@@ -421,6 +467,10 @@ document.addEventListener('click', event => {
   const step = Number(element.dataset.step);
   if (action === 'kiosk-pick') runAction(element.dataset.node);
   if (action === 'kiosk-focus') focusPreset(element.dataset.preset);
+  if (action === 'kiosk-inside') {
+    if (isInside(state.preset)) exitKiosk();
+    else focusPreset('inside');
+  }
   if (action === 'kiosk-home') goHome();
   if (action === 'kiosk-back' || action === 'tv-off') goBack();
   if (action === 'kiosk-help') showHint();
@@ -444,11 +494,12 @@ document.addEventListener('keydown', event => {
   const vertical = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
   if (state.preset === 'inside' && (horizontal || vertical)) {
     event.preventDefault();
-    state.kiosk?.lookInside(horizontal * 60, -vertical * 60);
+    // keys turn your head; a drag grabs the world, so they run opposite
+    state.kiosk?.lookInside(-horizontal * 60, -vertical * 60);
   }
   if (state.preset === 'rack' && horizontal) state.kiosk?.spinRack(horizontal);
   if (state.preset === 'tv' && horizontal) changeChannel(horizontal);
-  if (['tv', 'billboard', 'terminal', 'flyer'].includes(state.preset) && vertical) {
+  if (['tv', 'billboard', 'terminal', 'flyer', 'price'].includes(state.preset) && vertical) {
     event.preventDefault();
     scrollScreen(vertical);
   }

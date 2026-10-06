@@ -126,6 +126,15 @@ test('every screen is a locked close-up with a camera preset', () => {
   assert.equal(SCREENS.flyer, 'screen_flyer');
 });
 
+test('the price list is its own sheet on the right shutter, read up close', () => {
+  assert.equal(ROUTE_PRESETS.price, 'price');
+  assert.equal(SCREENS.price, 'screen_price');
+  assert.ok(LOCKED_PRESETS.includes('price'));
+  assert.equal(hotspotForNode('hs_pricelist').action.hash, '#price');
+  assert.equal(allowedIn('price', 'hs_pricelist'), true);
+  assert.equal(allowedIn('price', 'hs_flyer'), false);
+});
+
 test('contacts live on the flyer, the terminal is a place to walk to', () => {
   assert.equal(ROUTE_PRESETS.contact, 'flyer');
   assert.equal(hotspotForNode('hs_flyer').action.hash, '#contact');

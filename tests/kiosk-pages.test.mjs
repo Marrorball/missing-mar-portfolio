@@ -4,7 +4,7 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
-  renderPriceBoard,
+  renderPriceSheet,
   renderTerminalScreen,
   renderTvChannel,
   renderTvGuide
@@ -74,9 +74,10 @@ test('the billboard shows who Marat is, with tabs for about and price', () => {
   assert.match(html, /class="board-stamp" aria-hidden="true">Ищу<br>работу/);
 });
 
-test('price and generic pages also fit the billboard', () => {
-  assert.match(renderPriceBoard(), /href="#price" aria-current="page"/);
-  assert.match(renderPriceBoard(), /Скоро здесь будет прайс/);
+test('the price sheet is printed with blanks, and generic pages fit the billboard', () => {
+  assert.match(renderPriceSheet(), /<h1>Прайс<\/h1>/);
+  assert.match(renderPriceSheet(), /Скоро здесь будет.*прайс на услуги/s);
+  assert.match(renderPriceSheet(), /href="#about"/);
   assert.match(renderPageBoard({ title: 'Пресса', content: '<p>x</p>' }), /Пресса.*<p>x<\/p>/s);
 });
 
@@ -93,4 +94,7 @@ test('terminal and flyer both carry clickable contacts', () => {
   assert.match(flyer, /Нашедшего просьба написать/);
   assert.match(flyer, /href="https:\/\/t\.me\/marrorball"/);
   assert.match(flyer, /data-action="copy-contact" data-value="@marrorball"/);
+  assert.match(flyer, /data-value="a@b\.cd" aria-label="Скопировать a@b\.cd"><span>a@b\.cd<\/span>/);
+  const long = renderFlyer([{ kind: 'email', label: 'Почта', value: 'marrorball@gmail.com', href: 'mailto:marrorball@gmail.com' }]);
+  assert.match(long, /<span>marrorball<\/span><span>@gmail\.com<\/span>/, 'long contacts wrap on the slip');
 });

@@ -662,39 +662,6 @@
   margin-bottom: 6px;
 }
 
-.price-list {
-  max-width: 640px;
-  margin: 10px 0 18px;
-  padding: 0;
-  list-style: none;
-}
-
-.price-list li {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-  padding: 12px 0 0;
-  font: 700 22px var(--pt-narrow);
-}
-
-.price-item {
-  flex: 0 0 44%;
-  height: 1.1em;
-  border-bottom: 2px solid var(--print-ink);
-}
-
-.price-dots {
-  flex: 1;
-  border-bottom: 3px dotted rgba(27, 26, 23, .45);
-}
-
-.price-note {
-  display: inline-block;
-  margin: 0;
-  color: var(--poster-red);
-  font: italic 400 18px var(--pt-sans);
-}
-
 /* ---------- terminal: an orange payment terminal ---------- */
 
 .screen-terminal {
@@ -810,108 +777,222 @@
   font-size: 14px;
 }
 
-/* ---------- flyer: a photocopy taped to the shutter ---------- */
+/* ---------- sheets on the shutters: flyer and price list ----------
+   Printed sheets 0.32 x 0.45 m. The layout is in hundredths of the sheet
+   width (cqw) and matches the sheet painted on the model (paper.js), so the
+   page lands on it without a jump. */
 
-.screen-flyer {
+.screen-flyer,
+.screen-price { background: #f2f0ea; }
+
+.flyer-page,
+.price-sheet {
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  aspect-ratio: 32 / 45;
+  overflow: hidden;
   color: #141414;
   background:
-    radial-gradient(circle at 12% 18%, rgba(0, 0, 0, .06) 0 1px, transparent 1.5px) 0 0 / 23px 19px,
-    radial-gradient(circle at 70% 60%, rgba(0, 0, 0, .05) 0 1px, transparent 1.5px) 0 0 / 31px 27px,
-    linear-gradient(100deg, rgba(0, 0, 0, .05), transparent 22%, transparent 80%, rgba(0, 0, 0, .06)),
+    radial-gradient(circle at 12% 18%, rgba(0, 0, 0, .07) 0 1px, transparent 1.5px) 0 0 / 23px 19px,
+    radial-gradient(circle at 70% 60%, rgba(0, 0, 0, .06) 0 1px, transparent 1.5px) 0 0 / 31px 27px,
     #f2f0ea;
-}
-
-.flyer-page {
-  position: relative;
-  padding: 26px 22px 0;
-  font: 15px/1.4 var(--pt-sans);
   text-align: center;
 }
 
-.flyer-tape {
+.flyer-page > *,
+.price-sheet > * {
   position: absolute;
-  top: -8px;
-  width: 92px;
-  height: 28px;
-  background: rgba(232, 222, 186, .78);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+  margin: 0;
+  letter-spacing: 0;
 }
 
-.flyer-tape-left { left: -16px; transform: rotate(-9deg); }
-.flyer-tape-right { right: -14px; transform: rotate(8deg); }
+/* centred on a line at `top`, like the painted sheet */
+.flyer-page h1,
+.flyer-name,
+.flyer-role,
+.flyer-ask,
+.price-sheet h1,
+.price-sheet-bar,
+.price-sheet-about {
+  left: 4cqw;
+  right: 4cqw;
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+.flyer-tape {
+  top: -1.5cqw;
+  width: 26cqw;
+  height: 7cqw;
+  background: rgba(228, 216, 176, .85);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .15);
+}
+
+.flyer-tape-left { left: -4cqw; transform: rotate(-9deg); }
+.flyer-tape-right { right: -4cqw; transform: rotate(8deg); }
 
 .flyer-page h1 {
-  margin: 6px 0 12px;
-  font: 700 46px/.88 var(--pt-narrow);
+  top: 10.5cqw;
+  font: 700 10.5cqw/1 var(--pt-narrow);
   text-transform: uppercase;
 }
 
-.flyer-page img {
-  display: block;
-  width: 72%;
-  margin: 0 auto;
-  aspect-ratio: 1;
+.flyer-page img,
+.flyer-photo {
+  top: 17.5cqw;
+  left: 22cqw;
+  width: 56cqw;
+  height: 56cqw;
   object-fit: cover;
+  background: #9a9a96;
   filter: grayscale(1) contrast(1.7) brightness(1.12);
 }
 
 .flyer-name {
-  margin: 10px 0 2px;
-  font: 700 24px/1.05 var(--pt-narrow);
+  top: 79.5cqw;
+  font: 700 7cqw/1 var(--pt-narrow);
   text-transform: uppercase;
 }
 
-.flyer-page p {
-  margin: 0;
+.flyer-role {
+  top: 85.2cqw;
+  font: 400 3.9cqw/1 var(--pt-sans);
 }
 
 .flyer-ask {
-  margin: 14px 0 6px !important;
-  font: 700 17px var(--pt-narrow);
-  letter-spacing: .04em;
+  top: 91.5cqw;
+  font: 700 4.4cqw/1 var(--pt-narrow);
   text-transform: uppercase;
 }
 
 .flyer-contacts {
-  margin: 0 0 14px;
+  top: 94.3cqw;
+  left: 0;
+  right: 0;
   padding: 0;
   list-style: none;
 }
 
+.flyer-contacts li {
+  height: 5.4cqw;
+  line-height: 5.4cqw;
+}
+
 .flyer-contacts a {
-  display: inline-block;
-  min-height: 32px;
-  padding: 4px 0;
   color: inherit;
-  font: 400 16px var(--pt-mono);
+  font: 400 3.6cqw/5.4cqw var(--pt-mono);
   text-decoration: underline;
+  text-decoration-thickness: .3cqw;
+  text-underline-offset: .6cqw;
 }
 
 .flyer-tabs {
+  top: 112.5cqw;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
-  margin: 0 -22px;
-  border-top: 2px dashed #555;
+  border-top: .5cqw dashed #555;
 }
 
 .flyer-tabs button {
+  display: flex;
   flex: 1;
-  height: 130px;
-  padding: 8px 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5cqw 0 0;
   color: #141414;
   background: transparent;
-  border-left: 2px dashed #555;
-  font: 400 13px var(--pt-mono);
+  border-left: .5cqw dashed #555;
+  font: 400 3.4cqw/4.4cqw var(--pt-mono);
   writing-mode: vertical-rl;
 }
 
-.flyer-tabs button:first-child {
-  border-left: 0;
-}
+.flyer-tabs button:first-child { border-left: 0; }
+
+.flyer-tabs button span { display: block; }
 
 .flyer-tabs button:hover,
 .flyer-tabs button:focus-visible {
   background: #e3dccb;
   outline: none;
+}
+
+.price-sheet h1 {
+  top: 17cqw;
+  font: 700 24cqw/1 var(--pt-narrow);
+  text-transform: uppercase;
+}
+
+.price-sheet-bar {
+  top: 30.5cqw;
+  left: 50%;
+  right: auto;
+  padding: 0 3cqw;
+  color: #fff;
+  background: var(--poster-red);
+  font: 700 4.6cqw/7cqw var(--pt-narrow);
+  text-transform: uppercase;
+  transform: translate(-50%, -50%);
+}
+
+.price-sheet-rows {
+  top: 46cqw;
+  left: 8cqw;
+  right: 8cqw;
+  padding: 0;
+  list-style: none;
+}
+
+/* each row's rule sits on the line, like the painted rows every 9cqw */
+.price-sheet-rows li {
+  position: relative;
+  height: 9cqw;
+}
+
+.price-sheet-rows .price-item,
+.price-sheet-rows .price-dots,
+.price-sheet-rows b {
+  position: absolute;
+  top: 0;
+}
+
+.price-sheet-rows .price-item {
+  left: 0;
+  width: 40cqw;
+  border-top: .5cqw solid #141414;
+}
+
+.price-sheet-rows .price-dots {
+  left: 42cqw;
+  width: 27cqw;
+  border-top: .6cqw dotted rgba(20, 20, 20, .8);
+}
+
+.price-sheet-rows b {
+  right: 0;
+  font: 700 5cqw/1 var(--pt-narrow);
+  transform: translateY(-82%);
+}
+
+.price-sheet-note {
+  top: 102.2cqw;
+  left: 4cqw;
+  right: 4cqw;
+  color: var(--poster-red);
+  font: italic 400 4.4cqw/5.5cqw var(--pt-sans);
+}
+
+.price-sheet-note span { display: block; }
+
+.price-sheet-about {
+  top: 130cqw;
+  color: #141414;
+  font: 700 4.2cqw/1 var(--pt-narrow);
+  text-decoration: underline;
+  text-transform: uppercase;
 }
 
 /* ---------- flat mode ---------- */
@@ -945,10 +1026,14 @@
 
 .screen-flat .tv-osd { top: 0; }
 
-.screen-flat .flyer-page {
-  max-width: 420px;
-  margin: 0 auto;
-  padding-top: 70px;
+.screen-flat.screen-flyer,
+.screen-flat.screen-price { background: #39404c; }
+
+.screen-flat .flyer-page,
+.screen-flat .price-sheet {
+  width: min(100% - 32px, 440px);
+  margin: 72px auto 150px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
 }
 
 .kiosk-chrome {

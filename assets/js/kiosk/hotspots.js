@@ -1,14 +1,15 @@
-export const PRESETS = ['home', 'showcase', 'inside', 'cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
+export const PRESETS = ['home', 'showcase', 'inside', 'cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer', 'price'];
 
 // Close-ups hold the camera still: you read or spin something, you don't orbit.
-export const LOCKED_PRESETS = ['cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
+export const LOCKED_PRESETS = ['cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer', 'price'];
 
 // Close-ups that show a page, and the Blender anchor the page sits on.
 export const SCREENS = {
   tv: 'screen_tv',
   billboard: 'screen_billboard',
   terminal: 'screen_terminal',
-  flyer: 'screen_flyer'
+  flyer: 'screen_flyer',
+  price: 'screen_price'
 };
 
 // How much of the viewport a screen may take: room is left for the way back
@@ -38,7 +39,7 @@ export const ROUTE_PRESETS = {
   project: 'tv',
   catalog: 'tv',
   about: 'billboard',
-  price: 'billboard',
+  price: 'price',
   contact: 'flyer'
 };
 
@@ -115,7 +116,8 @@ const CLOSE_UP_TARGETS = {
   tv: /^hs_tv$/,
   billboard: /^hs_billboard$/,
   terminal: /^hs_terminal$/,
-  flyer: /^hs_flyer$/
+  flyer: /^hs_flyer$/,
+  price: /^hs_pricelist$/
 };
 
 export function allowedIn(preset, name) {

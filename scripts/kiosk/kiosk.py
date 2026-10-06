@@ -10,6 +10,7 @@ from dims import (D, DOOR_L, DOOR_OPEN_DEG, DOOR_R, DOOR_TOP, GLASS_HIGH, GLASS_
 from geometry import grille_segments
 from lib import Merge, box, cylinder, empty, screen, text
 
+SHEET = (0.4, 0.5625)    # flyer and price list: big enough to read from the street, 32:45
 ADS = ('СДАМ\nКВАРТИРУ', 'РЕМОНТ\nКОМПЬЮТЕРОВ', 'КУПЛЮ ВОЛОСЫ\nДОРОГО')
 
 
@@ -99,12 +100,6 @@ def _window(M):
 
     away = box('hs_sign_away', (0.3, 0.01, 0.18), (0.0, -HD + 0.06, 1.2), M['away'])
     text('away_text', 'ОТОШЁЛ\n5 МИН', (0.0, -0.007, 0.0), 0.045, M['paper'], parent=away)
-    prices = box('hs_pricelist', (0.3, 0.01, 0.36), (-0.9, -HD + 0.06, 1.12), M['paper'])
-    text('pricelist_title', 'ПРАЙС', (0.0, -0.007, 0.13), 0.045, M['ink'], parent=prices)
-    lines = Merge('pricelist_lines')
-    for index in range(7):
-        lines.box((0.22, 0.004, 0.006), (0.0, -0.006, 0.07 - index * 0.035), M['ink'])
-    lines.finish(parent=prices)
 
 
 def _shutters(M):
@@ -125,33 +120,32 @@ def _shutters(M):
         for index in range(12):
             w, h = rng.uniform(0.12, 0.3), rng.uniform(0.1, 0.3)
             x, z = out * rng.uniform(0.15, 0.85), rng.uniform(1.0, 2.2)
-            if side == 'left' and abs(x - 0.45) < 0.26 and abs(z - 1.55) < 0.34:
+            if side == 'left' and abs(x - 0.45) < 0.32 and abs(z - 1.55) < 0.42:
                 continue  # the flyer lives here
             if side == 'left' and abs(x - 0.45) < 0.3 and z < 1.25:
                 continue  # marker contacts live here
-            if side == 'right' and abs(x + 0.5) < 0.3 and z > 1.25:
-                continue  # the three ads live here
+            if side == 'right' and (abs(x + 0.5) < 0.32 and abs(z - 1.55) < 0.42 or z > 1.85):
+                continue  # the price sheet and the three ads live here
             depth = 0.024 + index * 0.0006
             posters.box((w, 0.004, h), (x, depth, z), rng.choice(M['posters']), rot=(0.0, rng.uniform(-0.12, 0.12), 0.0))
             if rng.random() < 0.4:
                 for k in range(6):
                     posters.box((w / 7, 0.003, 0.05), (x - w / 2 + (k + 0.75) * w / 6.5, depth + 0.001, z - h / 2 - 0.03), M['paper'])
         if side == 'right':
-            for index, (body, z) in enumerate(zip(ADS, (2.05, 1.75, 1.45))):
-                posters.box((0.34, 0.004, 0.24), (-0.5, 0.026, z), M['paper'])
-                text(f'ad_{index}', body, (-0.5, 0.03, z + 0.02), 0.035, M['ink'], parent=hinge, rot_z=math.pi)
+            for index, (body, x) in enumerate(zip(ADS, (-0.19, -0.5, -0.81))):
+                posters.box((0.28, 0.004, 0.2), (x, 0.026, 2.07), M['paper'])
+                text(f'ad_{index}', body, (x, 0.03, 2.09), 0.026, M['ink'], parent=hinge, rot_z=math.pi)
         posters.finish(parent=hinge)
 
         if side == 'left':
-            flyer = box('hs_flyer', (0.32, 0.006, 0.45), (0.45, 0.026, 1.55), M['paper'], parent=hinge)
-            details = Merge('flyer_details')
-            details.box((0.2, 0.004, 0.16), (0.0, 0.004, 0.03), M['ink'])      # photo
-            for k in range(8):
-                details.box((0.032, 0.004, 0.08), (-0.14 + k * 0.04, 0.0, -0.27), M['paper'])
-            details.finish(parent=flyer)
-            text('flyer_title', 'ПРОПАЛ', (0.0, 0.006, 0.17), 0.06, M['ink'], parent=flyer, rot_z=math.pi)
-            screen('screen_flyer', (0.0, 0.0035, 0.0), 0.32, 0.45, rot_z=math.pi, parent=flyer)
+            # the sheet is printed by the site (assets/js/kiosk/paper.js)
+            flyer = box('hs_flyer', (SHEET[0], 0.006, SHEET[1]), (0.45, 0.026, 1.55), M['paper'], parent=hinge)
+            screen('screen_flyer', (0.0, 0.0035, 0.0), *SHEET, rot_z=math.pi, parent=flyer)
             screen('wall_contacts', (0.45, 0.024, 1.02), 0.52, 0.24, rot_z=math.pi, parent=hinge)
+        else:
+            # the price list, mirroring the flyer on the other shutter
+            prices = box('hs_pricelist', (SHEET[0], 0.006, SHEET[1]), (-0.5, 0.026, 1.55), M['paper'], parent=hinge)
+            screen('screen_price', (0.0, 0.0035, 0.0), *SHEET, rot_z=math.pi, parent=prices)
 
 
 def _roof_and_lamp(M):

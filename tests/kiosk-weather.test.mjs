@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { KIOSK_FOOTPRINT, QUALITY, SNOW_BOUNDS, flakePositions, flickerLevel, insideFootprint, qualityTier } from '../assets/js/kiosk/weather.js';
+import { KIOSK_FOOTPRINT, QUALITY, SNOW_BOUNDS, flakePositions, flickerLevel, insideFootprint, qualityTier, tvWarmUp } from '../assets/js/kiosk/weather.js';
+
+test('the TV blinks a couple of times when someone comes in, then stays on', () => {
+  assert.equal(tvWarmUp(-1), 0, 'off until someone steps in');
+  assert.ok(tvWarmUp(150) < 0.2, 'blinks off');
+  assert.equal(tvWarmUp(250), 1, 'and on again');
+  assert.ok(tvWarmUp(360) < 0.2);
+  assert.equal(tvWarmUp(2000), 1);
+  for (let ms = 0; ms < 1200; ms += 7) assert.ok(tvWarmUp(ms) >= 0 && tvWarmUp(ms) <= 1, ms);
+});
 
 function seeded(seed = 1) {
   return () => {
