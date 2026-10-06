@@ -78,3 +78,15 @@ test('the TV inside comes on with the channel list', async () => {
   assert.ok(texts.includes('KORTEX') && texts.includes('ДРЕВО'));
   assert.ok(texts.includes('02'));
 });
+
+test('the neighbours are silhouettes cropped by the sill, one with a lit cigarette', async () => {
+  const { drawNeighbour } = await import('../assets/js/kiosk/neighbours.js');
+  const calls = [];
+  const context = new Proxy({}, { get: (target, key) => (key in target ? target[key] : (...args) => calls.push([key, ...args])), set: (target, key, value) => { target[key] = value; return true; } });
+  drawNeighbour(context, 1024, 1229, 'smoking');
+  assert.ok(calls.some(([name]) => name === 'arc'), 'the ember');
+  assert.ok(calls.filter(([name]) => name === 'ellipse').length >= 2, 'a head with hair');
+  calls.length = 0;
+  drawNeighbour(context, 1024, 1229, 'looking');
+  assert.ok(!calls.some(([name]) => name === 'arc'));
+});

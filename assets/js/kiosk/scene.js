@@ -22,6 +22,7 @@ import {
 import { addLights, addSky, addSnow, createComposer, flicker, setupShadows, weatherMaterials } from './atmosphere.js';
 import { QUALITY, qualityTier, tvWarmUp } from './weather.js';
 import { drawPosterWear } from './poster.js';
+import { drawNeighbour } from './neighbours.js';
 
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
@@ -76,7 +77,8 @@ export async function createKioskScene({
   const forced = new URLSearchParams(window.location.search).get('quality');
   const quality = QUALITY[forced in QUALITY ? forced : qualityTier({ width: window.innerWidth, cores: navigator.hardwareConcurrency || 8 })];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const pixelRatio = Math.min(window.devicePixelRatio, quality.bloom ? 2 : 1.25);
+  // Retina at 2x costs four times the pixels for little visible gain here.
+  const pixelRatio = Math.min(window.devicePixelRatio, quality.bloom ? 1.5 : 1.25);
   renderer.setPixelRatio(pixelRatio);
   container.appendChild(renderer.domElement);
   const canvas = renderer.domElement;
@@ -158,6 +160,15 @@ export async function createKioskScene({
     highlight.get(name).push(object.material);
   });
 
+  // Hover and click rays only test what can be picked or can hide something
+  // that can; heavy decoration (snow, goods, 3D lettering, trees) is skipped.
+  // A ray against everything cost ~2.6 ms, on every mouse move.
+  const DECOR = /^(ground_snow|snow_|roof_snow|rack_snow|terminal_snow|trees|buildings|power|wires|ad_\d|glass_tag|goods_fill|stock_|price_tags|window_|counter_|cat_(whisker|forehead|mouth|eye|nose|ear|left|right))|_(text|label|title)(_\d+)?$/;
+  const pickTargets = [];
+  root.traverse(object => {
+    if (object.isMesh && !DECOR.test(object.name)) pickTargets.push(object);
+  });
+
   weatherMaterials(root);
   const sky = addSky(scene);
   const flickering = addLights(scene, root, quality);
@@ -229,6 +240,18 @@ export async function createKioskScene({
     });
   }
 
+  // The cat breathes in its sleep and shivers a little when it purrs.
+  const cat = root.getObjectByName('hs_cat');
+  let purrUntil = 0;
+  function purr() {
+    purrUntil = performance.now() + 1900;
+  }
+  function breathe(now) {
+    if (!cat || reducedMotion) return;
+    const purring = now * 1000 < purrUntil;
+    cat.scale.y = 1 + 0.012 * Math.sin(now * 1.9) + (purring ? 0.003 * Math.sin(now * 160) : 0);
+  }
+
   const rack = root.getObjectByName('dvd_rack');
   let rackFace = 0;
   let rackTarget = 0;
@@ -261,7 +284,7 @@ export async function createKioskScene({
     const rect = canvas.getBoundingClientRect();
     pointer.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(pointer, camera);
-    const names = raycaster.intersectObject(root, true)
+    const names = raycaster.intersectObjects(pickTargets, false)
       .filter(hit => isShown(hit.object))
       .map(hit => pickableNameOf(hit.object));
     const name = pickHotspot(names);
@@ -359,7 +382,7 @@ export async function createKioskScene({
     const distance = toEye.length();
     sight.set(camera.position, toEye.negate().normalize());
     sight.far = distance - 0.03;
-    const hit = sight.intersectObject(root, true).find(entry => isShown(entry.object)
+    const hit = sight.intersectObjects(pickTargets, false).find(entry => isShown(entry.object)
       && !entry.object.material?.transparent);
     return !hit || allowedIn(name, pickableNameOf(hit.object));
   }
@@ -583,6 +606,7 @@ export async function createKioskScene({
     if (pickAs) {
       if (!highlight.has(pickAs)) highlight.set(pickAs, []);
       highlight.get(pickAs).push(material);
+      pickTargets.push(plane);
     }
     renderer.shadowMap.needsUpdate = true;
     return plane;
@@ -742,6 +766,7 @@ export async function createKioskScene({
   }
 
   let down = null;
+  let hoverAt = null;
   canvas.addEventListener('pointerdown', event => {
     down = { x: event.clientX, y: event.clientY, lastX: event.clientX, lastY: event.clientY, dragged: false };
     if (current === 'inside') {
@@ -777,11 +802,10 @@ export async function createKioskScene({
       return;
     }
     if (event.pointerType !== 'mouse' || event.buttons) return;
-    const name = pick(event.clientX, event.clientY);
-    setHovered(name);
-    onHover(name, event.clientX, event.clientY);
+    hoverAt = { x: event.clientX, y: event.clientY };   // picked once per frame
   });
   canvas.addEventListener('pointerleave', () => {
+    hoverAt = null;
     setHovered(null);
     onHover(null, 0, 0);
   });
@@ -822,13 +846,42 @@ export async function createKioskScene({
     camera.updateProjectionMatrix();
   }, { passive: false });
 
-  const resize = () => {
+  function applySize() {
     const width = container.clientWidth;
     const height = container.clientHeight;
     renderer.setSize(width, height, false);
     composer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+  }
+
+  // If frames keep running slow (median over two seconds), step the
+  // resolution down, and at the very end drop the glow. Never steps back up,
+  // so it can't oscillate. A hidden or throttled tab is not a slow one.
+  const ratios = [pixelRatio, 1.25, 1, 0.85].filter((ratio, index, all) => ratio <= pixelRatio && all.indexOf(ratio) === index);
+  let ratioStep = 0;
+  const frameTimes = [];
+  function keepFrameRate(ms) {
+    if (ms <= 0 || ms > 250 || document.hidden) return;
+    frameTimes.push(ms);
+    if (frameTimes.length < 120) return;
+    const median = frameTimes.sort((a, b) => a - b)[60];
+    frameTimes.length = 0;
+    if (median < 24) return;
+    if (ratioStep < ratios.length - 1) {
+      ratioStep += 1;
+      renderer.setPixelRatio(ratios[ratioStep]);
+      composer.setPixelRatio(ratios[ratioStep]);
+      applySize();
+    } else if (composer.bloom) {
+      composer.removePass(composer.bloom);
+      composer.bloom.dispose();
+      composer.bloom = null;
+    }
+  }
+
+  const resize = () => {
+    applySize();
     if (flight) {
       focus(current, { instant: true });
       return;
@@ -862,7 +915,9 @@ export async function createKioskScene({
       if (flight.page && !(flight.page === 'billboard' && billboardMotion)) {
         // fades in late in the flight, and only from the moment the screen
         // comes into sight (a walk round the back sees it at the doorway)
-        const seen = t > 0.5 && inSight(flight.page);
+        flight.frames = (flight.frames || 0) + 1;
+        if (flight.frames % 3 === 1) flight.inSight = t > 0.5 && inSight(flight.page);
+        const seen = t > 0.5 && flight.inSight;
         if (!seen) flight.seenAt = null;
         else flight.seenAt ??= performance.now();
         const opacity = seen ? Math.min(smoothstep(0.5, 0.92, t), smoothstep(0, 380, performance.now() - flight.seenAt)) : 0;
@@ -910,11 +965,20 @@ export async function createKioskScene({
       disc.scale.setScalar((1 - 0.5 * inHand) * (1 - smoothstep(0.92, 1, t)));
       if (t === 1) cancelDisc();
     }
+    if (hoverAt && !flight) {
+      const { x, y } = hoverAt;
+      hoverAt = null;
+      const name = pick(x, y);
+      setHovered(name);
+      onHover(name, x, y);
+    }
     const now = performance.now() / 1000;
     const elapsed = now - (lastFrame || now);
+    keepFrameRate(elapsed * 1000);
     const dt = Math.min(elapsed, 0.1);
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * (1 - Math.exp(-elapsed * 10));
     updateTv(performance.now());
+    breathe(performance.now() / 1000);
     lastFrame = now;
     sky.position.copy(camera.position);
     snow.update(dt, now);
@@ -928,10 +992,28 @@ export async function createKioskScene({
   if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera, controls, pick, frame,
     get inFlight() { return Boolean(flight); }, get current() { return current; } };
 
+  // neighbours at two lit windows across the street
+  for (const pose of ['smoking', 'looking']) {
+    paintAnchor(`window_person_${pose}`, (context, width, height) => drawNeighbour(context, width, height, pose));
+  }
+
+  // Compile every shader and upload every texture now, behind the loading
+  // screen, so the first walk into the kiosk or up to a screen doesn't stall
+  // on materials the camera hasn't seen yet.
+  const textures = new Set();
+  scene.traverse(object => {
+    for (const material of [].concat(object.material || [])) {
+      for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
+    }
+  });
+  textures.forEach(texture => renderer.initTexture(texture));
+  await renderer.compileAsync(scene, camera).catch(() => {});
+
   return {
     focus,
     paintSheet,
     setTvPicture,
+    purr,
     snapshot,
     restore,
     spinRack,

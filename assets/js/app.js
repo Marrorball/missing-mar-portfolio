@@ -16,6 +16,7 @@ import {
   renderTvGuide
 } from './kiosk/pages.js';
 import { drawFlyer, drawPriceNote, drawPriceSheet } from './kiosk/paper.js';
+import { purr } from './kiosk/purr.js';
 import { isInside } from './kiosk/routes.js';
 import { assignHits } from './kiosk/slots.js';
 import { drawTeletext } from './kiosk/teletext.js';
@@ -244,6 +245,11 @@ function runAction(node) {
   if (!spot) return;
   const { action } = spot;
   if (/^(slot|disc)_\d+$/.test(node)) state.pendingDisc = node;
+  if (node === 'hs_cat') {
+    purr();
+    state.kiosk?.purr();
+    showNote('Мррр…');
+  }
   if (action.type === 'route') window.location.hash = action.hash;
   if (action.type === 'note') showNote(action.text);
   if (action.type === 'focus') {

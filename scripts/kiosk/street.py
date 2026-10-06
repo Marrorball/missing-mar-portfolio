@@ -173,45 +173,12 @@ def _billboard(M):
 
 
 def _window_person(M, wx, face, wz, smoking):
-    """Waist-up silhouettes against the apartment light, facing the street.
-
-    The lit pane is behind the figure; the sill hides the cropped lower body.
-    At this distance the head/shoulders and bent arms carry the pose.
-    """
-    person = Merge('window_person_smoking' if smoking else 'window_person_looking')
-    clothes = material('window_person_clothes', (0.018, 0.024, 0.034))
-    skin = material('window_person_skin', (0.15, 0.11, 0.085))
-    hair = material('window_person_hair', (0.017, 0.014, 0.018))
-    y = -0.08
-    hx = 0.035 if smoking else -0.055
-    person.blob((.37, .15, .65), (-.03, y, -.20), clothes, 12, 8, True)
-    person.blob((.43, .16, .23), (-.03, y, .035), clothes, 12, 8, True)
-    person.cylinder(.052, .10, (hx, y, .17), skin, segments=10)
-    person.blob((.20, .16, .235), (hx, y-.012, .31), skin, 12, 8, True)
-    person.blob((.215, .16, .15), (hx-.018, y+.005, .375), hair, 12, 8, True)
-    # Small profile: a visible nose and a slight turn rather than a round dot.
-    direction = 1 if smoking else -1
-    person.blob((.065, .11, .055), (hx+direction*.094, y-.03, .30), skin, 8, 6, True)
-    person.bar((-.20, y, .02), (-.25, y-.025, -.30), .105, clothes)
-    person.bar((-.25, y-.025, -.30), (-.20, y-.04, -.55), .085, clothes)
-    person.blob((.10, .075, .065), (-.20, y-.04, -.55), skin, 8, 6, True)
-    if smoking:
-        person.bar((.16, y, .015), (.28, y-.02, -.16), .105, clothes)
-        person.bar((.28, y-.02, -.16), (.19, y-.06, .23), .085, clothes)
-        person.blob((.09, .07, .10), (.19, y-.065, .24), skin, 8, 6, True)
-        cigarette = material('window_cigarette', (.76, .70, .58), emission=.2)
-        ember = material('window_cigarette_ember', (1, .16, .025), emission=1.2)
-        person.bar((.19, y-.09, .27), (.30, y-.09, .27), .017, cigarette)
-        person.blob((.023, .025, .025), (.30, y-.09, .27), ember, 8, 6, True)
-        smoke = material('window_smoke', (.28, .31, .36), emission=.25)
-        person.polyline(((.31, y-.09, .30), (.34, y-.09, .36), (.32, y-.09, .42),
-                         (.34, y-.09, .48), (.40, y-.09, .53), (.42, y-.09, .61)), .015, smoke)
-    else:
-        person.bar((.15, y, .025), (.23, y-.025, -.34), .11, clothes)
-        person.bar((.23, y-.025, -.34), (.16, y-.04, -.55), .085, clothes)
-        person.blob((.10, .075, .065), (.16, y-.04, -.55), skin, 8, 6, True)
-    obj = person.finish((wx, face, wz))
-    obj['pose'] = 'smoking' if smoking else 'looking_out'
+    """A neighbour at a lit window, facing the street. The figure is a soft
+    silhouette painted by the site (assets/js/kiosk/neighbours.js) on this
+    anchor, just inside the frame; the sill crops it at the waist."""
+    pose = 'smoking' if smoking else 'looking'
+    anchor = screen(f'window_person_{pose}', (wx, face - 0.07, wz), 1.1, 1.32)
+    anchor['pose'] = 'smoking' if smoking else 'looking_out'
 
     trim = Merge('window_occupied_trim_smoking' if smoking else 'window_occupied_trim_looking')
     frame = material('apartment_window_frame', (.19, .20, .23))

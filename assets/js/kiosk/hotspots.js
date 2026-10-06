@@ -27,7 +27,14 @@ export const HOTSPOTS = {
   hs_rack: { label: 'Все проекты', action: { type: 'focus', preset: 'rack' } },
   hs_tv: { label: 'Телевизор', action: { type: 'route', hash: '#catalog' } },
   hs_radio: { label: 'Радио', action: { type: 'note', text: 'Радио пока молчит.' } },
-  hs_cat: { label: 'Рыжий спит', action: { type: 'focus', preset: 'cat' } },
+  hs_cat: { label: 'Рыжий спит — погладить', action: { type: 'focus', preset: 'cat' } },
+  hs_calendar: {
+    label: 'Календарь',
+    action: {
+      type: 'note',
+      text: 'Июнь 2004, тридцатое обведено. Фото на календаре: t.A.T.u. в Кирове, 2006, автор — Дмитрий Азаров, CC BY-SA 3.0.'
+    }
+  },
   hs_sign_away: {
     label: 'Отошёл',
     action: { type: 'note', text: 'Марат отошёл: ищет команду. Контакты — на терминале справа.' }

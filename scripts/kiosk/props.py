@@ -2,7 +2,7 @@
 import math
 from pathlib import Path
 import bpy
-from lib import Merge, material
+from lib import Merge, empty, material
 
 ROOT = Path(__file__).resolve().parents[2] / 'assets/kiosk'
 
@@ -177,19 +177,27 @@ def chair(M,loc):
     parts.blob((.43,.054,.075),(cx,cy+.205,1.075),M['wood'],segments=20,rings=8,smooth=True)
     parts.bar((cx-.18,cy+.18,.3),(cx+.18,cy+.18,.3),.02,M['wood']); parts.finish()
     cloth=Merge('chair_plaid_blanket'); vertices=[]; uvs=[]; nx=20
-    # Continuous cloth goes up the rear, over the rail, down the front, across the seat and over its edge.
-    path=[(cy+.24,.72),(cy+.24,.9),(cy+.235,1.07),(cy+.21,1.116),(cy+.178,1.07),(cy+.165,.9),(cy+.15,.7),(cy+.11,.59),(cy+.02,.591),(cy-.08,.586),(cy-.2,.574),(cy-.232,.52),(cy-.237,.40)]
-    for j,(yy,zz) in enumerate(path):
+    # Continuous cloth goes up the rear, over the rail, down the front, across
+    # the seat and over its edge. Each point sits just clear of the wood and
+    # carries the direction away from it; folds only ever push outward, so
+    # the chair never shows through the plaid.
+    d=.7071
+    path=[(cy+.242,.70,(1,0)),(cy+.242,.88,(1,0)),(cy+.242,1.06,(1,0)),
+          (cy+.226,1.105,(d,d)),(cy+.205,1.124,(0,1)),(cy+.184,1.105,(-d,d)),
+          (cy+.176,1.04,(-1,0)),(cy+.168,.90,(-1,0)),(cy+.155,.74,(-1,0)),
+          (cy+.13,.635,(-d,d)),(cy+.07,.6,(0,1)),(cy-.03,.598,(0,1)),(cy-.13,.592,(0,1)),
+          (cy-.2,.578,(-d,d)),(cy-.232,.53,(-1,0)),(cy-.236,.40,(-1,0))]
+    for j,(yy,zz,(ny,nz)) in enumerate(path):
         for i in range(nx+1):
-            u=i/nx; fold=.012*math.sin(u*math.pi*8+j*.15)+.004*math.sin(u*math.pi*19)
-            vertices.append((cx+(u-.5)*.40,yy+fold*.4,zz+fold)); uvs.append((u*1.5,j/len(path)*2.4))
+            u=i/nx; fold=.004+.007*(.5+.5*math.sin(u*math.pi*8+j*.7))+.002*(.5+.5*math.sin(u*math.pi*19))
+            vertices.append((cx+(u-.5)*.40,yy+ny*fold,zz+nz*fold)); uvs.append((u*1.5,j/len(path)*2.4))
     faces=[]
     for j in range(len(path)-1):
         for i in range(nx):
             a=j*(nx+1)+i; faces.append((a,a+1,a+nx+2,a+nx+1))
     mesh(cloth,vertices,faces,textured('blanket_woven_plaid','blanket-plaid.png'),uvs,smooth=True)
     for i in range(25):
-        xx=cx-.19+i*.016; cloth.bar((xx,cy-.237,.399),(xx+.003*math.sin(i),cy-.235,.37+.006*math.sin(i)),.002,material('blanket_fringe',(.62,.61,.48)))
+        xx=cx-.19+i*.016; cloth.bar((xx,cy-.244,.401),(xx+.003*math.sin(i),cy-.243,.372+.006*math.sin(i)),.002,material('blanket_fringe',(.62,.61,.48)))
     cloth.finish()
 
 def stock(M):
@@ -214,14 +222,16 @@ def wall_details(M,hw):
         a=k*math.pi/6; r=.092
         clock.bar((x+.003,y+r*math.sin(a),z+r*math.cos(a)),(x+.003,y+(r-.012)*math.sin(a),z+(r-.012)*math.cos(a)),.003,M['ink'])
     clock.bar((x+.005,y,z),(x+.005,y-.064,z+.041),.004,M['ink']); clock.bar((x+.006,y,z),(x+.006,y+.027,z+.042),.006,M['ink']); clock.finish()
+    # hs_calendar answers a click with the photo's credit (CC BY-SA 3.0)
+    holder=empty('hs_calendar',(0,0,0))
     calendar=Merge('calendar_print')
     x=hw-.090
     mesh(calendar,[(x,.04,1.427),(x,-.34,1.427),(x,-.34,1.665),(x,.04,1.665)],[(0,1,2,3)],textured('calendar_june_2004','calendar-june-2004.png'),[(0,0),(1,0),(1,1),(0,1)])
-    page=calendar.finish()
+    page=calendar.finish(parent=holder)
     page['year']=2004; page['month']=6; page['marked_day']=30
     picture=Merge('calendar_concert_picture')
     mesh(picture,[(x,.04,1.670),(x,-.34,1.670),(x,-.34,1.928),(x,.04,1.928)],[(0,1,2,3)],textured('calendar_tatu_photo','calendar-tatu.jpg'),[(0,0),(1,0),(1,1),(0,1)])
-    picture.finish()
+    picture.finish(parent=holder)
 
 def soften(obj, amount=.014):
     bevel=obj.modifiers.new('softened_casing_edges','BEVEL'); bevel.width=amount; bevel.segments=3

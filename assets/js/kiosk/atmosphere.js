@@ -86,7 +86,18 @@ export function addLights(scene, root, quality) {
   moon.position.set(-8, 14, -6);
   scene.add(moon);
 
-  const inside = ['tube_0', 'tube_1'].map(name => point(scene, root, name, { color: TUBE, intensity: 2.2, distance: 5, drop: 0.5 }));
+  // One light for both tube fittings: every light costs every lit pixel, so
+  // the pair shares a light hung between them.
+  const tubes = ['tube_0', 'tube_1'].map(name => root.getObjectByName(name)).filter(Boolean);
+  const inside = [];
+  if (tubes.length) {
+    const light = new THREE.PointLight(TUBE, 3.6, 5.5, 2);
+    tubes.forEach(tube => light.position.add(tube.getWorldPosition(new THREE.Vector3())));
+    light.position.divideScalar(tubes.length);
+    light.position.y -= 0.5;
+    scene.add(light);
+    inside.push(light);
+  }
   point(scene, root, 'bulb_outside', { color: WARM, intensity: 1.6, distance: 4 });
   // the bulb sits on the axis; its light hangs out over the street so the
   // face you look at is lit, not just grazed from above
@@ -96,20 +107,21 @@ export function addLights(scene, root, quality) {
   point(scene, root, 'light_window', { color: WARM, intensity: 2.4, distance: 2.6, drop: 0.02 });
   spot(scene, root, 'light_window', 'light_window_target', { color: WARM, intensity: 32, distance: 9, angle: 0.9, shadow: quality.shadows });
   spot(scene, root, 'light_street', 'light_street_target', { color: SODIUM, intensity: 22, distance: 11, angle: 0.9 });
-  for (let index = 0; index < 3; index += 1) {
-    spot(scene, root, `light_billboard_${index}`, 'light_billboard_target', { color: 0xffe0b3, intensity: 3.5, distance: 6, angle: 0.7 });
-  }
+  // the three lamps share one light from the middle one; the close-up page
+  // paints their three pools itself
+  spot(scene, root, 'light_billboard_1', 'light_billboard_target', { color: 0xffe0b3, intensity: 8, distance: 7, angle: 1.0 });
 
   // The flickering tube gets its own material so the other stays steady.
   const bulb = root.getObjectByName('tube_1');
   if (bulb?.isMesh) bulb.material = bulb.material.clone();
-  return { light: inside[1], bulb, base: inside[1]?.intensity ?? 0 };
+  return { light: inside[0], bulb, base: inside[0]?.intensity ?? 0 };
 }
 
 export function flicker(state, t) {
   if (!state.light) return;
   const level = flickerLevel(t);
-  state.light.intensity = state.base * level;
+  // one of two fittings sputters, so the shared light dips only part way
+  state.light.intensity = state.base * (0.55 + 0.45 * level);
   if (state.bulb?.material) state.bulb.material.emissiveIntensity = level;
 }
 
@@ -272,7 +284,10 @@ export function addSnow(scene, count, { moving = true } = {}) {
 export function createComposer(renderer, scene, camera, width, height, quality) {
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  if (quality.bloom) composer.addPass(new UnrealBloomPass(new THREE.Vector2(width, height), 0.32, 0.45, 1.1));
+  if (quality.bloom) {
+    composer.bloom = new UnrealBloomPass(new THREE.Vector2(width, height), 0.32, 0.45, 1.1);
+    composer.addPass(composer.bloom);
+  }
   composer.addPass(new OutputPass());
   return composer;
 }

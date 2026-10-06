@@ -9,6 +9,7 @@ from dims import GLASS_HIGH, GLASS_LOW, HW, SHELF_LEVELS, SHELF_Y, SLOT_LEVEL, S
 from lib import Merge, box
 
 SHELF_DEPTH = 0.3
+COUNTER_TOP_BELOW = 1.02   # the seller's counter top; shelves under it keep their back row clear
 SHELF_THICK = 0.03
 X_MIN, X_MAX = -HW + 0.12, HW - 0.12
 SLOT_SIZE = (0.2, 0.13, 0.28)
@@ -82,7 +83,10 @@ def build(M):
             ceiling = base + 0.09   # the top shelf stays low: crisps hang above it
         max_h = min(0.26, ceiling - base)
         skip = [(x - 0.13, x + 0.13) for x in SLOT_XS] if level == SLOT_LEVEL else ()
-        _fill_row(goods, rng, SHELF_Y + 0.07, base, max_h, M)
+        # the counter (top at 1.02 m, reaching y -0.77) covers the back of the
+        # lowest shelf: nothing stands there, or it would grow out of the counter
+        if level >= COUNTER_TOP_BELOW:
+            _fill_row(goods, rng, SHELF_Y + 0.07, base, max_h, M)
         _fill_row(goods, rng, SHELF_Y - 0.07, base, max_h, M, skip)
         x = X_MIN + 0.05
         while x < X_MAX:

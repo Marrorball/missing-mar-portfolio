@@ -85,7 +85,12 @@ test('the curled cat has a bed inside and does not obstruct the back entrance', 
 
 test('the revised cat has a smooth continuous tail, sleeping face and tucked paws', () => {
   const all = names();
-  for (const name of ['cat_body', 'cat_head', 'cat_tail', 'cat_eye_left', 'cat_eye_right', 'cat_paw_left', 'cat_paw_right']) assert.ok(all.has(name), name);
+  for (const name of ['cat_body', 'cat_head', 'cat_face', 'cat_tail', 'cat_eye_left', 'cat_eye_right', 'cat_ear_left', 'cat_ear_right']) assert.ok(all.has(name), name);
+  // one soft surface, not a pile of ovals
+  for (const name of ['cat_haunch', 'cat_paw_left', 'cat_paw_right', 'cat_cheek_left']) assert.ok(!all.has(name), name);
+  const json = gltf();
+  const body = json.meshes.find(mesh => mesh.name === 'cat_body');
+  assert.ok(body.primitives[0].attributes.COLOR_0 !== undefined, 'fur painted on the surface, not stacked shapes');
 });
 
 test('the terminal has orange paint and wear', () => {
@@ -149,6 +154,15 @@ test('the price sheet hangs on the right shutter, the flyer is printed on the sh
 test('snow lies on the rack and the terminal like on the roof', () => {
   const all = names();
   assert.ok(all.has('rack_snow') && all.has('terminal_snow'));
+});
+
+test('two neighbours stand at lit windows as painted silhouettes', () => {
+  const nodes = gltf().nodes;
+  for (const pose of ['smoking', 'looking']) {
+    const anchor = nodes.find(node => node.name === `window_person_${pose}`);
+    assert.ok(anchor && anchor.extras.width > 1 && anchor.extras.height > 1, pose);
+    assert.equal(anchor.mesh, undefined, 'no blob figure, just the anchor for the silhouette');
+  }
 });
 
 test('the walk round the kiosk has its waypoints', () => {

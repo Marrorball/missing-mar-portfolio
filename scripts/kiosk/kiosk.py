@@ -8,7 +8,7 @@ import random
 from dims import (D, DOOR_L, DOOR_OPEN_DEG, DOOR_R, DOOR_TOP, GLASS_HIGH, GLASS_LOW, HD, HW,
                   PLINTH, TOP, W, WALL, WINDOW_L, WINDOW_R, WINDOW_TOP)
 from geometry import grille_segments
-from lib import Merge, box, cylinder, empty, screen, text
+from lib import Merge, box, cylinder, empty, link, screen, text
 
 SHEET = (0.4, 0.5625)    # flyer and price list: big enough to read from the street, 32:45
 NOTE = (0.3, 0.13)       # the «полный прайс» note under the price list
@@ -153,14 +153,49 @@ def _shutters(M):
             screen('note_fullprice', (0.0, 0.003, 0.0), *NOTE, rot_z=math.pi, parent=note)
 
 
+def _roof_snow(M):
+    """One continuous blanket over the roof: thickest in the middle, rounded
+    down to the edges with a slight lip hanging over them, lumpy on top."""
+    import bmesh
+    import bpy
+    width, depth = W + 0.34, D + 0.34
+    nx, ny = 36, 26
+    base = TOP + 0.1
+    bm = bmesh.new()
+    rng = random.Random(7)
+    bumps = [(rng.uniform(-1.4, 1.4), rng.uniform(-0.9, 0.9), rng.uniform(0.25, 0.6), rng.uniform(0.01, 0.035))
+             for _ in range(12)]
+
+    def height(x, y):
+        # distance to the nearest edge, 0 at the rim
+        edge = min(width / 2 - abs(x), depth / 2 - abs(y))
+        body = 0.11 * (1 - math.exp(-max(edge, 0) / 0.12))
+        lumps = sum(h * math.exp(-((x - bx) ** 2 + (y - by) ** 2) / (r * r)) for bx, by, r, h in bumps)
+        return body + lumps * min(1, edge / 0.25)
+
+    grid = []
+    for j in range(ny + 1):
+        row = []
+        for i in range(nx + 1):
+            x = (i / nx - 0.5) * width
+            y = (j / ny - 0.5) * depth
+            row.append(bm.verts.new((x, y, base + height(x, y) - 0.012)))
+        grid.append(row)
+    for j in range(ny):
+        for i in range(nx):
+            bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
+    mesh = bpy.data.meshes.new('roof_snow')
+    bm.to_mesh(mesh)
+    bm.free()
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    mesh.materials.append(M['snow'])
+    link(bpy.data.objects.new('roof_snow', mesh))
+
+
 def _roof_and_lamp(M):
     box('kiosk_roof', (W + 0.3, D + 0.3, 0.1), (0.0, 0.0, TOP + 0.05), M['paint_dark'])
-    snow = Merge('roof_snow')
-    rng = random.Random(7)
-    for _ in range(14):
-        snow.blob((rng.uniform(0.5, 1.2), rng.uniform(0.5, 1.0), rng.uniform(0.08, 0.16)),
-                  (rng.uniform(-1.2, 1.2), rng.uniform(-0.75, 1.0), TOP + 0.1), M['snow'], 16, 10, True)
-    snow.finish()
+    _roof_snow(M)
 
     lamp = Merge('lamp_outside')
     lamp.bar((0.0, -HD, TOP - 0.02), (0.0, -HD - 0.27, TOP - 0.02), 0.02, M['frame'])
