@@ -9,7 +9,8 @@
     "test": "node --test tests/*.test.mjs",
     "validate:content": "node scripts/validate-content.mjs",
     "build:art": "python3 scripts/build-hero.py && python3 scripts/build-underground.py",
-    "vendor:three": "node scripts/vendor-three.mjs"
+    "vendor:three": "node scripts/vendor-three.mjs",
+    "build:kiosk": "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender} -b --factory-startup --python-exit-code 1 --python scripts/kiosk/build.py"
   },
   "devDependencies": {
     "vite": "^8.2.1"

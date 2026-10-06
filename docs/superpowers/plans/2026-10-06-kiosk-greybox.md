@@ -769,9 +769,7 @@ _materials = {}
 def material(name, color, alpha=1.0, emission=0.0):
     if name in _materials:
         return _materials[name]
-    mat = bpy.data.materials.new(name)
-    if not getattr(mat, 'use_nodes', True):
-        mat.use_nodes = True
+    mat = bpy.data.materials.new(name)  # Blender 5: always node-based
     bsdf = mat.node_tree.nodes['Principled BSDF']
     bsdf.inputs['Base Color'].default_value = (*color, 1.0)
     bsdf.inputs['Roughness'].default_value = 0.85
