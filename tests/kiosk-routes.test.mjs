@@ -8,7 +8,8 @@ const WAYPOINTS = {
   path_side_left: [-2.9, 1.65, -1.2],
   path_front_right: [3.9, 1.6, 1.6],
   path_side_right: [3.9, 1.65, -0.9],
-  path_door_out: [0.6, 1.6, -2.5],
+  path_door_out: [0.6, 1.6, -2.6],
+  path_doorway: [0.6, 1.6, -1.0],
   path_door_in: [0.6, 1.6, -0.45]
 };
 const CAMERAS = {
@@ -31,28 +32,28 @@ test('the inside presets are the ones behind the walls', () => {
 
 test('from the street to the TV you walk round the right side and in through the back door', () => {
   assert.deepEqual(route('home', 'tv'),
-    ['path_front_right', 'path_side_right', 'path_door_out', 'path_door_in']);
+    ['path_front_right', 'path_side_right', 'path_door_out', 'path_doorway', 'path_door_in']);
 });
 
 test('from the rack you go round the left, between the rack and the lamp post', () => {
   assert.deepEqual(route('rack', 'tv'),
-    ['path_front_left', 'path_side_left', 'path_door_out', 'path_door_in']);
+    ['path_front_left', 'path_side_left', 'path_door_out', 'path_doorway', 'path_door_in']);
 });
 
 test('coming out retraces the walk backwards', () => {
   assert.deepEqual(route('tv', 'home'),
-    ['path_door_in', 'path_door_out', 'path_side_right', 'path_front_right']);
+    ['path_door_in', 'path_doorway', 'path_door_out', 'path_side_right', 'path_front_right']);
   assert.deepEqual(route('cat', 'rack'),
-    ['path_door_in', 'path_door_out', 'path_side_left', 'path_front_left']);
+    ['path_door_in', 'path_doorway', 'path_door_out', 'path_side_left', 'path_front_left']);
 });
 
 test('from behind the kiosk the door is right there', () => {
-  assert.deepEqual(route('billboard', 'inside'), ['path_door_out', 'path_door_in']);
+  assert.deepEqual(route('billboard', 'inside'), ['path_door_out', 'path_doorway', 'path_door_in']);
 });
 
 test('a camera already wide of the corner skips the front waypoint', () => {
   const wide = walkingRoute({ from: 'home', to: 'tv', fromPosition: [6, 1.6, -0.5], toPosition: CAMERAS.tv, waypoints: WAYPOINTS });
-  assert.deepEqual(wide, ['path_side_right', 'path_door_out', 'path_door_in']);
+  assert.deepEqual(wide, ['path_side_right', 'path_door_out', 'path_doorway', 'path_door_in']);
 });
 
 test('moves that stay outside or stay inside fly straight', () => {
@@ -64,6 +65,6 @@ test('moves that stay outside or stay inside fly straight', () => {
 test('a waypoint the model does not have is left out', () => {
   const { path_front_left, ...rest } = WAYPOINTS;
   const result = walkingRoute({ from: 'rack', to: 'tv', fromPosition: CAMERAS.rack, toPosition: CAMERAS.tv, waypoints: rest });
-  assert.deepEqual(result, ['path_side_left', 'path_door_out', 'path_door_in']);
+  assert.deepEqual(result, ['path_side_left', 'path_door_out', 'path_doorway', 'path_door_in']);
   assert.ok(path_front_left);
 });

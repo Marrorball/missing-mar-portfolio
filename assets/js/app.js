@@ -39,8 +39,18 @@ const state = {
   preset: 'home',
   rackFace: 0,
   channel: null,
-  pendingDisc: null
+  pendingDisc: null,
+  // where you stood before each close-up, most recent last
+  trail: [],
+  hash: '',
+  returning: null
 };
+
+const TRAIL_LENGTH = 12;
+
+function currentHash() {
+  return window.location.hash === '#' ? '' : window.location.hash;
+}
 
 const header = document.querySelector('#site-header');
 const homeView = document.querySelector('#home-view');
@@ -128,7 +138,14 @@ function focusPreset(name, options) {
     window.location.hash = '#catalog';
     return;
   }
+  const leaving = state.preset;
+  if (name === 'home') state.trail = [];
+  else if (state.kiosk && name !== leaving && !state.returning) {
+    state.trail.push({ preset: leaving, hash: state.hash, view: state.kiosk.snapshot() });
+    if (state.trail.length > TRAIL_LENGTH) state.trail.shift();
+  }
   state.preset = name;
+  state.hash = currentHash();
   state.kiosk?.focus(name, options);
   document.querySelector('#kiosk-closeup-slot').innerHTML = chromeFor(name);
 }
@@ -166,6 +183,34 @@ function goHome() {
   }
   closeFlat();
   focusPreset('home');
+}
+
+// Steps back to where you stood before this close-up: the same spot and
+// angle for a free view, the same object (and page) for a close-up.
+function goBack() {
+  const entry = state.trail.pop();
+  if (!entry || !state.kiosk) {
+    goHome();
+    return;
+  }
+  state.returning = entry;
+  if (currentHash() !== entry.hash) window.location.hash = entry.hash;
+  else renderRoute();
+}
+
+function arriveBack(entry) {
+  if (entry.preset === 'terminal') {
+    openScreen('terminal', terminalPage());
+    return;
+  }
+  if (LOCKED_PRESETS.includes(entry.preset)) {
+    focusPreset(entry.preset);
+    return;
+  }
+  state.preset = entry.preset;
+  state.hash = currentHash();
+  state.kiosk.restore(entry.view);
+  document.querySelector('#kiosk-closeup-slot').innerHTML = chromeFor(entry.preset);
 }
 
 function terminalPage() {
@@ -232,6 +277,14 @@ function scrollScreen(step) {
 }
 
 function renderRoute() {
+  try {
+    showRoute();
+  } finally {
+    state.returning = null;
+  }
+}
+
+function showRoute() {
   if (!state.bundle) return;
   const route = parseRoute(window.location.hash);
   const { site, resume, projects } = state.bundle;
@@ -249,10 +302,11 @@ function renderRoute() {
     }
     const project = projects[index];
     state.channel = project.id;
-    if (pendingDisc) state.kiosk?.playDisc(pendingDisc);
     openScreen('tv', renderTvChannel(project, { index, category: getCategory(project.category).title }), {
       switching: previous !== null && previous !== project.id
     });
+    // after the walk is planned, so the disc rides along for its length
+    if (pendingDisc) state.kiosk?.playDisc(pendingDisc);
     announce(`Канал ${index + 1}: ${project.title}`);
     return;
   }
@@ -294,7 +348,8 @@ function renderRoute() {
   }
 
   closeFlat();
-  focusPreset('home');
+  if (state.returning) arriveBack(state.returning);
+  else focusPreset('home');
 }
 
 async function mountKiosk() {
@@ -307,6 +362,7 @@ async function mountKiosk() {
       onProgress: percent => { loading.innerHTML = renderLoading(percent); },
       onHover: showLabel,
       onPick: runAction,
+      onEmptyClick: goBack,
       onRackFace: face => {
         state.rackFace = face;
         const title = document.querySelector('#rack-face');
@@ -348,7 +404,8 @@ document.addEventListener('click', event => {
   const step = Number(element.dataset.step);
   if (action === 'kiosk-pick') runAction(element.dataset.node);
   if (action === 'kiosk-focus') focusPreset(element.dataset.preset);
-  if (action === 'kiosk-home' || action === 'tv-off') goHome();
+  if (action === 'kiosk-home') goHome();
+  if (action === 'kiosk-back' || action === 'tv-off') goBack();
   if (action === 'kiosk-help') showHint();
   if (action === 'rack-spin') state.kiosk?.spinRack(step);
   if (action === 'tv-channel') changeChannel(step);
@@ -362,7 +419,7 @@ document.addEventListener('keydown', event => {
   if (event.target.closest?.('input, textarea')) return;
   if (event.key === 'Escape') {
     if (document.querySelector('#contact-card')) toggleContactCard(false);
-    else if (state.preset !== 'home' || !flatView.hidden) goHome();
+    else if (state.preset !== 'home' || !flatView.hidden) goBack();
     return;
   }
   const horizontal = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0;

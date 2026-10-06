@@ -20,6 +20,16 @@
   animation: screen-on .35s ease-out both;
 }
 
+/* on the way up: laid on the screen in perspective, not clickable yet */
+.kiosk-screens .screen-page.is-near {
+  display: block;
+  pointer-events: none;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+}
+
+.kiosk-screens .screen-page.is-landed { animation: none; }
+
 @keyframes screen-on {
   from { opacity: 0; filter: brightness(2.2); }
   to { opacity: 1; filter: none; }

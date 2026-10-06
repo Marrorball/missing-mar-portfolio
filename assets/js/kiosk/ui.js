@@ -24,7 +24,7 @@ export function renderContactCard(links = []) {
 }
 
 export function renderBackButton() {
-  return `<button type="button" class="kiosk-back" data-action="kiosk-home">${BACK_ICON}К ларьку</button>`;
+  return `<button type="button" class="kiosk-back" data-action="kiosk-back" title="Или нажми мимо — или Esc">${BACK_ICON}Назад</button>`;
 }
 
 export function renderRackControls(title = '') {
@@ -55,7 +55,7 @@ export function renderHotspotButtons(entries = []) {
 
 export function renderRemote() {
   return `<div class="tv-remote" role="group" aria-label="Пульт">
-    <button type="button" data-action="tv-off" aria-label="Выключить и вернуться к ларьку">ВЫКЛ</button>
+    <button type="button" data-action="tv-off" aria-label="Выключить и вернуться назад">ВЫКЛ</button>
     <button type="button" data-action="tv-channel" data-step="1" aria-label="Следующий канал">CH+</button>
     <button type="button" data-action="tv-channel" data-step="-1" aria-label="Предыдущий канал">CH−</button>
     <button type="button" data-action="tv-scroll" data-step="-1" aria-label="Листать вверх">▲</button>

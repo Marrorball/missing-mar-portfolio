@@ -67,12 +67,13 @@ function spot(scene, root, from, to, { color, intensity, distance, angle, shadow
   return light;
 }
 
-function point(scene, root, name, { color, intensity, distance, drop = 0.06 }) {
+function point(scene, root, name, { color, intensity, distance, drop = 0.06, offset = [0, 0, 0] }) {
   const mesh = root.getObjectByName(name);
   if (!mesh) return null;
   const light = new THREE.PointLight(color, intensity, distance, 2);
   mesh.getWorldPosition(light.position);
   light.position.y -= drop;
+  light.position.add(new THREE.Vector3(...offset));
   scene.add(light);
   return light;
 }
@@ -86,7 +87,9 @@ export function addLights(scene, root, quality) {
 
   const inside = ['bulb_0', 'bulb_1', 'bulb_2'].map(name => point(scene, root, name, { color: WARM, intensity: 2.2, distance: 5 }));
   point(scene, root, 'bulb_outside', { color: WARM, intensity: 1.6, distance: 4 });
-  point(scene, root, 'bulb_rack', { color: WARM, intensity: 0.30, distance: 3 });
+  // the bulb sits on the axis; its light hangs out over the street so the
+  // face you look at is lit, not just grazed from above
+  point(scene, root, 'bulb_rack', { color: WARM, intensity: 1.1, distance: 3.2, offset: [0, 0.1, 0.65] });
   point(scene, root, 'light_terminal', { color: 0xffdfbd, intensity: 0.85, distance: 3.5, drop: 0 });
   // the showcase light over the shelves, so the goods face the street lit
   point(scene, root, 'light_window', { color: WARM, intensity: 2.4, distance: 2.6, drop: 0.02 });

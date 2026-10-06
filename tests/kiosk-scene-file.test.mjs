@@ -134,7 +134,7 @@ test('the TV and the player are dark plastic', () => {
 
 test('the walk round the kiosk has its waypoints', () => {
   const all = names();
-  for (const name of ['front_left', 'side_left', 'front_right', 'side_right', 'door_out', 'door_in']) {
+  for (const name of ['front_left', 'side_left', 'front_right', 'side_right', 'door_out', 'doorway', 'door_in']) {
     assert.ok(all.has(`path_${name}`), name);
   }
 });

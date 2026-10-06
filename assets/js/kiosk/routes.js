@@ -27,6 +27,6 @@ function outsideLeg([x, , z], waypoints) {
 export function walkingRoute({ from, to, fromPosition, toPosition, waypoints }) {
   if (isInside(from) === isInside(to)) return [];
   const outside = isInside(from) ? toPosition : fromPosition;
-  const leg = [...outsideLeg(outside, waypoints), 'path_door_in'].filter(name => name in waypoints);
+  const leg = [...outsideLeg(outside, waypoints), 'path_doorway', 'path_door_in'].filter(name => name in waypoints);
   return isInside(to) ? leg : leg.reverse();
 }

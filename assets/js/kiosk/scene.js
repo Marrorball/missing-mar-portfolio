@@ -4,6 +4,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RACK_FACES } from './discs.js';
 import { coverDescriptor, drawCover } from './covers.js';
 import { lookDirection, turnLook } from './look.js';
+import { quadTransform } from './quad.js';
+import { walkingRoute } from './routes.js';
 import {
   PRESETS,
   SCREENS,
@@ -21,6 +23,10 @@ import { QUALITY, qualityTier } from './weather.js';
 
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
+// Straight flights take longer the further they go; walks round the kiosk
+// move at a steady jog.
+const FLIGHT_RANGE = [1.2, 2.2];
+const WALK_RANGE = [1.8, 3.8];
 const QUARTER = Math.PI / 2;
 const SCREEN_FOV = 40;
 
@@ -42,13 +48,29 @@ function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
+// Gentler in the middle than the cubic: a long walk never sprints.
+function easeInOutSine(t) {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
+}
+
+// The kiosk's footprint in three.js coordinates (3 x 2 m, front at +z).
+function withinWalls({ x, z }) {
+  return Math.abs(x) < 1.5 && Math.abs(z) < 1.0;
+}
+
+function smoothstep(from, to, value) {
+  const t = THREE.MathUtils.clamp((value - from) / (to - from), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
 export async function createKioskScene({
   container,
   url,
   onProgress = () => {},
   onHover = () => {},
   onPick = () => {},
-  onRackFace = () => {}
+  onRackFace = () => {},
+  onEmptyClick = () => {}
 }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(container.clientWidth, container.clientHeight, false);
@@ -98,10 +120,16 @@ export async function createKioskScene({
     }
   }
 
+  const waypoints = {};
+  root.traverse(object => {
+    if (object.name.startsWith('path_')) waypoints[object.name] = object.getWorldPosition(new THREE.Vector3()).toArray();
+  });
+
   const screens = {};
   for (const [preset, anchorName] of Object.entries(SCREENS)) {
     const anchor = root.getObjectByName(anchorName);
     if (!anchor) continue;
+    const turn = anchor.getWorldQuaternion(new THREE.Quaternion());
     const element = document.createElement('div');
     element.className = `screen-page screen-${preset}`;
     const scroller = document.createElement('div');
@@ -110,7 +138,9 @@ export async function createKioskScene({
     screenLayer.appendChild(element);
     screens[preset] = {
       center: anchor.getWorldPosition(new THREE.Vector3()),
-      normal: new THREE.Vector3(0, 0, 1).applyQuaternion(anchor.getWorldQuaternion(new THREE.Quaternion())),
+      normal: new THREE.Vector3(0, 0, 1).applyQuaternion(turn),
+      right: new THREE.Vector3(1, 0, 0).applyQuaternion(turn),
+      up: new THREE.Vector3(0, 1, 0).applyQuaternion(turn),
       element,
       scroller,
       width: anchor.userData.width,
@@ -264,7 +294,7 @@ export async function createKioskScene({
     mesh.name = 'playing_disc';
     mesh.position.copy(from);
     scene.add(mesh);
-    movingDisc = { mesh, from, to, start: performance.now() };
+    movingDisc = { mesh, from, to, start: performance.now(), duration: flight ? flight.duration : FLIGHT_MS };
   }
 
   // A screen close-up: straight in front of the anchor, far enough back for
@@ -276,25 +306,84 @@ export async function createKioskScene({
     return { position: screen.center.clone().addScaledVector(screen.normal, distance), target: screen.center.clone() };
   }
 
-  // The page covers exactly the screen's rectangle on the monitor.
-  function sizeScreen(name) {
+  // The page's size in pixels when the camera rests `distance` from it.
+  function pagePixels(name, distance) {
     const screen = screens[name];
-    const distance = camera.position.distanceTo(screen.center);
     const visible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(SCREEN_FOV / 2));
     const height = Math.round((screen.height / visible) * container.clientHeight);
-    const width = Math.round(height * (screen.width / screen.height));
+    return { width: Math.round(height * (screen.width / screen.height)), height };
+  }
+
+  // At rest the page covers exactly the screen's rectangle on the monitor.
+  function sizeScreen(name) {
+    const screen = screens[name];
+    const { width, height } = pagePixels(name, camera.position.distanceTo(screen.center));
     Object.assign(screen.element.style, {
       width: `${width}px`,
       height: `${height}px`,
       left: `${Math.round((container.clientWidth - width) / 2)}px`,
-      top: `${Math.round((container.clientHeight - height) / 2)}px`
+      top: `${Math.round((container.clientHeight - height) / 2)}px`,
+      transform: '',
+      opacity: ''
     });
   }
 
-  function showScreen(name) {
+  function showScreen(name, { landed = false } = {}) {
     for (const [key, screen] of Object.entries(screens)) {
       screen.element.classList.toggle('is-on', key === name);
+      screen.element.classList.toggle('is-landed', key === name && landed);
+      if (key !== name) screen.element.classList.remove('is-near');
     }
+  }
+
+  // While the camera walks up, the page already sits on the screen in
+  // perspective, laid on its four projected corners at the size it will have
+  // on arrival, and shows only when nothing stands between it and the eye.
+  const corner = new THREE.Vector3();
+  const sight = new THREE.Raycaster();
+  function screenQuad(screen) {
+    const quad = [];
+    for (const [x, y] of [[-1, 1], [1, 1], [1, -1], [-1, -1]]) {
+      corner.copy(screen.center)
+        .addScaledVector(screen.right, x * screen.width / 2)
+        .addScaledVector(screen.up, y * screen.height / 2)
+        .project(camera);
+      if (corner.z > 1 || corner.z < -1) return null;
+      quad.push([(corner.x + 1) / 2 * container.clientWidth, (1 - corner.y) / 2 * container.clientHeight]);
+    }
+    return quad;
+  }
+
+  function inSight(name) {
+    const screen = screens[name];
+    const toEye = camera.position.clone().sub(screen.center);
+    if (toEye.dot(screen.normal) <= 0) return false;
+    const distance = toEye.length();
+    sight.set(camera.position, toEye.negate().normalize());
+    sight.far = distance - 0.03;
+    const hit = sight.intersectObject(root, true).find(entry => isShown(entry.object)
+      && !entry.object.material?.transparent);
+    return !hit || allowedIn(name, pickableNameOf(hit.object));
+  }
+
+  function layPage(name, opacity) {
+    const screen = screens[name];
+    const quad = opacity > 0.01 ? screenQuad(screen) : null;
+    const element = screen.element;
+    if (!quad) {
+      element.classList.remove('is-near');
+      return;
+    }
+    const { width, height } = screen.landing;
+    Object.assign(element.style, {
+      width: `${width}px`,
+      height: `${height}px`,
+      left: '0px',
+      top: '0px',
+      transform: `matrix3d(${quadTransform(width, height, quad).join(',')})`,
+      opacity: String(opacity)
+    });
+    element.classList.add('is-near');
   }
 
   function applyLimits(name) {
@@ -320,15 +409,58 @@ export async function createKioskScene({
     }
   }
 
-  function arrive(name) {
+  function arrive(name, { landed = false } = {}) {
     applyLimits(name);
     if (screens[name]) {
       sizeScreen(name);
-      if (name !== 'billboard' || !billboardMotion) showScreen(name);
+      if (name !== 'billboard' || !billboardMotion) showScreen(name, { landed });
     }
   }
 
   let flight = null;
+
+  // Flies to a view; walks round through the back door when the move
+  // crosses the walls. `name` is the preset that takes over on arrival.
+  function fly(name, view, fov) {
+    // cut in mid-walk: what counts is where the camera is, not where it was going
+    const leaving = flight ? (withinWalls(camera.position) ? 'inside' : 'home') : current;
+    controls.enabled = false;
+    const route = walkingRoute({
+      from: leaving,
+      to: name,
+      fromPosition: camera.position.toArray(),
+      toPosition: view.position.toArray(),
+      waypoints
+    });
+    const from = camera.position.clone();
+    let curve = null;
+    let length = from.distanceTo(view.position);
+    if (route.length) {
+      curve = new THREE.CatmullRomCurve3([from, ...route.map(point => new THREE.Vector3(...waypoints[point])), view.position.clone()],
+        false, 'centripetal');
+      length = curve.getLength();
+    }
+    const [shortest, longest] = curve ? WALK_RANGE : FLIGHT_RANGE;
+    const duration = THREE.MathUtils.clamp((curve ? 0.6 + length * 0.22 : 0.8 + length * 0.12), shortest, longest) * 1000;
+    const page = screens[name] ? name : null;
+    if (page) screens[page].landing = pagePixels(page, view.position.distanceTo(screens[page].center));
+    flight = {
+      name,
+      start: performance.now(),
+      duration,
+      from,
+      fromTarget: controls.target.clone(),
+      fromFov: camera.fov,
+      to: view.position,
+      toTarget: view.target,
+      toFov: fov,
+      curve,
+      page,
+      // the page you leave fades off its screen as you step back
+      leavingPage: screens[leaving] && leaving !== name && leaving !== 'billboard' ? leaving : null
+    };
+  }
+
   function focus(name, { instant = false } = {}) {
     let view = screenView(name) || presets[name];
     if (!view) return;
@@ -337,22 +469,27 @@ export async function createKioskScene({
       view = { target: view.target, position: view.position.clone().sub(view.target).multiplyScalar(scale).add(view.target) };
     }
     const fov = screens[name] ? SCREEN_FOV : fitFov(presetLimits(name).fov, camera.aspect);
+    travel(name, view, fov, { instant });
+  }
+
+  function travel(name, view, fov, { instant = false, look = null } = {}) {
     const alreadyThere = !flight && name === current
       && camera.position.distanceTo(view.position) < 1e-3
       && controls.target.distanceTo(view.target) < 1e-3
       && Math.abs(camera.fov - fov) < 1e-3;
-    current = name;
     insidePointers.clear();
     pinch = null;
     if (name !== 'tv') cancelDisc();
-    if (name === 'home') turnBillboard(0);
+    if (name !== 'billboard') turnBillboard(0);
     if (alreadyThere) {
+      current = name;
       arrive(name); // e.g. switching channels: the TV stays on
       return;
     }
-    showScreen(null);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (instant || reduced) {
+      showScreen(null);
+      current = name;
       flight = null;
       camera.fov = fov;
       camera.updateProjectionMatrix();
@@ -360,19 +497,51 @@ export async function createKioskScene({
       controls.target.copy(view.target);
       camera.lookAt(controls.target);
       arrive(name);
+      if (look) insideLook = { ...look };
       return;
     }
-    controls.enabled = false;
-    flight = {
-      name,
-      start: performance.now(),
-      from: camera.position.clone(),
-      fromTarget: controls.target.clone(),
-      fromFov: camera.fov,
-      to: view.position,
-      toTarget: view.target,
-      toFov: fov
+    const leavingPage = screens[current] && current !== name ? current : null;
+    if (!leavingPage) showScreen(null);
+    fly(name, view, fov);
+    current = name;
+    if (leavingPage) {
+      screens[leavingPage].landing = pagePixels(leavingPage, camera.position.distanceTo(screens[leavingPage].center));
+      screens[leavingPage].element.classList.remove('is-on', 'is-landed');
+    }
+  }
+
+  // Where the camera stands now, to come back to after a close-up.
+  function snapshot() {
+    return {
+      preset: current,
+      position: camera.position.clone(),
+      target: controls.target.clone(),
+      fov: camera.fov,
+      look: { ...insideLook }
     };
+  }
+
+  function restore(saved) {
+    travel(saved.preset, { position: saved.position.clone(), target: saved.target.clone() }, saved.fov, { look: saved.look });
+  }
+
+  // Position and target along a flight at eased progress k.
+  const ahead = new THREE.Vector3();
+  const heading = new THREE.Vector3();
+  function flightPose(k) {
+    if (!flight.curve) {
+      camera.position.lerpVectors(flight.from, flight.to, k);
+      controls.target.lerpVectors(flight.fromTarget, flight.toTarget, k);
+      return;
+    }
+    flight.curve.getPointAt(k, camera.position);
+    flight.curve.getTangentAt(Math.min(k, 0.999), heading);
+    heading.y = 0;
+    if (heading.lengthSq() < 1e-6) heading.copy(flight.toTarget).sub(camera.position).setY(0);
+    // look where you walk, level, then settle on what you came for
+    ahead.copy(camera.position).addScaledVector(heading.normalize(), 2);
+    ahead.lerpVectors(flight.fromTarget, ahead, smoothstep(0, 0.14, k));
+    controls.target.lerpVectors(ahead, flight.toTarget, smoothstep(0.66, 0.96, k));
   }
 
   function setPage(name, html, { switching = false, boardFace = 1 } = {}) {
@@ -578,12 +747,14 @@ export async function createKioskScene({
     const dragged = down.dragged;
     down = null;
     pinch = null;
+    if (flight) return;
     if (moved > 6 || dragged) {
       if (current === 'rack' && rack) snapRack();
       return;
     }
     const name = pick(event.clientX, event.clientY);
     if (name) onPick(name);
+    else if (!flight && presetLimits(current).locked) onEmptyClick();
   });
   canvas.addEventListener('pointercancel', () => {
     down = null;
@@ -619,24 +790,35 @@ export async function createKioskScene({
   const observer = new ResizeObserver(resize);
   observer.observe(container);
 
-  // Dev server only: handles for profiling from the console.
-  if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera, controls, pick,
-    get inFlight() { return Boolean(flight); } };
 
+  const carried = new THREE.Vector3();
+  const flat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
   let lastFrame = 0;
-  renderer.setAnimationLoop(() => {
+  const frame = () => {
     if (flight) {
-      const t = Math.min((performance.now() - flight.start) / FLIGHT_MS, 1);
-      const k = easeInOutCubic(t);
-      camera.position.lerpVectors(flight.from, flight.to, k);
-      controls.target.lerpVectors(flight.fromTarget, flight.toTarget, k);
+      const t = Math.min((performance.now() - flight.start) / flight.duration, 1);
+      const k = flight.curve ? easeInOutSine(t) : easeInOutCubic(t);
+      flightPose(k);
       camera.fov = THREE.MathUtils.lerp(flight.fromFov, flight.toFov, k);
       camera.updateProjectionMatrix();
       camera.lookAt(controls.target);
+      camera.updateMatrixWorld();
+      if (flight.leavingPage) layPage(flight.leavingPage, 1 - smoothstep(0, 0.35, t));
+      if (flight.page && !(flight.page === 'billboard' && billboardMotion)) {
+        // fades in late in the flight, and only from the moment the screen
+        // comes into sight (a walk round the back sees it at the doorway)
+        const seen = t > 0.5 && inSight(flight.page);
+        if (!seen) flight.seenAt = null;
+        else flight.seenAt ??= performance.now();
+        const opacity = seen ? Math.min(smoothstep(0.5, 0.92, t), smoothstep(0, 380, performance.now() - flight.seenAt)) : 0;
+        layPage(flight.page, opacity);
+      }
       if (t === 1) {
-        const { name } = flight;
+        const { name, page, leavingPage } = flight;
         flight = null;
-        arrive(name);
+        if (leavingPage) layPage(leavingPage, 0);
+        arrive(name, { landed: page === name && screens[name]?.element.classList.contains('is-near') });
+        screens[name]?.element.classList.remove('is-near');
       }
     } else if (controls.enabled) {
       controls.update();
@@ -654,16 +836,20 @@ export async function createKioskScene({
       }
     }
     if (movingDisc) {
-      const t = Math.min((performance.now() - movingDisc.start) / FLIGHT_MS, 1);
-      const k = easeInOutCubic(t);
-      movingDisc.mesh.position.lerpVectors(movingDisc.from, movingDisc.to, k);
-      movingDisc.mesh.position.y += Math.sin(Math.PI * k) * 0.55;
-      movingDisc.mesh.quaternion.copy(camera.quaternion);
-      if (t > 0.65) {
-        const horizontal = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
-        movingDisc.mesh.quaternion.slerp(horizontal, (t - 0.65) / 0.35);
-      }
-      movingDisc.mesh.scale.setScalar(1 - Math.max(0, (t - 0.85) / 0.15));
+      // The disc hops off the rack into your hand, rides along in front of
+      // you round the kiosk and drops into the player as you reach the TV.
+      const t = Math.min((performance.now() - movingDisc.start) / movingDisc.duration, 1);
+      const carry = carried.copy(camera.position)
+        .addScaledVector(camera.getWorldDirection(heading), 0.62)
+        .addScaledVector(camera.up, -0.2);
+      const disc = movingDisc.mesh;
+      disc.position.lerpVectors(movingDisc.from, carry, smoothstep(0, 0.2, t));
+      disc.position.y += Math.sin(Math.PI * Math.min(t / 0.2, 1)) * 0.25;
+      disc.position.lerp(movingDisc.to, smoothstep(0.78, 1, t));
+      disc.quaternion.copy(camera.quaternion);
+      if (t > 0.78) disc.quaternion.slerp(flat, smoothstep(0.78, 0.95, t));
+      disc.rotateZ(t * 9);
+      disc.scale.setScalar(1 - smoothstep(0.9, 1, t));
       if (t === 1) cancelDisc();
     }
     const now = performance.now() / 1000;
@@ -675,10 +861,18 @@ export async function createKioskScene({
     snow.update(dt, now);
     if (!reducedMotion) flicker(flickering, now);
     composer.render();
-  });
+  };
+  renderer.setAnimationLoop(frame);
+
+  // Dev server only: handles for profiling from the console; `frame` steps
+  // the loop by hand when the tab is hidden and the browser stops drawing.
+  if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera, controls, pick, frame,
+    get inFlight() { return Boolean(flight); }, get current() { return current; } };
 
   return {
     focus,
+    snapshot,
+    restore,
     spinRack,
     lookInside,
     setPage,

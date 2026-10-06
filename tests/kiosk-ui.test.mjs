@@ -33,7 +33,7 @@ test('the contact card opens links in one click and offers copying', () => {
 });
 
 test('close-ups get a way back and the rack gets its spin controls', () => {
-  assert.match(renderBackButton(), /data-action="kiosk-home">.*К ларьку/);
+  assert.match(renderBackButton(), /data-action="kiosk-back"[^>]*>.*Назад/);
   const rack = renderRackControls('UX/UI <3');
   assert.match(rack, /data-action="rack-spin" data-step="-1"/);
   assert.match(rack, /data-action="rack-spin" data-step="1"/);
