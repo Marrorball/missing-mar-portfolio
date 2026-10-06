@@ -383,7 +383,7 @@ export async function createKioskScene({
   const labelPoint = new THREE.Vector3();
   function updateTouchLabels(now) {
     const hidden = !touchInput.matches || Boolean(flight) || Boolean(screens[current])
-      || Boolean(document.querySelector('.screen-flat, #contact-card, .kiosk-note'));
+      || Boolean(document.querySelector('.screen-flat, #contact-card, .kiosk-note, #kiosk-explore[open]'));
     touchLabels.hidden = hidden;
     if (hidden) {
       labelPose = '';
@@ -656,8 +656,12 @@ export async function createKioskScene({
     prepareFlightOrientation(flight);
   }
 
-  function focus(name, { instant = false } = {}) {
+  function focus(name, { instant = false, lookAt = null } = {}) {
     let view = screenView(name) || presets[name];
+    const object = lookAt && root.getObjectByName(lookAt);
+    if (name === 'inside' && object && view) {
+      view = { ...view, target: new THREE.Box3().setFromObject(object).getCenter(new THREE.Vector3()) };
+    }
     if (!view) return;
     if (name === 'home') {
       const scale = overviewScale(presetLimits(name).fov, camera.aspect);

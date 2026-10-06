@@ -6,7 +6,7 @@ test('phone shows at most two main actions, tablet at most three', () => {
   const items = ['hs_showcase', 'hs_flyer', 'hs_billboard', 'hs_pricelist', 'hs_terminal', 'hs_rack']
     .map(node => ({ node, x: 195, y: 400 }));
   assert.deepEqual(selectLabels(items, { width: 390, height: 844, preset: 'home' }).map(i => i.node),
-    ['hs_rack', 'hs_showcase']);
+    ['hs_rack', 'hs_flyer']);
   assert.equal(selectLabels(items, { width: 820, height: 1180, preset: 'home' }).length, 3);
 });
 

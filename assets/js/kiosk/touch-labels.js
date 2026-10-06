@@ -4,7 +4,7 @@ export const TOUCH_LABEL_QUERY = '(hover: none), (any-pointer: coarse)';
 
 export function selectLabels(items, { width, height, preset }) {
   const priority = node => preset === 'home'
-    ? ({ hs_rack: 0, hs_showcase: 1 }[node] ?? 2) : 0;
+    ? ({ hs_rack: 0, hs_flyer: 1 }[node] ?? 2) : 0;
   const score = item => priority(item.node) * width * height
     + (item.x - width / 2) ** 2 + (item.y - height * 0.48) ** 2;
   return items.filter(item => !(preset === 'rack' && item.node === 'hs_rack'))

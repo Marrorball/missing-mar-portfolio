@@ -26,6 +26,7 @@ import { drawTeletext } from './kiosk/teletext.js';
 import {
   renderBackButton,
   renderContactCard,
+  renderExploreMenu,
   renderHelpBar,
   renderHint,
   renderHotspotButtons,
@@ -290,6 +291,19 @@ function toggleContactCard(force) {
   if (open) slot.querySelector('a')?.focus();
 }
 
+function openExploreMenu() {
+  document.querySelector('#kiosk-explore')?.remove();
+  document.querySelector('.kiosk-chrome').insertAdjacentHTML('beforeend',
+    renderExploreMenu(state.bundle.projects, isInside(state.preset)));
+  const dialog = document.querySelector('#kiosk-explore');
+  dialog.addEventListener('click', event => {
+    if (event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+  });
+  dialog.showModal();
+}
+
 function changeChannel(step) {
   const { projects } = state.bundle;
   if (!projects.length) return;
@@ -484,6 +498,8 @@ async function mountKiosk() {
 }
 
 document.addEventListener('click', event => {
+  const explore = document.querySelector('#kiosk-explore');
+  if (explore?.open && event.target.closest('#kiosk-explore a[href]')) explore.close();
   const card = document.querySelector('#contact-card');
   if (card && !event.target.closest('#contact-card, [data-action="contacts-card"]')) toggleContactCard(false);
 
@@ -492,6 +508,14 @@ document.addEventListener('click', event => {
   const action = element.dataset.action;
   const step = Number(element.dataset.step);
   if (action === 'kiosk-pick') runAction(element.dataset.node);
+  if (action === 'kiosk-explore') openExploreMenu();
+  if (action === 'kiosk-explore-close') explore?.close();
+  if (action === 'kiosk-explore-pick') {
+    explore?.close();
+    const node = element.dataset.node;
+    if (['hs_radio', 'hs_calendar'].includes(node)) focusPreset('inside', { lookAt: node });
+    runAction(node);
+  }
   if (action === 'kiosk-focus') focusPreset(element.dataset.preset);
   if (action === 'kiosk-inside') {
     if (isInside(state.preset)) exitKiosk();
@@ -509,6 +533,7 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('keydown', event => {
+  if (document.querySelector('#kiosk-explore')?.open) return;
   if (event.target.closest?.('input, textarea')) return;
   if (event.key === 'Escape') {
     if (document.querySelector('#contact-card')) toggleContactCard(false);

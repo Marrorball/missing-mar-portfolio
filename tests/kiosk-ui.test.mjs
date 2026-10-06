@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   renderBackButton,
   renderContactCard,
+  renderExploreMenu,
   renderHelpBar,
   renderHotspotButtons,
   renderLoading,
@@ -10,6 +11,19 @@ import {
   renderRackControls,
   renderRemote
 } from '../assets/js/kiosk/ui.js';
+import { HOTSPOTS } from '../assets/js/kiosk/hotspots.js';
+
+test('touch exploration exposes every fixed object and every project independently of camera visibility', () => {
+  const html = renderExploreMenu([{ id: 'a b', title: 'A&B' }, { id: 'c', title: 'C' }]);
+  for (const node of Object.keys(HOTSPOTS)) {
+    if (node === 'hs_doorway') continue; // same entrance as the door
+    assert.ok(html.includes(`data-node="${node}"`), node);
+  }
+  assert.match(html, /Листок с контактами/);
+  assert.match(html, /href="#project\/a%20b">A&amp;B/);
+  assert.match(html, /href="#project\/c">C/);
+  assert.match(renderHelpBar(), /data-action="kiosk-explore"[^>]*>Осмотреть/);
+});
 
 test('the help bar sends projects to the rack, about to the billboard, contacts to the card', () => {
   const html = renderHelpBar();
