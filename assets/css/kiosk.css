@@ -218,3 +218,116 @@ body.is-pointing .kiosk-stage canvas {
     font-size: 12px;
   }
 }
+
+/* ---------- close-ups, rack, contact card ---------- */
+
+.kiosk-back {
+  position: fixed;
+  z-index: 6;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 14px;
+  color: #f3ecdf;
+  background: rgba(14, 18, 28, .8);
+  border: 1px solid rgba(255, 255, 255, .14);
+  font: 13px/1.2 var(--mono);
+}
+
+.rack-controls {
+  position: fixed;
+  z-index: 6;
+  left: 50%;
+  bottom: 78px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px;
+  color: #f3ecdf;
+  background: rgba(14, 18, 28, .8);
+  border: 1px solid rgba(255, 255, 255, .14);
+  font: 13px/1.2 var(--mono);
+  transform: translateX(-50%);
+}
+
+.rack-controls span {
+  min-width: 140px;
+  text-align: center;
+}
+
+.rack-controls button {
+  width: 42px;
+  height: 36px;
+  color: #f3ecdf;
+  background: transparent;
+  font: 16px var(--mono);
+}
+
+.kiosk-back:hover,
+.kiosk-back:focus-visible,
+.rack-controls button:hover,
+.rack-controls button:focus-visible {
+  color: #1c1408;
+  background: #f4e3b8;
+  outline: none;
+}
+
+.contact-card {
+  position: fixed;
+  z-index: 7;
+  left: 50%;
+  bottom: 72px;
+  width: min(420px, calc(100vw - 24px));
+  padding: 6px 8px;
+  color: #1c1408;
+  background: #f4e3b8;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .4);
+  font: 14px/1.4 var(--mono);
+  transform: translateX(-50%);
+}
+
+.contact-card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-card li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 6px;
+  border-bottom: 1px solid rgba(28, 20, 8, .15);
+}
+
+.contact-card li:last-child {
+  border-bottom: 0;
+}
+
+.contact-card a {
+  flex: 1;
+  display: grid;
+  color: inherit;
+}
+
+.contact-card small {
+  font-size: 12px;
+  opacity: .65;
+}
+
+.contact-card button {
+  padding: 6px 10px;
+  color: #1c1408;
+  background: transparent;
+  border: 1px solid rgba(28, 20, 8, .35);
+  font: 12px var(--mono);
+}
+
+.contact-card a:focus-visible,
+.contact-card button:hover,
+.contact-card button:focus-visible {
+  outline: 2px solid #1c1408;
+  outline-offset: 2px;
+}

@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RACK_FACES } from './discs.js';
 import { PRESETS, fitFov, isPickable, pickHotspot, presetLimits } from './hotspots.js';
 
 const SKY = 0x1b2a4a;
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
+const QUARTER = Math.PI / 2;
 
 function pickableNameOf(object) {
   for (let node = object; node; node = node.parent) {
@@ -25,7 +27,14 @@ function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
-export async function createKioskScene({ container, url, onProgress = () => {}, onHover = () => {}, onPick = () => {} }) {
+export async function createKioskScene({
+  container,
+  url,
+  onProgress = () => {},
+  onHover = () => {},
+  onPick = () => {},
+  onRackFace = () => {}
+}) {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight, false);
@@ -91,11 +100,27 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
     }
   }
 
-  function setSlots(placed) {
-    const used = new Set(placed.map(item => item.slot));
+  function showOnly(pattern, entries) {
+    const used = new Set(entries.map(entry => entry.node));
     root.traverse(object => {
-      if (/^slot_\d+$/.test(object.name)) object.visible = used.has(object.name);
+      if (pattern.test(object.name)) object.visible = used.has(object.name);
     });
+  }
+
+  const rack = root.getObjectByName('dvd_rack');
+  let rackFace = 0;
+  let rackTarget = 0;
+  function spinRack(step) {
+    rackFace = (((rackFace + step) % RACK_FACES) + RACK_FACES) % RACK_FACES;
+    // keep turning the short way round instead of unwinding past 360°
+    rackTarget += -step * QUARTER;
+    onRackFace(rackFace);
+  }
+  function snapRack() {
+    const turns = Math.round(-rack.rotation.y / QUARTER);
+    rackTarget = -turns * QUARTER;
+    rackFace = ((turns % RACK_FACES) + RACK_FACES) % RACK_FACES;
+    onRackFace(rackFace);
   }
 
   const raycaster = new THREE.Raycaster();
@@ -110,8 +135,11 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
     return pickHotspot(names);
   }
 
+  let current = 'home';
   function applyLimits(name) {
     const limits = presetLimits(name);
+    controls.enabled = !limits.locked;
+    if (limits.locked) return;
     controls.minDistance = limits.minDistance;
     controls.maxDistance = limits.maxDistance;
     controls.minPolarAngle = limits.minPolarAngle;
@@ -127,7 +155,6 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
   }
 
   let flight = null;
-  let current = 'home';
   function focus(name, { instant = false } = {}) {
     const preset = presets[name];
     if (!preset) return;
@@ -136,11 +163,11 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
     const fov = fitFov(presetLimits(name).fov, camera.aspect);
     if (instant || reduced) {
       flight = null;
-      controls.enabled = true;
       camera.fov = fov;
       camera.updateProjectionMatrix();
       camera.position.copy(preset.position);
       controls.target.copy(preset.target);
+      camera.lookAt(controls.target);
       applyLimits(name);
       return;
     }
@@ -159,9 +186,15 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
 
   let down = null;
   canvas.addEventListener('pointerdown', event => {
-    down = { x: event.clientX, y: event.clientY };
+    down = { x: event.clientX, y: event.clientY, lastX: event.clientX };
   });
   canvas.addEventListener('pointermove', event => {
+    if (down && current === 'rack' && rack) {
+      rack.rotation.y += (event.clientX - down.lastX) * 0.01;
+      rackTarget = rack.rotation.y;
+      down.lastX = event.clientX;
+      return;
+    }
     if (event.pointerType !== 'mouse' || event.buttons) return;
     const name = pick(event.clientX, event.clientY);
     setHovered(name);
@@ -175,7 +208,10 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
     if (!down) return;
     const moved = Math.hypot(event.clientX - down.x, event.clientY - down.y);
     down = null;
-    if (moved > 6) return;
+    if (moved > 6) {
+      if (current === 'rack' && rack) snapRack();
+      return;
+    }
     const name = pick(event.clientX, event.clientY);
     if (name) onPick(name);
   });
@@ -203,18 +239,20 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
       if (t === 1) {
         const { name } = flight;
         flight = null;
-        controls.enabled = true;
         applyLimits(name);
       }
-    } else {
+    } else if (controls.enabled) {
       controls.update();
     }
+    if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * 0.15;
     renderer.render(scene, camera);
   });
 
   return {
     focus,
-    setSlots,
+    spinRack,
+    setHits: hits => showOnly(/^slot_\d+$/, hits),
+    setDiscs: discs => showOnly(/^disc_\d+$/, discs),
     dispose() {
       observer.disconnect();
       renderer.setAnimationLoop(null);
