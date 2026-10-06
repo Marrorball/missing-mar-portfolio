@@ -1,6 +1,6 @@
 // Street art sprayed on the kiosk's side walls, old and a bit flaked: a
-// bubble-letter MAR piece with a crown and drips, «ЦОЙ ЖИВ» in marker and a
-// smiley on the right; «ЗДЕСЬ БЫЛ ВАСЯ» and a heart on the left.
+// bubble-letter MAR piece with a crown and drips and a smiley on the right;
+// «ЗДЕСЬ БЫЛА ДАЯНА» and a heart «М + Г» on the left.
 
 const BUBBLE = '"Arial Black", "PT Sans Narrow", Impact, sans-serif';
 const MARKER = '"PT Sans Narrow", "Arial Narrow", Arial, sans-serif';
@@ -148,17 +148,16 @@ export function drawGraffiti(context, width, height, side = 'right') {
   if (side === 'right') {
     const w = bubble(context, 'MAR', width * 0.47, height * 0.42, height * 0.42, random);
     crown(context, width * 0.47 - w * 0.32, height * 0.13, height * 0.07);
-    marker(context, 'ЦОЙ ЖИВ', width * 0.2, height * 0.83, height * 0.11, -0.06);
     smiley(context, width * 0.84, height * 0.72, height * 0.1);
     marker(context, '2004', width * 0.76, height * 0.2, height * 0.07, 0.12, '#e8e8e8');
     marker(context, 'kirpich', width * 0.5, height * 0.9, height * 0.06, 0.03, '#2b5fd9');
     marker(context, '→', width * 0.93, height * 0.45, height * 0.1, 0.4, '#e8e8e8');
   } else {
-    marker(context, 'ЗДЕСЬ БЫЛ ВАСЯ', width * 0.45, height * 0.3, height * 0.13, -0.05);
+    marker(context, 'ЗДЕСЬ БЫЛА ДАЯНА', width * 0.45, height * 0.3, height * 0.13, -0.05);
     heart(context, width * 0.7, height * 0.66, height * 0.16, '#d62a4a');
-    marker(context, 'М + Ю', width * 0.7, height * 0.64, height * 0.07, 0, '#fff');
+    marker(context, 'М + Г', width * 0.7, height * 0.64, height * 0.07, 0, '#fff');
     marker(context, 'не курить', width * 0.25, height * 0.68, height * 0.07, 0.08, '#2b5fd9');
-    smiley(context, width * 0.12, height * 0.32, height * 0.08);
+    smiley(context, width * 0.1, height * 0.62, height * 0.08);
   }
   flake(context, width, height, random, Math.round((width * height) / 900));
 }

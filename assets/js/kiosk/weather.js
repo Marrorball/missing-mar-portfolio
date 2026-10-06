@@ -39,11 +39,11 @@ export function flickerLevel(t) {
 // The last two letters of «ДИЗАЙН У МАРАТА» are on tired bulbs: now and then
 // they stutter and go out for a few seconds, and the sign reads «МАРА».
 export function signTail(t) {
-  const cycle = t % 13.7;
+  const cycle = t % 15;
   if (cycle < 8.5) return 1;
   if (cycle < 9.1) return Math.sin(cycle * 53) > 0.2 ? 1 : 0.05;
-  if (cycle < 11.6) return 0.03;
-  if (cycle < 11.9) return Math.sin(cycle * 71) > 0 ? 1 : 0.03;
+  if (cycle < 13.1) return 0.03;      // about four seconds of «МАРА»
+  if (cycle < 13.4) return Math.sin(cycle * 71) > 0 ? 1 : 0.03;
   return 1;
 }
 

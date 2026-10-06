@@ -108,6 +108,10 @@ test('graffiti on both walls draws without trouble', async () => {
   for (const side of ['right', 'left']) {
     const { context, texts } = recorder();
     drawGraffiti(context, 1024, 580, side);
-    assert.ok(texts.includes(side === 'right' ? 'ЦОЙ ЖИВ' : 'ЗДЕСЬ БЫЛ ВАСЯ'));
+    if (side === 'left') {
+      assert.ok(texts.includes('ЗДЕСЬ БЫЛА ДАЯНА'));
+      assert.ok(texts.includes('М + Г'));
+    }
+    assert.ok(!texts.includes('ЦОЙ ЖИВ'));
   }
 });

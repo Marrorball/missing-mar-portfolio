@@ -76,8 +76,8 @@ def _light_letters(name, body, loc, size, tail):
     the site can let them give out like burnt bulbs. The split is measured:
     everything right of where the shorter text ends belongs to the tail."""
     import bpy
-    glow = material('sign_glow', (1.0, 0.8, 0.45), emission=4.0)
-    weak = material('sign_glow_tail', (1.0, 0.8, 0.45), emission=4.0)
+    glow = material('sign_glow', (1.0, 0.8, 0.45), emission=2.2)
+    weak = material('sign_glow_tail', (1.0, 0.8, 0.45), emission=2.2)
     obj = text(name, body, loc, size, glow, extrusion=0.012)
     obj.data.materials.append(weak)
     probe = text(f'{name}_probe', body[:-tail], loc, size, glow, extrusion=0.012)
