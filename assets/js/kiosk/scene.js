@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RACK_FACES } from './discs.js';
-import { PRESETS, fitFov, isPickable, pickHotspot, presetLimits } from './hotspots.js';
+import { PRESETS, allowedIn, fitFov, isPickable, pickHotspot, presetLimits } from './hotspots.js';
 
 const SKY = 0x1b2a4a;
 const HOVER = 0x4a3210;
@@ -132,7 +132,8 @@ export async function createKioskScene({
     const names = raycaster.intersectObject(root, true)
       .filter(hit => isShown(hit.object))
       .map(hit => pickableNameOf(hit.object));
-    return pickHotspot(names);
+    const name = pickHotspot(names);
+    return name && allowedIn(current, name) ? name : null;
   }
 
   let current = 'home';

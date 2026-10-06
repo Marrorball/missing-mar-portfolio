@@ -4,6 +4,7 @@ import {
   HOTSPOTS,
   PRESETS,
   ROUTE_PRESETS,
+  allowedIn,
   fitFov,
   hotspotForNode,
   isPickable,
@@ -85,4 +86,16 @@ test('a portrait screen widens the lens so the kiosk still fits across', () => {
   assert.equal(fitFov(40, 2.4), 40);
   const portrait = fitFov(40, 390 / 844);
   assert.ok(portrait > 60 && portrait <= 90, String(portrait));
+});
+
+test('a close-up only answers to its own object', () => {
+  assert.equal(allowedIn('rack', 'disc_4'), true);
+  assert.equal(allowedIn('rack', 'hs_rack'), true);
+  assert.equal(allowedIn('rack', 'hs_showcase'), false);
+  assert.equal(allowedIn('tv', 'hs_tv'), true);
+  assert.equal(allowedIn('tv', 'hs_radio'), false);
+  assert.equal(allowedIn('billboard', 'hs_billboard'), true);
+  assert.equal(allowedIn('terminal', 'hs_flyer'), false);
+  assert.equal(allowedIn('home', 'hs_showcase'), true);
+  assert.equal(allowedIn('inside', 'disc_0'), true);
 });

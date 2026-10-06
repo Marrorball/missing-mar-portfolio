@@ -79,6 +79,20 @@ export function pickHotspot(names = []) {
   return glass;
 }
 
+// In a close-up only the object you came to look at answers the mouse; the
+// overview and the inside answer everything.
+const CLOSE_UP_TARGETS = {
+  rack: /^(disc_\d+|hs_rack)$/,
+  tv: /^hs_tv$/,
+  billboard: /^hs_billboard$/,
+  terminal: /^hs_terminal$/
+};
+
+export function allowedIn(preset, name) {
+  const target = CLOSE_UP_TARGETS[preset];
+  return target ? target.test(name) : true;
+}
+
 export function hotspotForNode(name, { hits = [], discs = [] } = {}) {
   if (PROJECT_NODE.test(name)) {
     const item = [...hits, ...discs].find(entry => entry.node === name);
