@@ -67,11 +67,15 @@ function isFlat() {
 function drawShell() {
   homeView.innerHTML = `<div class="kiosk-stage" id="kiosk-stage"></div>
     <div class="kiosk-label" id="kiosk-label" hidden></div>
+    <div id="kiosk-loading-slot">${renderLoading(0)}</div>
+    ${renderHelpBar()}`;
+  // Notes, the way back, the remote and the contact card float above
+  // everything, including full-screen pages on phones.
+  document.body.insertAdjacentHTML('beforeend', `<div class="kiosk-chrome">
     <div id="kiosk-note-slot"></div>
     <div id="kiosk-closeup-slot"></div>
     <div id="contact-card-slot"></div>
-    <div id="kiosk-loading-slot">${renderLoading(0)}</div>
-    ${renderHelpBar()}`;
+  </div>`);
 }
 
 function hotspotEntries() {
