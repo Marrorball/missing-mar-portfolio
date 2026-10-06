@@ -1,12 +1,17 @@
-export const PRESETS = ['home', 'showcase', 'flyer', 'terminal', 'pricelist', 'inside'];
+export const PRESETS = ['home', 'showcase', 'inside', 'rack', 'tv', 'billboard', 'terminal'];
+
+// Close-ups hold the camera still: you read or spin something, you don't orbit.
+export const LOCKED_PRESETS = ['rack', 'tv', 'billboard', 'terminal'];
 
 export const HOTSPOTS = {
-  hs_showcase: { label: 'Проекты', action: { type: 'focus', preset: 'showcase' } },
+  hs_showcase: { label: 'Хиты', action: { type: 'focus', preset: 'showcase' } },
   hs_flyer: { label: 'Обо мне', action: { type: 'route', hash: '#about' } },
-  hs_terminal: { label: 'Контакты', action: { type: 'route', hash: '#contact' } },
+  hs_billboard: { label: 'Обо мне', action: { type: 'route', hash: '#about' } },
   hs_pricelist: { label: 'Прайс', action: { type: 'route', hash: '#price' } },
+  hs_terminal: { label: 'Контакты', action: { type: 'route', hash: '#contact' } },
   hs_backdoor: { label: 'Заглянуть внутрь', action: { type: 'focus', preset: 'inside' } },
-  hs_tv: { label: 'Весь товар', action: { type: 'route', hash: '#catalog' } },
+  hs_rack: { label: 'Все диски', action: { type: 'focus', preset: 'rack' } },
+  hs_tv: { label: 'Телевизор', action: { type: 'route', hash: '#catalog' } },
   hs_radio: { label: 'Радио', action: { type: 'note', text: 'Радио пока молчит.' } },
   hs_sign_away: {
     label: 'Отошёл',
@@ -17,17 +22,18 @@ export const HOTSPOTS = {
 export const ROUTE_PRESETS = {
   home: 'home',
   page: 'home',
-  project: 'showcase',
-  catalog: 'showcase',
-  about: 'flyer',
-  contact: 'terminal',
-  price: 'pricelist'
+  project: 'tv',
+  catalog: 'tv',
+  about: 'billboard',
+  price: 'billboard',
+  contact: 'terminal'
 };
 
 const OUTSIDE = { fov: 40, minDistance: 1.2, maxDistance: 9, minPolarAngle: 0.45, maxPolarAngle: 1.52 };
 // Inside, the camera stands in the back corner: a wide lens and a short leash
 // so turning around never pushes it through a wall.
-const INSIDE = { fov: 62, minDistance: 0.4, maxDistance: 1.6, minPolarAngle: 1.0, maxPolarAngle: 1.75, azimuthSpan: 0.6 };
+const INSIDE = { fov: 62, minDistance: 0.4, maxDistance: 1.8, minPolarAngle: 1.0, maxPolarAngle: 1.75, azimuthSpan: 0.6 };
+const CLOSE_UP = { fov: 40, locked: true };
 
 const DESIGN_ASPECT = 1.6;
 const MAX_FOV = 75;
@@ -41,14 +47,16 @@ export function fitFov(fov, aspect) {
 }
 
 export function presetLimits(preset) {
-  return preset === 'inside' ? INSIDE : OUTSIDE;
+  if (preset === 'inside') return INSIDE;
+  if (LOCKED_PRESETS.includes(preset)) return CLOSE_UP;
+  return OUTSIDE;
 }
 
-const SLOT_NAME = /^slot_\d+$/;
+const PROJECT_NODE = /^(slot|disc)_\d+$/;
 const HOTSPOT_NAME = /^hs_[a-z_]+$/;
 
 export function isPickable(name = '') {
-  return SLOT_NAME.test(name) || HOTSPOT_NAME.test(name);
+  return PROJECT_NODE.test(name) || HOTSPOT_NAME.test(name);
 }
 
 // Thin enough to click through: hits on these are ignored.
@@ -71,9 +79,9 @@ export function pickHotspot(names = []) {
   return glass;
 }
 
-export function hotspotForNode(name, placed = []) {
-  if (SLOT_NAME.test(name)) {
-    const item = placed.find(entry => entry.slot === name);
+export function hotspotForNode(name, { hits = [], discs = [] } = {}) {
+  if (PROJECT_NODE.test(name)) {
+    const item = [...hits, ...discs].find(entry => entry.node === name);
     if (!item) return null;
     return {
       label: item.title,
