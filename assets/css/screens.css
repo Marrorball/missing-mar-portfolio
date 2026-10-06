@@ -2,7 +2,7 @@
    Each is dressed as the thing it sits on, the way it looked in the 2000s:
    a DVD menu and Teletext on the CRT, a printed street poster, a photocopied
    flyer, an orange payment terminal. Set in ParaType's PT family.
-   On phones and without 3D the same pages fill the viewport (.screen-flat). */
+   Without a working 3D scene the pages fill the viewport (.screen-flat). */
 
 :root {
   --pt-sans: 'PT Sans', Arial, sans-serif;
@@ -29,6 +29,7 @@
   display: none;
   overflow: hidden;
   pointer-events: auto;
+  container: kiosk-screen / inline-size;
 }
 
 .kiosk-screens .screen-page.is-on {
@@ -1362,4 +1363,26 @@
   .kiosk-screens .screen-page.is-on,
   .screen-tv.is-switching::before { animation: none; }
   .screen-tv.is-switching::before { display: none; }
+}
+
+/* Size content to the physical screen, which can be much smaller than the
+   viewport. Keep the same scene screens on phones instead of flat pages. */
+@container kiosk-screen (max-width: 360px) {
+  .ttx { padding: 8px; font-size: clamp(11px, 4.6cqw, 16px); }
+  .ttx h1 { padding: 5px 6px; font-size: clamp(12px, 7cqw, 26px); }
+  .ttx-head { flex-wrap: wrap; gap: 4px 8px; font-size: 11px; }
+  .ttx-sub { font-size: 12px; }
+  .ttx-list a { grid-template-columns: 2ch minmax(0, 1fr); gap: 2px 8px; padding: 6px 2px; }
+  .ttx-meta { grid-column: 2; font-size: 11px; }
+  .ttx-list a span { overflow-wrap: anywhere; }
+  .terminal-bar { gap: 8px; padding: 8px 10px; font-size: 16px; }
+  .terminal-bar span:last-child { font-size: 11px; }
+  .terminal-page h1 { margin: 10px 10px 2px; font-size: 20px; }
+  .terminal-lead { margin: 0 10px 8px; font-size: 12px; }
+  .terminal-buttons { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; gap: 8px; padding: 0 10px; }
+  .terminal-button { min-height: 56px; padding: 8px 10px; font-size: 18px; }
+  .terminal-button small { font-size: 12px; }
+  .board-page h1 { font-size: clamp(18px, 9cqw, 32px); }
+  .board-stamp { font-size: 16px; }
+  .tv-page h1 { font-size: clamp(18px, 8cqw, 28px); }
 }

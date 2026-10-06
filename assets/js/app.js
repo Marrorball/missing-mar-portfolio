@@ -35,7 +35,6 @@ import {
 } from './kiosk/ui.js';
 
 const KIOSK_URL = new URL('../kiosk/kiosk.glb', import.meta.url).href;
-const NARROW = window.matchMedia('(max-width: 760px)');
 const TOUCH = window.matchMedia('(hover: none), (any-pointer: coarse)');
 
 const state = {
@@ -80,9 +79,10 @@ function getCategory(categoryId) {
   return state.bundle?.site.categories?.find(category => category.id === categoryId) || {};
 }
 
-// Phones and devices without 3D get the same pages full screen.
+// Use the same physical screens on every device; flat pages are only a
+// fallback when this device cannot initialise the 3D scene.
 function isFlat() {
-  return !state.kiosk || NARROW.matches;
+  return !state.kiosk;
 }
 
 function drawShell() {
@@ -531,7 +531,6 @@ document.addEventListener('keydown', event => {
 });
 
 window.addEventListener('hashchange', renderRoute);
-NARROW.addEventListener('change', renderRoute);
 
 export async function bootstrapPortfolio() {
   header.hidden = true;

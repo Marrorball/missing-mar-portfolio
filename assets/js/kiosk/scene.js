@@ -378,7 +378,14 @@ export async function createKioskScene({
   function screenView(name) {
     const screen = screens[name];
     if (!screen) return null;
-    const distance = fitDistance(screen.width, screen.height, SCREEN_FOV, camera.aspect, SCREEN_FILL);
+    const height = container.clientHeight;
+    const rect = container.getBoundingClientRect();
+    const footerTop = document.querySelector('.kiosk-help')?.getBoundingClientRect().top ?? rect.bottom;
+    // The centred physical screen must leave room for Back and the footer,
+    // including a short landscape phone viewport.
+    const usableHeight = Math.max(80, 2 * Math.min(height / 2 - 76, footerTop - rect.top - 12 - height / 2));
+    const fill = Math.min(SCREEN_FILL, usableHeight / height);
+    const distance = fitDistance(screen.width, screen.height, SCREEN_FOV, camera.aspect, fill);
     return { position: screen.center.clone().addScaledVector(screen.normal, distance), target: screen.center.clone() };
   }
 
