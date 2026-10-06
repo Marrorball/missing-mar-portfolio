@@ -4,7 +4,7 @@
   overflow: hidden;
   isolation: isolate;
   background-color: var(--cobalt);
-  background-image: url('../media/y2k/landscape-background-smooth-chrome.webp');
+  background-image: url('../media/y2k/hero-scene.webp');
   background-position: center;
   background-size: cover;
 }
@@ -69,10 +69,6 @@
   border-radius: 50%;
 }
 
-.profile-monument {
-  display: none;
-}
-
 .profile-scene-overlay {
   position: absolute;
   z-index: 1;
@@ -83,12 +79,6 @@
   object-fit: cover;
   object-position: center;
   pointer-events: none;
-}
-
-.profile-monument-art {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 
 .featured-selector {

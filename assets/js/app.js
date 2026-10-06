@@ -14,7 +14,8 @@ import { selectFeaturedProjects } from './selectors.js';
 const state = {
   bundle: null,
   activeProjectId: '',
-  activeCategory: 'all'
+  activeCategory: 'all',
+  trackDepth: null
 };
 
 const header = document.querySelector('#site-header');
@@ -44,6 +45,48 @@ function drawHome() {
     activeProjectId: state.activeProjectId,
     activeCategory: state.activeCategory
   });
+  enhanceDig();
+}
+
+let unearthObserver = null;
+
+function enhanceDig() {
+  const finds = document.querySelector('#finds');
+  const head = document.querySelector('#depth-head');
+  if (!finds) return;
+
+  unearthObserver?.disconnect();
+  unearthObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-unearthed');
+        unearthObserver.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+  finds.querySelectorAll('.find').forEach(find => unearthObserver.observe(find));
+
+  if (!head) return;
+  const deepest = 1.4 * finds.children.length;
+  let queued = false;
+
+  const track = () => {
+    queued = false;
+    const box = finds.getBoundingClientRect();
+    const travelled = window.innerHeight * 0.5 - box.top;
+    const progress = Math.min(Math.max(travelled / Math.max(box.height, 1), 0), 1);
+    head.style.top = `${(progress * 100).toFixed(2)}%`;
+    head.innerHTML = `<strong>−${(progress * deepest).toFixed(1).replace('.', ',')} м</strong>`;
+  };
+
+  window.removeEventListener('scroll', state.trackDepth);
+  state.trackDepth = () => {
+    if (queued) return;
+    queued = true;
+    window.requestAnimationFrame(track);
+  };
+  window.addEventListener('scroll', state.trackDepth, { passive: true });
+  track();
 }
 
 function announce(message) {
@@ -81,7 +124,13 @@ function renderRoute() {
       window.location.hash = '';
       return;
     }
-    showOverlay(renderProjectView(project, getCategory(project.category)), 'project');
+    const ordered = state.bundle.projects;
+    const position = ordered.findIndex(item => item.id === project.id);
+    const neighbour = ordered[(position + 1) % ordered.length] || null;
+    showOverlay(
+      renderProjectView(project, getCategory(project.category), neighbour === project ? null : neighbour),
+      'project'
+    );
     announce(`Открыт проект ${project.title}`);
     return;
   }
@@ -126,6 +175,13 @@ function handleAction(element, event) {
     drawHome();
     document.querySelector('#project-archive')?.scrollIntoView({ block: 'start' });
     announce(`Фильтр проектов: ${element.textContent.trim()}`);
+    return;
+  }
+  if (action === 'scroll-to-section') {
+    // Section anchors must not touch the hash: it is the view router.
+    event.preventDefault();
+    const target = document.getElementById(element.dataset.sectionId);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
   if (action === 'show-projects') {

@@ -46,7 +46,9 @@ test('keeps the approved Y2K scene untinted behind the live interface', async ()
 
   assert.match(css, /\.landscape-hero::after\s*\{[^}]*background:\s*transparent;/s);
   assert.match(css, /\.profile-scene-overlay\s*\{[^}]*z-index:\s*1;/s);
-  assert.match(responsiveCss, /landscape-y2k-smooth-v3\.png'\)\s*!important/);
+  // On a phone the scene is laid out in flow, so it is never cropped by cover.
+  assert.match(responsiveCss, /\.landscape-hero\s*\{[^}]*background-image:\s*none\s*!important/s);
+  assert.match(responsiveCss, /\.profile-scene-overlay\s*\{[^}]*object-fit:\s*contain;/s);
 });
 
 test('renders the approved identity, three featured projects, and complete archive', () => {
@@ -65,18 +67,23 @@ test('renders the approved identity, three featured projects, and complete archi
   });
 
   assert.match(html, /missing mar/);
-  assert.match(html, /class="profile-monument" aria-hidden="true"/);
-  assert.match(html, /class="profile-monument-art"/);
-  assert.match(html, /missing-mar-profile-monument-v1\.webp/);
+  // The hero is one raster; the heavy standalone plate must not be shipped too.
+  assert.doesNotMatch(html, /profile-monument/);
+  assert.doesNotMatch(html, /missing-mar-profile-monument-v1\.webp/);
   assert.match(html, /class="profile-scene-overlay"/);
-  assert.match(html, /landscape-profile-y2k-v3\.png/);
+  assert.match(html, /hero-scene\.webp/);
   assert.doesNotMatch(html, /class="landscape-foreground-grass"/);
   assert.doesNotMatch(html, /href="#about" class="profile-card"/);
   assert.equal((html.match(/WHERE&#39;S/g) || []).length, 0);
   assert.match(html, /featured-indicator ph ph-star-four/);
   assert.doesNotMatch(html, /ph-sparkle/);
   assert.equal((html.match(/class="featured-project/g) || []).length, 3);
-  assert.match(html, /Все проекты — 4/);
+  assert.match(html, /РАЗРЕЗ \/ 4 НАХОДОК/);
+  assert.match(html, /class="dig"/);
+  assert.equal((html.match(/class="find"/g) || []).length, 4);
+  assert.equal((html.match(/class="find-stone-face"/g) || []).length, 4);
+  assert.doesNotMatch(html, /find-spec/);
+  assert.match(html, /class="depth-rail"/);
   assert.match(html, /data-project-id="d"/);
   assert.match(html, /id="project-archive"/);
 });

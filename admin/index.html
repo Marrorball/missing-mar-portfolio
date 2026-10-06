@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>missing mar — админка</title>
+<style>
+:root{
+  --ink:#f2efe9; --muted:#a49c90; --acid:#caff18;
+  --bg:#0d0a07; --panel:#151009; --line:rgba(226,214,196,.18);
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 var(--mono)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--acid)}
+
+.bar{position:sticky;top:0;z-index:5;display:flex;gap:16px;align-items:center;
+  padding:14px 22px;background:rgba(13,10,7,.94);border-bottom:1px solid var(--line);
+  backdrop-filter:blur(8px)}
+.bar h1{margin:0;font-size:14px;font-weight:500;letter-spacing:.14em;text-transform:uppercase}
+.bar .spacer{flex:1}
+.status{color:var(--muted);font-size:12px}
+.status.dirty{color:var(--acid)}
+.status.error{color:#ff7a6b}
+
+.tabs{display:flex;gap:4px}
+.tabs button{padding:9px 16px;background:transparent;border:1px solid var(--line);color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{color:#0d0a07;background:var(--acid);border-color:var(--acid)}
+
+.btn{padding:10px 18px;background:transparent;border:1px solid var(--line);cursor:pointer}
+.btn:hover{border-color:var(--acid);color:var(--acid)}
+.btn.primary{background:var(--acid);border-color:var(--acid);color:#0d0a07}
+.btn.primary:hover{color:#0d0a07;filter:brightness(1.08)}
+.btn.danger:hover{border-color:#ff7a6b;color:#ff7a6b}
+
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:0;min-height:calc(100vh - 57px)}
+.side{border-right:1px solid var(--line);padding:18px}
+.side h2{margin:0 0 14px;font-size:11px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.list{display:grid;gap:2px;margin-bottom:16px}
+.list button{display:grid;gap:2px;padding:11px 12px;text-align:left;background:transparent;border:1px solid transparent;cursor:pointer}
+.list button:hover{border-color:var(--line)}
+.list button[aria-current="true"]{background:var(--panel);border-color:var(--acid)}
+.list small{color:var(--muted);font-size:11px}
+.list .off{color:var(--muted);text-decoration:line-through}
+
+.main{padding:26px 30px 90px;max-width:1000px}
+.field{display:grid;gap:6px;margin-bottom:18px}
+.field label{font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.field input,.field select,.field textarea{
+  padding:11px 13px;background:var(--panel);border:1px solid var(--line);border-radius:0}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--acid)}
+.field textarea{min-height:120px;resize:vertical;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 18px}
+.row{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.check{display:inline-flex;gap:9px;align-items:center;cursor:pointer}
+.check input{accent-color:var(--acid);width:16px;height:16px}
+
+fieldset{margin:0 0 18px;padding:16px;border:1px solid var(--line)}
+legend{padding:0 8px;font-size:11px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+
+.section-card{margin-bottom:14px;padding:14px;background:var(--panel);border:1px solid var(--line)}
+.section-card .head{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.section-card .head input{flex:1}
+.hint{margin:6px 0 0;color:var(--muted);font-size:11px}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.thumb{position:relative;width:104px}
+.thumb img{width:100%;height:78px;object-fit:cover;border:1px solid var(--line);display:block}
+.thumb button{position:absolute;top:3px;right:3px;padding:2px 6px;font-size:11px;background:rgba(13,10,7,.86);border:1px solid var(--line);cursor:pointer}
+.cover-preview img{max-width:260px;border:1px solid var(--line)}
+.empty{color:var(--muted);padding:40px 0}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>missing mar / админка</h1>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="projects" aria-selected="true">Проекты</button>
+    <button role="tab" data-tab="site" aria-selected="false">О себе и контакты</button>
+  </div>
+  <span class="spacer"></span>
+  <span class="status" id="status">загрузка…</span>
+  <a class="btn" href="/missing-mar-portfolio/" target="_blank">Открыть сайт</a>
+  <button class="btn primary" id="save">Сохранить</button>
+</div>
+
+<div class="layout">
+  <aside class="side" id="side"></aside>
+  <main class="main" id="main"></main>
+</div>
+
+<script type="module">
+const API = '/admin/api';
+const state = { data: null, tab: 'projects', selected: null, dirty: false };
+
+const statusEl = document.querySelector('#status');
+const sideEl = document.querySelector('#side');
+const mainEl = document.querySelector('#main');
+
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+function setStatus(text, kind = '') {
+  statusEl.textContent = text;
+  statusEl.className = `status ${kind}`;
+}
+
+function markDirty() {
+  state.dirty = true;
+  setStatus('есть несохранённые правки', 'dirty');
+}
+
+async function api(path, options) {
+  const response = await fetch(API + path, options);
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+  return payload;
+}
+
+/* ---------- projects ---------- */
+
+const blankProject = () => ({
+  id: '', title: '', shortLabel: '', category: state.data.site.categories?.[0]?.id || '',
+  year: String(new Date().getFullYear()), status: '', summary: '', cover: '',
+  tags: [], gallery: [], sections: [], behance: '',
+  featured: false, featuredOrder: 0, published: true,
+  order: (state.data.projects.length + 1) * 10, accent: '#caff18'
+});
+
+function drawProjectList() {
+  const items = state.data.projects.map((project, index) => `
+    <button data-index="${index}" aria-current="${state.selected === index}">
+      <span class="${project.published === false ? 'off' : ''}">${escapeHtml(project.title || '(без названия)')}</span>
+      <small>${escapeHtml(project.id)} · ${escapeHtml(project.year || '')}${project.featured ? ' · избранный' : ''}</small>
+    </button>`).join('');
+
+  sideEl.innerHTML = `<h2>Проекты — ${state.data.projects.length}</h2>
+    <div class="list" id="project-list">${items}</div>
+    <button class="btn" id="add-project">+ Новый проект</button>`;
+
+  sideEl.querySelector('#project-list')?.addEventListener('click', event => {
+    const button = event.target.closest('button[data-index]');
+    if (!button) return;
+    state.selected = Number(button.dataset.index);
+    draw();
+  });
+
+  sideEl.querySelector('#add-project').addEventListener('click', () => {
+    state.data.projects.push(blankProject());
+    state.selected = state.data.projects.length - 1;
+    markDirty();
+    draw();
+  });
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function upload(file, projectId) {
+  setStatus(`загружаю ${file.name}…`);
+  const { path } = await api('/upload', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ projectId, name: file.name, dataUrl: await fileToDataUrl(file) })
+  });
+  markDirty();
+  return path;
+}
+
+function drawProjectForm() {
+  const project = state.data.projects[state.selected];
+  if (!project) {
+    mainEl.innerHTML = '<p class="empty">Выберите проект слева или создайте новый.</p>';
+    return;
+  }
+
+  const categories = (state.data.site.categories || [])
+    .map(category => `<option value="${escapeHtml(category.id)}"${category.id === project.category ? ' selected' : ''}>${escapeHtml(category.title)}</option>`)
+    .join('');
+
+  mainEl.innerHTML = `
+    <div class="row">
+      <strong style="font-size:18px">${escapeHtml(project.title || 'Новый проект')}</strong>
+      <span class="spacer" style="flex:1"></span>
+      <button class="btn danger" id="delete-project">Удалить проект</button>
+    </div>
+
+    <div class="grid2">
+      <div class="field"><label for="f-title">Название</label>
+        <input id="f-title" data-key="title" value="${escapeHtml(project.title)}"></div>
+      <div class="field"><label for="f-id">Идентификатор (латиницей, в ссылке)</label>
+        <input id="f-id" data-key="id" value="${escapeHtml(project.id)}"></div>
+      <div class="field"><label for="f-short">Короткая подпись (для главной)</label>
+        <input id="f-short" data-key="shortLabel" value="${escapeHtml(project.shortLabel)}"></div>
+      <div class="field"><label for="f-cat">Раздел</label>
+        <select id="f-cat" data-key="category">${categories}</select></div>
+      <div class="field"><label for="f-year">Год</label>
+        <input id="f-year" data-key="year" value="${escapeHtml(project.year)}"></div>
+      <div class="field"><label for="f-status">Подпись (например «Figma · 2025»)</label>
+        <input id="f-status" data-key="status" value="${escapeHtml(project.status)}"></div>
+      <div class="field"><label for="f-order">Порядок (меньше — выше)</label>
+        <input id="f-order" type="number" data-key="order" value="${Number(project.order) || 0}"></div>
+      <div class="field"><label for="f-behance">Ссылка на Behance</label>
+        <input id="f-behance" data-key="behance" value="${escapeHtml(project.behance)}"></div>
+    </div>
+
+    <div class="field"><label for="f-summary">Описание (одним абзацем)</label>
+      <textarea id="f-summary" data-key="summary" style="min-height:90px">${escapeHtml(project.summary)}</textarea></div>
+
+    <div class="field"><label for="f-tags">Теги через запятую</label>
+      <input id="f-tags" data-key="tags" value="${escapeHtml((project.tags || []).join(', '))}"></div>
+
+    <div class="row">
+      <label class="check"><input type="checkbox" data-key="published" ${project.published !== false ? 'checked' : ''}> Опубликован</label>
+      <label class="check"><input type="checkbox" data-key="featured" ${project.featured ? 'checked' : ''}> Показывать на главной</label>
+    </div>
+
+    <fieldset>
+      <legend>Обложка</legend>
+      <div class="cover-preview">${project.cover ? `<img src="${escapeHtml(project.cover)}" alt="">` : '<p class="hint">Пока нет. Появится карточкой в разрезе и шапкой проекта.</p>'}</div>
+      <div class="row" style="margin:12px 0 0">
+        <input type="file" id="cover-file" accept="image/*">
+        ${project.cover ? '<button class="btn danger" id="cover-clear">Убрать</button>' : ''}
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Разделы кейса</legend>
+      <div id="sections">${(project.sections || []).map((section, index) => `
+        <div class="section-card" data-section="${index}">
+          <div class="head">
+            <input data-section-key="label" value="${escapeHtml(section.label)}" placeholder="Заголовок раздела">
+            <button class="btn" data-move="-1" title="Выше">↑</button>
+            <button class="btn" data-move="1" title="Ниже">↓</button>
+            <button class="btn danger" data-remove-section>Удалить</button>
+          </div>
+          <textarea data-section-key="content" placeholder="Текст или HTML">${escapeHtml(section.content)}</textarea>
+          <div class="row" style="margin:10px 0 0">
+            <input type="file" data-section-image accept="image/*" multiple>
+            <span class="hint">Картинки добавятся в конец раздела</span>
+          </div>
+        </div>`).join('')}</div>
+      <button class="btn" id="add-section">+ Раздел</button>
+    </fieldset>`;
+
+}
+
+function currentProject() {
+  return state.data.projects[state.selected];
+}
+
+function onProjectInput(event) {
+  const project = currentProject();
+  const field = event.target.closest('[data-key]');
+  if (field && project) {
+    const key = field.dataset.key;
+    if (key === 'tags') {
+      project.tags = field.value.split(',').map(tag => tag.trim()).filter(Boolean);
+    } else if (key === 'order') {
+      project.order = Number(field.value) || 0;
+    } else if (field.type === 'checkbox') {
+      project[key] = field.checked;
+    } else {
+      project[key] = field.value;
+    }
+    markDirty();
+    if (key === 'title' || key === 'id' || key === 'published' || key === 'featured') drawProjectList();
+    return;
+  }
+
+  const sectionField = event.target.closest('[data-section-key]');
+  if (sectionField && project) {
+    const index = Number(sectionField.closest('[data-section]').dataset.section);
+    project.sections[index][sectionField.dataset.sectionKey] = sectionField.value;
+    if (sectionField.dataset.sectionKey === 'label') {
+      project.sections[index].id = project.sections[index].id
+        || `s${index + 1}-${Date.now().toString(36)}`;
+    }
+    markDirty();
+  }
+}
+
+async function onProjectChange(event) {
+  const project = currentProject();
+  if (!project) return;
+
+  if (event.target.matches('[data-key][type="checkbox"]')) {
+    onProjectInput(event);
+    return;
+  }
+
+  if (event.target.id === 'cover-file' && event.target.files[0]) {
+    try {
+      project.cover = await upload(event.target.files[0], project.id || 'general');
+      draw();
+      setStatus('обложка загружена, не забудьте сохранить', 'dirty');
+    } catch (error) {
+      setStatus(error.message, 'error');
+    }
+    return;
+  }
+
+  const sectionInput = event.target.closest('[data-section-image]');
+  if (sectionInput && sectionInput.files.length) {
+    const index = Number(sectionInput.closest('[data-section]').dataset.section);
+    try {
+      for (const file of sectionInput.files) {
+        const path = await upload(file, project.id || 'general');
+        const section = project.sections[index];
+        section.content = `${section.content || ''}\n<img src="${path}" alt="">`.trim();
+      }
+      draw();
+      setStatus('картинки добавлены, не забудьте сохранить', 'dirty');
+    } catch (error) {
+      setStatus(error.message, 'error');
+    }
+  }
+}
+
+function onProjectClick(event) {
+  const project = currentProject();
+  if (!project) return;
+
+  if (event.target.id === 'delete-project') {
+    if (!confirm(`Удалить проект «${project.title || project.id}»? Файлы картинок останутся на диске.`)) return;
+    state.data.projects.splice(state.selected, 1);
+    state.selected = null;
+    markDirty();
+    draw();
+    return;
+  }
+
+  if (event.target.id === 'cover-clear') {
+    project.cover = '';
+    markDirty();
+    draw();
+    return;
+  }
+
+  if (event.target.id === 'add-section') {
+    project.sections = project.sections || [];
+    project.sections.push({ id: `s${Date.now().toString(36)}`, label: 'Новый раздел', content: '' });
+    markDirty();
+    draw();
+    return;
+  }
+
+  const move = event.target.closest('[data-move]');
+  if (move) {
+    const index = Number(move.closest('[data-section]').dataset.section);
+    const target = index + Number(move.dataset.move);
+    if (target < 0 || target >= project.sections.length) return;
+    const [item] = project.sections.splice(index, 1);
+    project.sections.splice(target, 0, item);
+    markDirty();
+    draw();
+    return;
+  }
+
+  if (event.target.closest('[data-remove-section]')) {
+    const index = Number(event.target.closest('[data-section]').dataset.section);
+    project.sections.splice(index, 1);
+    markDirty();
+    draw();
+  }
+}
+
+/* ---------- site ---------- */
+
+function drawSite() {
+  const owner = state.data.site.owner || {};
+  const contacts = state.data.site.contacts || {};
+  sideEl.innerHTML = '<h2>О себе</h2><p class="hint">Эти поля видны в шапке, на плите и на странице «Обо мне».</p>';
+
+  mainEl.innerHTML = `
+    <div class="grid2">
+      <div class="field"><label for="o-brand">Псевдоним</label>
+        <input id="o-brand" data-owner="brandName" value="${escapeHtml(owner.brandName)}"></div>
+      <div class="field"><label for="o-name">Имя</label>
+        <input id="o-name" data-owner="name" value="${escapeHtml(owner.name)}"></div>
+      <div class="field"><label for="o-role">Роль</label>
+        <input id="o-role" data-owner="role" value="${escapeHtml(owner.role)}"></div>
+      <div class="field"><label for="o-loc">Город</label>
+        <input id="o-loc" data-owner="location" value="${escapeHtml(owner.location)}"></div>
+      <div class="field"><label for="o-status">Статус</label>
+        <input id="o-status" data-owner="status" value="${escapeHtml(owner.status)}"></div>
+      <div class="field"><label for="o-exp">Опыт</label>
+        <input id="o-exp" data-owner="experience" value="${escapeHtml(owner.experience)}"></div>
+    </div>
+    <div class="field"><label for="o-bio">О себе</label>
+      <textarea id="o-bio" data-owner="bio">${escapeHtml(owner.bio)}</textarea></div>
+
+    <fieldset><legend>Контакты</legend>
+      <div class="grid2">
+        <div class="field"><label for="c-email">Email</label>
+          <input id="c-email" data-contact="email" value="${escapeHtml(contacts.email)}"></div>
+        <div class="field"><label for="c-tg">Telegram (без @)</label>
+          <input id="c-tg" data-contact="telegram" value="${escapeHtml(contacts.telegram)}"></div>
+        <div class="field"><label for="c-be">Behance</label>
+          <input id="c-be" data-contact="behance" value="${escapeHtml(contacts.behance)}"></div>
+      </div>
+    </fieldset>`;
+
+}
+
+function onSiteInput(event) {
+  const owned = event.target.closest('[data-owner]');
+  if (owned) {
+    state.data.site.owner[owned.dataset.owner] = owned.value;
+    markDirty();
+    return;
+  }
+  const contact = event.target.closest('[data-contact]');
+  if (contact) {
+    state.data.site.contacts[contact.dataset.contact] = contact.value;
+    markDirty();
+  }
+}
+
+/* ---------- shell ---------- */
+
+mainEl.addEventListener('input', event => {
+  if (state.tab === 'projects') onProjectInput(event);
+  else onSiteInput(event);
+});
+mainEl.addEventListener('change', event => {
+  if (state.tab === 'projects') onProjectChange(event);
+});
+mainEl.addEventListener('click', event => {
+  if (state.tab === 'projects') onProjectClick(event);
+});
+
+function draw() {
+  mainEl.replaceChildren();
+  if (state.tab === 'projects') {
+    drawProjectList();
+    drawProjectForm();
+  } else {
+    drawSite();
+  }
+}
+
+document.querySelector('.tabs').addEventListener('click', event => {
+  const tab = event.target.closest('[data-tab]');
+  if (!tab) return;
+  state.tab = tab.dataset.tab;
+  document.querySelectorAll('[data-tab]').forEach(button => {
+    button.setAttribute('aria-selected', String(button.dataset.tab === state.tab));
+  });
+  draw();
+});
+
+document.querySelector('#save').addEventListener('click', async () => {
+  try {
+    setStatus('сохраняю…');
+    await api('/content', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ projects: state.data.projects, site: state.data.site })
+    });
+    state.dirty = false;
+    setStatus('сохранено');
+  } catch (error) {
+    setStatus(error.message, 'error');
+  }
+});
+
+window.addEventListener('beforeunload', event => {
+  if (state.dirty) event.preventDefault();
+});
+
+try {
+  state.data = await api('/content');
+  state.selected = state.data.projects.length ? 0 : null;
+  setStatus('готово');
+  draw();
+} catch (error) {
+  setStatus(error.message, 'error');
+}
+</script>
+</body>
+</html>

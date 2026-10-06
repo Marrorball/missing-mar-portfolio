@@ -35,7 +35,11 @@ test('Pages CMS config parses and exposes the intended content files', () => {
     abort 'secret in config' if text.match?(/token|password|client_secret/i)
     puts 'Pages CMS OK'
   `;
-  const result = spawnSync('ruby', ['-e', ruby], { encoding: 'utf8' });
+  // Pin Ruby's IO encoding so the check does not depend on the shell locale.
+  const result = spawnSync('ruby', ['-e', ruby], {
+    encoding: 'utf8',
+    env: { ...process.env, RUBYOPT: `${process.env.RUBYOPT || ''} -EUTF-8`.trim() }
+  });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(result.stdout.trim(), 'Pages CMS OK');
 });

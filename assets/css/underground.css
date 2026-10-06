@@ -1,0 +1,580 @@
+/* Below the hero the page digs. Projects are not cards: they are stones half
+   buried in the soil, and the deeper you scroll the darker the ground gets —
+   until the heat of the core shows through at the bottom. */
+
+.dig {
+  position: relative;
+  z-index: 1;
+  color: var(--ink);
+  background-color: #17100a;
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(74, 46, 25, .92) 0,
+      rgba(46, 28, 15, .92) 14%,
+      rgba(28, 18, 11, .94) 34%,
+      rgba(16, 11, 8, .96) 56%,
+      rgba(9, 6, 5, .97) 74%,
+      rgba(6, 4, 4, .98) 88%,
+      rgba(20, 7, 3, .96) 100%
+    ),
+    url('../media/y2k/soil-tile.webp');
+  background-size: 100% 100%, 620px 620px;
+  background-repeat: no-repeat, repeat;
+}
+
+.dig::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 236, 205, .045) 0 1px,
+    transparent 1px 9px
+  );
+  pointer-events: none;
+}
+
+/* ---------- the cut ---------- */
+
+.dig-cut {
+  position: absolute;
+  z-index: 2;
+  top: calc(-1 * clamp(28px, 4vw, 54px));
+  left: 0;
+  width: 100%;
+  height: clamp(34px, 5vw, 66px);
+  background-color: #3a2416;
+  background-image: url('../media/y2k/soil-tile.webp');
+  background-size: 620px 620px;
+  clip-path: polygon(
+    0 34%, 4% 22%, 9% 39%, 14% 24%, 19% 41%, 24% 27%, 29% 44%, 34% 26%,
+    39% 42%, 44% 28%, 49% 45%, 54% 25%, 59% 40%, 64% 27%, 69% 43%, 74% 24%,
+    79% 41%, 84% 26%, 89% 38%, 94% 23%, 100% 36%, 100% 100%, 0 100%
+  );
+}
+
+.dig-roots {
+  position: absolute;
+  z-index: 3;
+  top: clamp(4px, .8vw, 12px);
+  left: 0;
+  width: 100%;
+  height: clamp(60px, 7vw, 96px);
+  color: rgba(120, 76, 40, .62);
+  pointer-events: none;
+}
+
+.dig-intro {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  gap: 34px;
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: clamp(96px, 12vw, 168px) var(--page-pad) 0;
+}
+
+.dig-eyebrow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 0 0 16px;
+  color: var(--acid);
+  font-size: 11px;
+  letter-spacing: .14em;
+}
+
+.dig-eyebrow::before {
+  content: '';
+  width: clamp(28px, 6vw, 78px);
+  height: 1px;
+  background: currentColor;
+}
+
+.dig-intro h2 {
+  max-width: 15ch;
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(40px, 6.4vw, 88px);
+  font-style: italic;
+  line-height: .92;
+  letter-spacing: -.04em;
+  text-transform: lowercase;
+}
+
+.dig-lede {
+  max-width: 46ch;
+  margin: 22px 0 0;
+  color: rgba(238, 228, 214, .72);
+  font-size: clamp(13px, 1.2vw, 15px);
+  line-height: 1.7;
+}
+
+/* ---------- strata filters ---------- */
+
+.strata-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.strata-filters button {
+  min-height: 44px;
+  padding: 0 18px;
+  color: rgba(240, 232, 220, .82);
+  font-size: 12px;
+  letter-spacing: .06em;
+  background: rgba(20, 13, 8, .72);
+  border: 1px solid rgba(215, 190, 160, .3);
+}
+
+.strata-filters button:hover {
+  color: var(--ink);
+  border-color: rgba(215, 190, 160, .68);
+}
+
+.strata-filters button[aria-pressed='true'] {
+  color: #120c07;
+  background: var(--acid);
+  border-color: var(--acid);
+}
+
+/* ---------- the dig itself ---------- */
+
+.dig-body {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: clamp(64px, 8vw, 116px) minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 48px);
+  padding: clamp(48px, 6vw, 86px) var(--page-pad) clamp(90px, 11vw, 150px);
+}
+
+.depth-rail {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  height: min(560px, 62vh);
+  color: rgba(233, 222, 208, .5);
+}
+
+.depth-rail-line {
+  position: relative;
+  width: 1px;
+  height: 100%;
+  margin-left: 12px;
+  background: linear-gradient(to bottom, transparent, rgba(233, 222, 208, .4) 8%, rgba(233, 222, 208, .4) 92%, transparent);
+}
+
+.depth-tick {
+  position: absolute;
+  left: 0;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: .08em;
+  transform: translateY(-50%);
+}
+
+.depth-tick::before {
+  content: '';
+  width: 9px;
+  height: 1px;
+  background: currentColor;
+}
+
+.depth-head {
+  position: absolute;
+  left: -12px;
+  display: grid;
+  padding: 7px 10px;
+  white-space: nowrap;
+  color: #120c07;
+  font-size: 11px;
+  line-height: 1;
+  background: var(--acid);
+  transform: translateY(-50%);
+  transition: top .18s linear;
+}
+
+.depth-legend {
+  margin: 0 0 18px 2px;
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: .16em;
+}
+
+/* ---------- finds ---------- */
+
+.finds {
+  display: grid;
+  max-width: 1180px;
+  gap: clamp(56px, 8vw, 116px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.find {
+  position: relative;
+  --shift: 0px;
+  transform: translateX(var(--shift));
+}
+
+.find:nth-child(even) {
+  --shift: clamp(0px, 8vw, 132px);
+}
+
+.find-link {
+  display: block;
+  color: var(--ink);
+}
+
+.find-meta {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin: 0 0 12px 4%;
+  color: rgba(236, 226, 212, .5);
+  font-size: 11px;
+  letter-spacing: .1em;
+}
+
+.find-depth {
+  color: var(--acid);
+}
+
+/* --- the stone --- */
+
+.find-stone {
+  position: relative;
+  transform: rotate(var(--lean, -0.5deg));
+}
+
+/* Every boulder is a different mass, or the dig reads as a stack of cards. */
+.find:nth-child(2n) .find-stone { max-width: 88%; --lean: .7deg; }
+.find:nth-child(3n) .find-stone { max-width: 96%; --lean: -1.1deg; }
+.find:nth-child(4n) .find-stone { max-width: 78%; --lean: 1.2deg; }
+.find:nth-child(5n) .find-stone { max-width: 92%; --lean: -.3deg; }
+
+.find-stone-face {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  align-items: center;
+  padding: clamp(38px, 4.4vw, 66px) clamp(40px, 4.6vw, 72px);
+  background-color: #191410;
+  background-image: url('../media/y2k/stone-tile.webp');
+  background-size: 175px 175px;
+  /* A boulder, not a rectangle: few large facets, uneven angles. */
+  clip-path: polygon(
+    5% 26%, 19% 6%, 42% 0, 66% 5%, 87% 1%, 100% 24%,
+    96% 55%, 100% 80%, 84% 96%, 57% 100%, 28% 95%, 9% 87%, 0 60%, 1% 39%
+  );
+  filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .85));
+}
+
+.find:nth-child(3n) .find-stone-face {
+  clip-path: polygon(
+    2% 34%, 14% 10%, 36% 2%, 58% 8%, 79% 0, 98% 19%,
+    100% 47%, 94% 73%, 99% 92%, 76% 100%, 48% 96%, 21% 99%, 5% 82%, 0 55%
+  );
+}
+
+.find:nth-child(3n + 1) .find-stone-face {
+  clip-path: polygon(
+    8% 14%, 30% 2%, 52% 9%, 74% 1%, 95% 12%, 100% 38%,
+    97% 62%, 100% 88%, 79% 99%, 52% 94%, 25% 100%, 6% 90%, 0 66%, 3% 33%
+  );
+}
+
+.has-photo .find-stone-face {
+  grid-template-columns: minmax(0, 1fr) clamp(190px, 24vw, 300px);
+}
+
+/* Angular facets, so the block reads as broken rock rather than a panel. */
+.find-stone-face::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(112deg, rgba(255, 248, 234, .07) 0 26%, transparent 26.3%),
+    linear-gradient(-52deg, rgba(0, 0, 0, .34) 0 19%, transparent 19.3%),
+    linear-gradient(196deg, rgba(0, 0, 0, .26) 0 14%, transparent 14.3%);
+  pointer-events: none;
+}
+
+/* Light from above-left, weight in the shadow underneath. */
+.find-stone-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 22% -6%, rgba(255, 242, 224, .13), transparent 58%),
+    linear-gradient(to bottom, transparent 42%, rgba(0, 0, 0, .68) 100%);
+  pointer-events: none;
+}
+
+.find-stone-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.find-headline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 28px);
+  align-items: baseline;
+}
+
+.find-index {
+  color: rgba(236, 226, 212, .3);
+  font-family: var(--display);
+  font-size: clamp(26px, 3.4vw, 48px);
+  font-style: italic;
+  line-height: 1;
+}
+
+.find-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(27px, 3.8vw, 56px);
+  font-style: italic;
+  line-height: .96;
+  letter-spacing: -.03em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .6);
+}
+
+.find-summary {
+  max-width: 58ch;
+  margin: 16px 0 0;
+  color: rgba(233, 224, 211, .72);
+  font-size: clamp(12px, 1.05vw, 14px);
+  line-height: 1.72;
+}
+
+.find-tools {
+  margin: 16px 0 0;
+  color: rgba(228, 216, 200, .42);
+  font-size: 11px;
+  letter-spacing: .1em;
+}
+
+.find-open {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 22px;
+  color: var(--acid);
+  font-size: 12px;
+  letter-spacing: .08em;
+}
+
+.find-open i {
+  transition: transform .2s ease;
+}
+
+.find-photo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  padding: 6px;
+  background: #efe9dd;
+  box-shadow: 0 14px 26px -14px rgba(0, 0, 0, .9);
+  transform: rotate(-1.6deg);
+}
+
+/* --- the excavation tag --- */
+
+.find-tag {
+  position: absolute;
+  z-index: 3;
+  top: -16px;
+  right: clamp(28px, 6vw, 96px);
+  padding: 5px 12px 5px 14px;
+  color: #1a1207;
+  font-size: 10px;
+  letter-spacing: .14em;
+  background: #d9cba6;
+  clip-path: polygon(0 50%, 8px 0, 100% 0, 100% 100%, 8px 100%);
+  transform: rotate(2.4deg);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, .9);
+}
+
+.find-tag::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: clamp(18px, 3vw, 44px);
+  height: 1px;
+  background: rgba(217, 203, 166, .55);
+}
+
+/* --- the soil the stone sits in --- */
+
+.find-soil {
+  position: absolute;
+  z-index: 2;
+  bottom: -20px;
+  left: -4%;
+  width: 108%;
+  height: clamp(64px, 7vw, 108px);
+  background-color: #4a2f1a;
+  background-image:
+    linear-gradient(to bottom, rgba(255, 210, 150, .14) 0, transparent 26%),
+    url('../media/y2k/soil-tile.webp');
+  background-size: 100% 100%, 420px 420px;
+  background-position: center top, center bottom;
+  background-repeat: no-repeat, repeat;
+  clip-path: polygon(
+    0 46%, 5% 30%, 11% 52%, 17% 34%, 23% 56%, 29% 33%, 35% 50%, 41% 29%,
+    47% 54%, 53% 31%, 59% 49%, 65% 28%, 71% 52%, 77% 33%, 83% 55%, 89% 31%,
+    95% 48%, 100% 34%, 100% 100%, 0 100%
+  );
+  box-shadow: inset 0 -18px 26px -14px rgba(0, 0, 0, .85);
+}
+
+/* --- buried junk between the finds --- */
+
+.find-artifact {
+  position: absolute;
+  right: clamp(-18px, -1vw, 0px);
+  bottom: clamp(-64px, -6vw, -40px);
+  width: clamp(30px, 3.4vw, 52px);
+  height: auto;
+  color: rgba(196, 168, 132, .3);
+  pointer-events: none;
+  transform: rotate(-14deg);
+}
+
+.find:nth-child(even) .find-artifact {
+  right: auto;
+  left: clamp(-26px, -2vw, -8px);
+  transform: rotate(21deg);
+}
+
+.find:nth-child(3n) .find-artifact {
+  color: rgba(206, 214, 226, .26);
+  transform: rotate(-38deg);
+}
+
+/* --- states --- */
+
+.find-link:hover .find-title,
+.find-link:focus-visible .find-title {
+  color: var(--acid);
+}
+
+.find-link:hover .find-open i {
+  transform: translateX(5px);
+}
+
+.find-link:hover .find-stone-face::after {
+  background:
+    linear-gradient(to bottom, rgba(255, 246, 230, .22) 0, transparent 24%),
+    radial-gradient(140% 70% at 30% 0%, rgba(202, 255, 24, .12), transparent 62%),
+    linear-gradient(to bottom, transparent 48%, rgba(0, 0, 0, .58) 100%);
+}
+
+.finds-empty {
+  padding: 60px 0;
+  color: rgba(236, 226, 212, .6);
+}
+
+/* ---------- bedrock: the core shows through ---------- */
+
+.bedrock {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  gap: 30px;
+  padding: clamp(80px, 10vw, 140px) var(--page-pad) clamp(70px, 9vw, 120px);
+  overflow: hidden;
+  background:
+    radial-gradient(90% 130% at 50% 116%, rgba(255, 150, 44, .62) 0, rgba(196, 58, 10, .34) 30%, rgba(90, 22, 6, .16) 52%, transparent 72%),
+    linear-gradient(to bottom, rgba(5, 3, 3, .74), rgba(9, 4, 3, .88));
+  border-top: 1px solid rgba(212, 196, 176, .14);
+}
+
+.bedrock::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -22px;
+  height: 44px;
+  background: radial-gradient(60% 100% at 50% 100%, rgba(255, 196, 96, .85), rgba(255, 110, 20, .3) 46%, transparent 72%);
+  filter: blur(9px);
+  pointer-events: none;
+}
+
+.bedrock h2 {
+  max-width: 18ch;
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(30px, 4.4vw, 62px);
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: -.03em;
+}
+
+.bedrock-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bedrock-links a {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 22px;
+  font-size: 13px;
+  letter-spacing: .04em;
+  border: 1px solid rgba(224, 212, 196, .36);
+}
+
+.bedrock-links a:first-child {
+  color: #0d0a07;
+  background: var(--acid);
+  border-color: var(--acid);
+}
+
+.bedrock-links a:hover {
+  border-color: var(--acid);
+}
+
+.bedrock-note {
+  margin: 0;
+  color: rgba(230, 220, 206, .42);
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+/* ---------- unearthing ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .find {
+    opacity: 0;
+    transform: translateX(var(--shift)) translateY(30px);
+    transition: opacity .55s ease, transform .55s ease;
+  }
+
+  .find.is-unearthed {
+    opacity: 1;
+    transform: translateX(var(--shift)) translateY(0);
+  }
+}
+
+
+

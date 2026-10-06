@@ -57,17 +57,18 @@
     margin-top: -8px;
   }
 
+  /* On a phone the scene is shown whole, in flow, instead of being cropped by
+     a cover background. */
   .landscape-hero {
     display: flex;
-    min-height: 1080px;
-    padding: 108px var(--page-pad) 40px;
+    min-height: auto;
+    padding: 104px 0 0;
     flex-direction: column;
-    background-image: url('../media/y2k/landscape-y2k-smooth-v3.png') !important;
-    background-position: 46% center;
+    background-image: none !important;
+    background: linear-gradient(to bottom, #06255f 0, #00358f 58%, #0142a9 100%);
   }
 
   .hero-identity,
-  .profile-monument,
   .featured-selector,
   .hero-caption {
     position: relative;
@@ -75,11 +76,13 @@
   }
 
   .hero-identity {
+    order: 1;
     max-width: 100%;
+    padding: 0 var(--page-pad);
   }
 
   .hero-identity h1 {
-    font-size: clamp(50px, 15.5vw, 72px);
+    font-size: clamp(46px, 14.5vw, 68px);
     margin-right: 0;
     transform: none;
   }
@@ -93,24 +96,11 @@
     font-size: 13px;
   }
 
-  .profile-monument {
-    display: block;
-    width: min(390px, 104vw);
-    height: auto;
-    margin-top: 280px;
-    margin-left: -18px;
-    filter:
-      drop-shadow(0 16px 11px rgba(0, 7, 20, .44))
-      drop-shadow(0 3px 2px rgba(0, 7, 20, .28));
-  }
-
-  .profile-scene-overlay {
-    display: none;
-  }
-
   .featured-selector {
+    order: 2;
     width: 100%;
-    margin-top: 44px;
+    margin-top: 34px;
+    padding: 0 var(--page-pad);
   }
 
   .featured-list {
@@ -129,34 +119,67 @@
     scroll-snap-align: start;
   }
 
+  .profile-scene-overlay {
+    position: relative;
+    order: 3;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    margin-top: 34px;
+    object-fit: contain;
+  }
+
   .hero-caption {
+    order: 4;
     display: block;
-    align-self: flex-end;
-    margin-top: auto;
+    margin: 0;
+    padding: 16px var(--page-pad) 22px;
+    background: #071d52;
+    text-align: right;
   }
 
-  .project-archive {
-    padding-top: 70px;
-    padding-bottom: 90px;
+  .dig-body {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 40px;
   }
 
-  .archive-heading {
-    display: grid;
+  .depth-rail {
+    display: none;
   }
 
-  .archive-filters {
+  .dig-intro {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+
+  .strata-filters {
     justify-content: flex-start;
   }
 
-  .archive-list a {
-    grid-template-columns: 42px 1fr;
-    gap: 14px;
-    min-height: 116px;
+  .find:nth-child(even) {
+    --shift: 0px;
   }
 
-  .archive-project-meta {
-    grid-column: 2;
-    text-align: left;
+  .has-photo .find-stone-face {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .find-artifact {
+    display: none;
+  }
+
+  .find-meta {
+    margin-left: 6%;
+  }
+
+  .find-headline {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .case-next {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   #overlay-view {
@@ -168,20 +191,13 @@
     padding-top: 38px;
   }
 
-  .view-header {
-    margin-bottom: 48px;
+  .view-header,
+  .case-header {
+    margin-bottom: 44px;
   }
 
   .back-link {
     margin-bottom: 34px;
-  }
-
-  .case-study-section {
-    grid-template-columns: 40px 1fr;
-  }
-
-  .case-study-section .rich-content {
-    grid-column: 1 / -1;
   }
 
   .cs-row-2,
