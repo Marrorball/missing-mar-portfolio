@@ -270,6 +270,15 @@ function changeChannel(step) {
   window.location.hash = `#project/${encodeURIComponent(id)}`;
 }
 
+// DVD menu: jump to a scene of the case.
+function showChapter(number) {
+  const scroller = screenScroller();
+  const scene = scroller?.querySelector(`[data-chapter-section="${number}"]`);
+  if (!scene) return;
+  scroller.scrollTo({ top: scene.offsetTop - 64,
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+}
+
 function scrollScreen(step) {
   const scroller = screenScroller();
   scroller?.scrollBy({ top: step * scroller.clientHeight * 0.8,
@@ -371,7 +380,11 @@ async function mountKiosk() {
     });
     state.kiosk.setHits(state.hits);
     state.kiosk.setDiscs(state.discs);
-    document.fonts.ready.then(() => {
+    // canvas lettering needs its faces loaded first (Cyrillic subsets too)
+    Promise.all([
+      document.fonts.ready,
+      ...['700 40px "PT Sans Narrow"', '400 40px "PT Sans"'].map(font => document.fonts.load(font, 'МАРАТ mar').catch(() => []))
+    ]).then(() => {
       state.kiosk.setProjectArt(state.bundle.projects, [...state.hits, ...state.discs], state.bundle.site.categories);
       state.kiosk.setWallText(['ПИШИТЕ:', ...contactLinks(state.bundle.site.contacts)
         .filter(link => link.kind !== 'behance')
@@ -411,6 +424,7 @@ document.addEventListener('click', event => {
   if (action === 'tv-channel') changeChannel(step);
   if (action === 'tv-scroll') scrollScreen(step);
   if (action === 'tv-menu') window.location.hash = '#catalog';
+  if (action === 'tv-chapter') showChapter(element.dataset.chapter);
   if (action === 'contacts-card') toggleContactCard();
   if (action === 'copy-contact') copyContact(element.dataset.value);
 });

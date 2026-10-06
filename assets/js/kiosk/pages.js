@@ -25,39 +25,57 @@ function externalAttrs(link) {
   return link.kind === 'email' ? '' : ' target="_blank" rel="noreferrer"';
 }
 
+// A DVD title menu on the CRT: the project is the film, its case sections
+// are the scenes, picked from the chapter list like on a pirate disc.
 export function renderTvChannel(project = {}, { index = 0, category = '' } = {}) {
   const tags = (project.tags || []).map(tag => `<li>${escapeHtml(tag)}</li>`).join('');
   const behance = httpsUrl(project.behance);
   const cover = typeof project.cover === 'string' ? project.cover.trim() : '';
+  const sections = project.sections || [];
+  const chapters = sections.map((section, number) => `<li><button type="button" data-action="tv-chapter" data-chapter="${number + 1}">
+        <span>${number + 1}</span>${escapeHtml(plainLabel(section.label || ''))}
+      </button></li>`).join('');
   return `<article class="tv-page" data-channel="${escapeHtml(project.id || '')}">
-    <p class="tv-osd">КАНАЛ ${channelNumber(index)}</p>
-    <header class="tv-head">
+    <header class="tv-osd"><span>КАНАЛ ${channelNumber(index)}</span><span class="tv-osd-play">▶ ВОСПР.</span></header>
+    <div class="tv-title">
       <p class="tv-kicker">${meta(category, project.year)}</p>
       <h1>${escapeHtml(project.title || '')}</h1>
       ${project.summary ? `<p class="tv-summary">${escapeHtml(project.summary)}</p>` : ''}
-      ${tags ? `<ul class="tv-tags">${tags}</ul>` : ''}
-      ${behance ? `<a class="tv-link" href="${escapeHtml(behance)}" target="_blank" rel="noreferrer">Смотреть на Behance ↗</a>` : ''}
-    </header>
+    </div>
+    ${chapters ? `<nav class="tv-chapters" aria-label="Сцены"><p>Выбор сцены</p><ol>${chapters}</ol></nav>` : ''}
+    ${tags ? `<ul class="tv-tags">${tags}</ul>` : ''}
+    ${behance ? `<a class="tv-link" href="${escapeHtml(behance)}" target="_blank" rel="noreferrer">▶ Смотреть на Behance ↗</a>` : ''}
     ${cover ? `<img class="tv-cover" src="${escapeHtml(cover)}" alt="">` : ''}
-    ${(project.sections || []).map(section => `<section class="tv-section">
+    ${sections.map((section, number) => `<section class="tv-section" data-chapter-section="${number + 1}">
+      <p class="tv-scene">Сцена ${number + 1}</p>
       <h2>${escapeHtml(plainLabel(section.label || ''))}</h2>
       <div class="rich-content">${section.content || ''}</div>
     </section>`).join('')}
+    <p class="tv-end">Конец · CH+ — следующий канал</p>
   </article>`;
 }
 
+// Teletext page 100: the channel list, with the four coloured keys.
 export function renderTvGuide(projects = [], categories = []) {
   const categoryTitle = id => categories.find(category => category.id === id)?.title || '';
-  return `<article class="tv-page tv-guide">
-    <p class="tv-osd">ТЕЛЕПРОГРАММА</p>
-    <h1>Сегодня в эфире</h1>
-    <ol class="tv-guide-list">
+  const first = projects[0];
+  return `<article class="ttx">
+    <header class="ttx-head"><span>P100</span><span class="ttx-yellow-text">ТЕЛЕТЕКСТ</span><span class="ttx-cyan-text">ДИЗАЙН У МАРА</span></header>
+    <h1>ТЕЛЕПРОГРАММА</h1>
+    <p class="ttx-sub">Сегодня в эфире · выбери канал</p>
+    <ol class="ttx-list">
       ${projects.map((project, index) => `<li><a href="#project/${encodeURIComponent(project.id)}">
-        <span class="tv-guide-number">${channelNumber(index)}</span>
-        <span>${escapeHtml(project.title || '')}</span>
-        <small>${meta(categoryTitle(project.category), project.year)}</small>
+        <span class="ttx-num">${channelNumber(index)}</span>
+        <span class="ttx-name">${escapeHtml(project.title || '')}</span>
+        <small class="ttx-meta">${meta(categoryTitle(project.category), project.year)}</small>
       </a></li>`).join('')}
     </ol>
+    <nav class="ttx-keys" aria-label="Быстрые кнопки">
+      <a class="ttx-red" href="#about">Обо мне</a>
+      <a class="ttx-green" href="#price">Прайс</a>
+      <a class="ttx-yellow" href="#contact">Контакты</a>
+      ${first ? `<a class="ttx-blue" href="#project/${encodeURIComponent(first.id)}">Канал ${channelNumber(0)}</a>` : ''}
+    </nav>
   </article>`;
 }
 
@@ -90,28 +108,34 @@ function resumeBlocks(resume = {}) {
   return blocks ? `<div class="board-resume">${blocks}</div>` : '';
 }
 
+// A printed street poster: halftone photo, condensed headline, red stamp.
 export function renderAboutBoard(site = {}, resume = {}, page = {}) {
   const owner = site.owner || {};
   return `<article class="board-page">
     ${boardTabs('about')}
-    <div class="board-about">
-      ${owner.profileImage ? `<img src="${escapeHtml(owner.profileImage)}" alt="${escapeHtml(owner.name || '')}">` : ''}
-      <div>
+    <div class="board-hero">
+      ${owner.profileImage ? `<figure class="board-photo"><img src="${escapeHtml(owner.profileImage)}" alt="${escapeHtml(owner.name || '')}"></figure>` : ''}
+      <div class="board-head">
         <h1>${escapeHtml(owner.name || page.title || 'Обо мне')}</h1>
         <p class="board-role">${meta(owner.role, owner.location)}</p>
         ${page.content ? `<div class="rich-content">${page.content}</div>` : `<p>${escapeHtml(owner.bio || '')}</p>`}
         ${owner.status ? `<p class="board-status">${escapeHtml(owner.status)}</p>` : ''}
       </div>
+      <p class="board-stamp" aria-hidden="true">Ищу<br>работу</p>
     </div>
     ${resumeBlocks(resume)}
   </article>`;
 }
 
+// The price sheet is printed with blanks until there are prices to put in.
 export function renderPriceBoard() {
-  return `<article class="board-page">
+  const blank = '<li><span class="price-item"></span><span class="price-dots"></span><b>— ₽</b></li>';
+  return `<article class="board-page board-price">
     ${boardTabs('price')}
     <h1>Прайс</h1>
-    <p>Скоро здесь будет прайс на услуги.</p>
+    <p class="board-role">Дизайн у Мара · услуги</p>
+    <ul class="price-list" aria-hidden="true">${blank.repeat(5)}</ul>
+    <p class="price-note">Скоро здесь будет прайс на услуги.</p>
   </article>`;
 }
 
@@ -125,19 +149,25 @@ export function renderPageBoard(page = {}) {
 
 export function renderTerminalScreen(links = []) {
   return `<article class="terminal-page">
-    <p class="terminal-step">Шаг 1 из 1</p>
+    <header class="terminal-bar"><span>Оплата услуг</span><span>Шаг 1 из 1</span></header>
     <h1>Связаться с Маратом</h1>
+    <p class="terminal-lead">Выберите способ связи</p>
     <div class="terminal-buttons">
       ${links.map(link => `<a class="terminal-button" href="${escapeHtml(link.href)}"${externalAttrs(link)}>
         <span>${escapeHtml(link.label)}</span><small>${escapeHtml(link.value)}</small>
       </a>`).join('')}
     </div>
-    <p class="terminal-note">Комиссия 0%. Сдачу не выдаём.</p>
+    <footer class="terminal-foot">
+      <button type="button" class="terminal-key" data-action="kiosk-back">◀ Назад</button>
+      <p class="terminal-note">Комиссия 0%. Сдачу не выдаём.</p>
+    </footer>
   </article>`;
 }
 
 export function renderFlyer(links = [], owner = {}) {
   return `<article class="flyer-page">
+    <span class="flyer-tape flyer-tape-left" aria-hidden="true"></span>
+    <span class="flyer-tape flyer-tape-right" aria-hidden="true"></span>
     <h1>ПРОПАЛ ДИЗАЙНЕР</h1>
     ${owner.profileImage ? `<img src="${escapeHtml(owner.profileImage)}" alt="${escapeHtml(owner.name || '')}">` : ''}
     <p class="flyer-name">${escapeHtml(owner.name || '')}</p>

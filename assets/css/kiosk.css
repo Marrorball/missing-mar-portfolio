@@ -1,4 +1,14 @@
-/* The kiosk owns the whole viewport; portfolio views open as a panel on top. */
+/* The kiosk owns the whole viewport; portfolio views open as a panel on top.
+   Everything laid over the scene is a paper label: a price tag, a note
+   taped on, a handwritten card — the kiosk's own stationery. */
+
+:root {
+  --tag-paper: #efe6cf;
+  --tag-ink: #1d1a16;
+  --tag-red: #d0281e;
+  --tag-shadow: 0 2px 0 rgba(0, 0, 0, .28), 0 10px 26px rgba(0, 0, 0, .38);
+  --tag-font: 700 15px/1.15 'PT Sans Narrow', 'Arial Narrow', Arial, sans-serif;
+}
 
 body {
   overflow: hidden;
@@ -31,12 +41,15 @@ body.is-pointing .kiosk-stage canvas {
   z-index: 5;
   top: 0;
   left: 0;
-  padding: 4px 9px;
-  color: #1c1408;
-  background: #f4e3b8;
-  font: 13px/1.3 var(--mono);
+  padding: 5px 10px 4px 12px;
+  color: var(--tag-ink);
+  background: #fff7d6;
+  border-left: 4px solid var(--tag-red);
+  font: var(--tag-font);
+  letter-spacing: .04em;
+  text-transform: uppercase;
   pointer-events: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+  box-shadow: var(--tag-shadow);
 }
 
 .kiosk-label[hidden] {
@@ -49,30 +62,42 @@ body.is-pointing .kiosk-stage canvas {
   left: 50%;
   bottom: 18px;
   display: flex;
-  gap: 4px;
-  padding: 5px;
-  background: rgba(14, 18, 28, .8);
-  border: 1px solid rgba(255, 255, 255, .14);
+  gap: 2px;
+  padding: 4px;
+  background: var(--tag-paper);
+  border-top: 4px solid var(--tag-red);
+  box-shadow: var(--tag-shadow);
   transform: translateX(-50%);
-  backdrop-filter: blur(8px);
 }
 
 .kiosk-help a,
 .kiosk-help button {
-  padding: 9px 14px;
-  color: #f3ecdf;
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  color: var(--tag-ink);
   background: transparent;
-  font: 13px/1.2 var(--mono);
+  font: var(--tag-font);
+  font-size: 16px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
   white-space: nowrap;
   min-height: 44px;
+}
+
+.kiosk-help a + a,
+.kiosk-help a + button,
+.kiosk-help button + a,
+.kiosk-help button + button {
+  border-left: 1px dashed rgba(29, 26, 22, .35);
 }
 
 .kiosk-help a:hover,
 .kiosk-help button:hover,
 .kiosk-help a:focus-visible,
 .kiosk-help button:focus-visible {
-  color: #1c1408;
-  background: #f4e3b8;
+  color: var(--tag-paper);
+  background: var(--tag-ink);
   outline: none;
 }
 
@@ -82,10 +107,11 @@ body.is-pointing .kiosk-stage canvas {
   top: 22px;
   left: 50%;
   padding: 10px 16px;
-  color: #f3ecdf;
-  background: rgba(14, 18, 28, .8);
-  font: 14px/1.4 var(--mono);
-  transform: translateX(-50%);
+  color: var(--tag-ink);
+  background: #fffbe9;
+  box-shadow: var(--tag-shadow);
+  font: 400 16px/1.35 'PT Sans', Arial, sans-serif;
+  transform: translateX(-50%) rotate(-1deg);
   animation: kiosk-fade 4s both;
   pointer-events: none;
 }
@@ -103,10 +129,13 @@ body.is-pointing .kiosk-stage canvas {
   bottom: 78px;
   max-width: min(440px, calc(100vw - 32px));
   padding: 12px 16px;
-  color: #1c1408;
-  background: #f4e3b8;
-  font: 14px/1.45 var(--mono);
-  transform: translateX(-50%);
+  color: var(--tag-ink);
+  background:
+    repeating-linear-gradient(transparent 0 23px, rgba(70, 110, 170, .22) 23px 24px),
+    #fffbe9;
+  box-shadow: var(--tag-shadow);
+  font: 400 16px/24px 'PT Sans', Arial, sans-serif;
+  transform: translateX(-50%) rotate(.6deg);
 }
 
 .kiosk-loading {
@@ -115,9 +144,12 @@ body.is-pointing .kiosk-stage canvas {
   inset: 0;
   display: grid;
   place-items: center;
-  color: #f3ecdf;
-  background: #1b2a4a;
-  font: 15px var(--mono);
+  color: var(--tag-paper);
+  background: #0d1430;
+  font: var(--tag-font);
+  font-size: 18px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
 
 .kiosk-a11y button {
@@ -137,8 +169,9 @@ body.is-pointing .kiosk-stage canvas {
   width: auto;
   height: auto;
   padding: 8px 12px;
-  color: #1c1408;
-  background: #f4e3b8;
+  color: var(--tag-ink);
+  background: var(--tag-paper);
+  font: var(--tag-font);
   clip-path: none;
 }
 
@@ -155,9 +188,11 @@ body.is-pointing .kiosk-stage canvas {
 
   .kiosk-help a,
   .kiosk-help button {
-    padding: 12px 8px;
+    justify-content: center;
+    padding: 12px 6px;
     min-height: 44px;
-    font-size: 12px;
+    font-size: 14px;
+    border-left: 0 !important;
   }
 }
 
@@ -171,11 +206,16 @@ body.is-pointing .kiosk-stage canvas {
   display: flex;
   gap: 8px;
   align-items: center;
-  padding: 9px 14px;
-  color: #f3ecdf;
-  background: rgba(14, 18, 28, .8);
-  border: 1px solid rgba(255, 255, 255, .14);
-  font: 13px/1.2 var(--mono);
+  padding: 9px 16px 8px 14px;
+  color: var(--tag-ink);
+  background: var(--tag-paper);
+  border-left: 4px solid var(--tag-red);
+  box-shadow: var(--tag-shadow);
+  font: var(--tag-font);
+  font-size: 16px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  transform: rotate(-1.5deg);
   min-height: 44px;
 }
 
@@ -187,33 +227,37 @@ body.is-pointing .kiosk-stage canvas {
   display: flex;
   gap: 6px;
   align-items: center;
-  padding: 5px;
-  color: #f3ecdf;
-  background: rgba(14, 18, 28, .8);
-  border: 1px solid rgba(255, 255, 255, .14);
-  font: 13px/1.2 var(--mono);
+  padding: 4px;
+  color: var(--tag-ink);
+  background: var(--tag-paper);
+  border-top: 4px solid var(--tag-red);
+  box-shadow: var(--tag-shadow);
+  font: var(--tag-font);
+  font-size: 16px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
   transform: translateX(-50%);
 }
 
 .rack-controls span {
-  min-width: 140px;
+  min-width: 160px;
   text-align: center;
 }
 
 .rack-controls button {
   width: 44px;
   height: 44px;
-  color: #f3ecdf;
+  color: var(--tag-ink);
   background: transparent;
-  font: 16px var(--mono);
+  font: 16px 'PT Sans', Arial, sans-serif;
 }
 
 .kiosk-back:hover,
 .kiosk-back:focus-visible,
 .rack-controls button:hover,
 .rack-controls button:focus-visible {
-  color: #1c1408;
-  background: #f4e3b8;
+  color: var(--tag-paper);
+  background: var(--tag-ink);
   outline: none;
 }
 
@@ -223,12 +267,13 @@ body.is-pointing .kiosk-stage canvas {
   left: 50%;
   bottom: 72px;
   width: min(420px, calc(100vw - 24px));
-  padding: 6px 8px;
-  color: #1c1408;
-  background: #f4e3b8;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, .4);
-  font: 14px/1.4 var(--mono);
-  transform: translateX(-50%);
+  padding: 10px 12px 6px;
+  color: var(--tag-ink);
+  background: #fbf7ea;
+  border-top: 4px solid var(--tag-red);
+  box-shadow: var(--tag-shadow);
+  font: 400 16px/1.35 'PT Mono', 'Courier New', monospace;
+  transform: translateX(-50%) rotate(-.5deg);
 }
 
 .contact-card ul {
@@ -242,7 +287,7 @@ body.is-pointing .kiosk-stage canvas {
   gap: 10px;
   align-items: center;
   padding: 10px 6px;
-  border-bottom: 1px solid rgba(28, 20, 8, .15);
+  border-bottom: 1px dashed rgba(29, 26, 22, .3);
 }
 
 .contact-card li:last-child {
@@ -256,16 +301,22 @@ body.is-pointing .kiosk-stage canvas {
 }
 
 .contact-card small {
-  font-size: 12px;
-  opacity: .65;
+  font: var(--tag-font);
+  font-size: 13px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .7;
 }
 
 .contact-card button {
+  min-height: 36px;
   padding: 6px 10px;
-  color: #1c1408;
+  color: var(--tag-ink);
   background: transparent;
-  border: 1px solid rgba(28, 20, 8, .35);
-  font: 12px var(--mono);
+  border: 1px solid rgba(29, 26, 22, .4);
+  font: var(--tag-font);
+  font-size: 13px;
+  text-transform: uppercase;
 }
 
 .contact-card a:focus-visible,
@@ -282,11 +333,12 @@ body.is-pointing .kiosk-stage canvas {
   width: max-content;
   max-width: calc(100vw - 32px);
   padding: 8px 12px;
-  background: rgba(14, 18, 28, .8);
-  color: #f3ecdf;
-  font: 12px/1.5 var(--mono);
+  background: #fffbe9;
+  color: var(--tag-ink);
+  box-shadow: var(--tag-shadow);
+  font: 400 15px/1.4 'PT Sans', Arial, sans-serif;
   text-align: center;
-  transform: translateX(-50%);
+  transform: translateX(-50%) rotate(-.8deg);
 }
 .kiosk-chrome .kiosk-inside-hint { pointer-events: none; }
 

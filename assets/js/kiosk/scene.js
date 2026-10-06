@@ -617,50 +617,51 @@ export async function createKioskScene({
     billboardMotion = { start: performance.now(), from: billboardSlats.map(slat => slat.rotation.y), to: target };
   }
 
+  // The three printed faces of the billboard: the ad, the about poster and
+  // the price sheet, in the same newsprint and type as the pages on it.
+  function drawPoster(context, width, height, { headline, bar, line, big = false }) {
+    context.fillStyle = '#ece4d0';
+    context.fillRect(0, 0, width, height);
+    context.strokeStyle = '#d0281e';
+    context.lineWidth = 10;
+    context.strokeRect(14, 14, width - 28, height - 28);
+    context.fillStyle = '#1b1a17';
+    context.textBaseline = 'alphabetic';
+    context.font = `700 ${Math.round(height * (big ? 0.3 : 0.22))}px "PT Sans Narrow", "Arial Narrow", Arial, sans-serif`;
+    context.fillText(headline, width * 0.06, height * (big ? 0.44 : 0.4), width * 0.88);
+    if (bar) {
+      context.font = `700 ${Math.round(height * 0.075)}px "PT Sans Narrow", Arial, sans-serif`;
+      const barWidth = Math.min(context.measureText(bar).width + width * 0.04, width * 0.88);
+      context.fillStyle = '#d0281e';
+      context.fillRect(width * 0.06, height * 0.5, barWidth, height * 0.11);
+      context.fillStyle = '#fff';
+      context.fillText(bar, width * 0.08, height * 0.585, width * 0.84);
+    }
+    context.fillStyle = '#1b1a17';
+    context.fillRect(width * 0.06, height * 0.72, width * 0.88, height * 0.012);
+    context.font = `400 ${Math.round(height * 0.07)}px "PT Sans", Arial, sans-serif`;
+    context.fillText(line, width * 0.06, height * 0.84, width * 0.88);
+  }
+
   function setBillboardAd({ brand = 'missing mar', name = '', role = '' } = {}) {
     const anchor = root.getObjectByName('screen_billboard');
     if (!anchor) return;
     const { width: boardWidth, height: boardHeight } = anchor.userData;
-    const paint = document.createElement('canvas');
-    paint.width = 1024;
-    paint.height = 512;
-    const context = paint.getContext('2d');
-    const width = paint.width;
-    const height = paint.height;
-      context.fillStyle = '#efe7d4';
-      context.fillRect(0, 0, width, height);
-      context.fillStyle = '#17181c';
-      context.textBaseline = 'alphabetic';
-      context.font = `900 ${Math.round(height * 0.26)}px "Arial Black", "Helvetica Neue", Arial, sans-serif`;
-      context.fillText(brand, width * 0.06, height * 0.44);
-      context.font = `700 ${Math.round(height * 0.09)}px "IBM Plex Mono", monospace`;
-      context.fillText(name.toUpperCase(), width * 0.06, height * 0.62);
-      context.fillText(role, width * 0.06, height * 0.74);
-      context.fillRect(width * 0.06, height * 0.82, width * 0.88, height * 0.012);
-      context.font = `500 ${Math.round(height * 0.075)}px "IBM Plex Mono", monospace`;
-      context.fillText('Обо мне →', width * 0.06, height * 0.93);
-    const texture = new THREE.CanvasTexture(paint);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    billboardResources.push(texture);
-    const faceTextures = [texture];
-    for (const title of [name.toUpperCase(), 'ПРАЙС']) {
+    const faces = [
+      { headline: brand, bar: name.toUpperCase(), line: `${role} · Обо мне →`, big: true },
+      { headline: name.toUpperCase(), bar: role.toUpperCase(), line: 'Ищу работу. Подробности — на щите.' },
+      { headline: 'ПРАЙС', bar: 'ДИЗАЙН У МАРА · УСЛУГИ', line: 'Скоро здесь будет прайс на услуги.' }
+    ];
+    const faceTextures = faces.map(face => {
       const sheet = document.createElement('canvas');
       sheet.width = 1024;
       sheet.height = 512;
-      const ctx = sheet.getContext('2d');
-      ctx.fillStyle = '#efe7d4';
-      ctx.fillRect(0, 0, 1024, 512);
-      ctx.fillStyle = '#17181c';
-      ctx.font = '900 88px "Arial Black", Arial, sans-serif';
-      ctx.fillText(title, 60, 190, 900);
-      ctx.font = '500 40px "IBM Plex Mono", monospace';
-      ctx.fillText(title === 'ПРАЙС' ? 'Скоро здесь будет прайс на услуги' : role, 60, 300, 900);
-      ctx.fillRect(60, 390, 900, 6);
+      drawPoster(sheet.getContext('2d'), sheet.width, sheet.height, face);
       const map = new THREE.CanvasTexture(sheet);
       map.colorSpace = THREE.SRGBColorSpace;
-      faceTextures.push(map);
       billboardResources.push(map);
-    }
+      return map;
+    });
     const count = 24;
     const slatWidth = boardWidth / count;
     const radius = slatWidth / Math.sqrt(3);

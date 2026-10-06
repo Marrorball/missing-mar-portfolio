@@ -30,6 +30,8 @@ test('a TV channel shows the project under its channel number', () => {
   assert.match(html, /UX\/UI проекты · 2025/);
   assert.match(html, /<li>ИИ<\/li>/);
   assert.match(html, /<h2>Задача<\/h2>/);
+  assert.match(html, /data-action="tv-chapter" data-chapter="1">\s*<span>1<\/span>Задача/);
+  assert.match(html, /data-chapter-section="1">\s*<p class="tv-scene">Сцена 1<\/p>/);
   assert.match(html, /<p>owner html<\/p>/);
   assert.match(html, /href="https:\/\/www\.behance\.net\/gallery\/1" target="_blank" rel="noreferrer"/);
 });
@@ -47,6 +49,8 @@ test('the TV guide numbers every channel and links to it', () => {
   assert.match(html, /href="#project\/%D1%83%D1%87%D0%B8%20%D1%80%D1%83"/);
   assert.match(html, />01<.*Учи\.ру.*UX\/UI · 2026/s);
   assert.match(html, />02</);
+  assert.match(html, /class="ttx-red" href="#about"/);
+  assert.match(html, /class="ttx-blue" href="#project\/%D1%83%D1%87%D0%B8%20%D1%80%D1%83">Канал 01/);
 });
 
 test('the billboard shows who Marat is, with tabs for about and price', () => {
@@ -67,6 +71,7 @@ test('the billboard shows who Marat is, with tabs for about and price', () => {
   assert.match(html, /Ищу работу/);
   assert.match(html, /KORTEX/);
   assert.match(html, /src="\/p\.jpg"/);
+  assert.match(html, /class="board-stamp" aria-hidden="true">Ищу<br>работу/);
 });
 
 test('price and generic pages also fit the billboard', () => {
@@ -79,9 +84,12 @@ test('terminal and flyer both carry clickable contacts', () => {
   const terminal = renderTerminalScreen(links);
   assert.match(terminal, /href="https:\/\/t\.me\/marrorball" target="_blank" rel="noreferrer"/);
   assert.match(terminal, /href="mailto:a@b\.cd">/);
+  assert.match(terminal, /class="terminal-bar"><span>Оплата услуг/);
+  assert.match(terminal, /data-action="kiosk-back"/);
 
   const flyer = renderFlyer(links, { name: 'Марат', role: 'Designer', location: 'Москва', profileImage: '/p.jpg' });
   assert.match(flyer, /ПРОПАЛ ДИЗАЙНЕР/);
+  assert.match(flyer, /class="flyer-tape flyer-tape-left"/);
   assert.match(flyer, /Нашедшего просьба написать/);
   assert.match(flyer, /href="https:\/\/t\.me\/marrorball"/);
   assert.match(flyer, /data-action="copy-contact" data-value="@marrorball"/);
