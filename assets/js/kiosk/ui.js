@@ -34,8 +34,10 @@ export function renderRackControls(title = '') {
   </div>`;
 }
 
-export function renderHint() {
-  return '<div class="kiosk-hint" role="status">Крути мышкой и нажимай на то, что светится</div>';
+export function renderHint(touch = false) {
+  return `<div class="kiosk-hint" role="status">${touch
+    ? 'Поворачивай пальцем и нажимай на таблички'
+    : 'Крути мышкой и нажимай на то, что светится'}</div>`;
 }
 
 export function renderNote(text = '') {

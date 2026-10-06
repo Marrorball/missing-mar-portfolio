@@ -56,6 +56,64 @@ body.is-pointing .kiosk-stage canvas {
   display: none;
 }
 
+.kiosk-touch-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.kiosk-touch-labels[hidden],
+.kiosk-touch-label[hidden] {
+  display: none;
+}
+
+.kiosk-touch-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: min(160px, calc(100vw - 16px));
+  min-height: 44px;
+  min-width: 44px;
+  padding: 7px 10px;
+  border: 0;
+  border-left: 3px solid var(--tag-red);
+  color: var(--tag-ink);
+  background: #fff7d6;
+  font: var(--tag-font);
+  font-size: 13px;
+  text-align: center;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px #0006;
+  pointer-events: auto;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.kiosk-touch-label::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--stem-length);
+  height: 1px;
+  background: #fff7d6;
+  box-shadow: 0 1px 1px #0008;
+  transform: rotate(var(--stem-angle));
+  transform-origin: left center;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.kiosk-touch-label:focus-visible {
+  outline: 2px solid var(--tag-red);
+  outline-offset: 3px;
+}
+
+@media (hover: none), (any-pointer: coarse) {
+  .kiosk-label { display: none; }
+}
+
 .kiosk-help {
   position: fixed;
   z-index: 6;

@@ -20,6 +20,7 @@ import { STICKERS, drawSticker } from './kiosk/stickers.js';
 import { drawFlyer, drawPriceSheet } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
 import { isInside } from './kiosk/routes.js';
+import { TOUCH_LABEL_QUERY } from './kiosk/touch-labels.js';
 import { assignHits } from './kiosk/slots.js';
 import { drawTeletext } from './kiosk/teletext.js';
 import {
@@ -114,7 +115,7 @@ function showNote(text) {
 
 function showHint() {
   document.querySelector('.kiosk-hint')?.remove();
-  homeView.insertAdjacentHTML('beforeend', renderHint());
+  homeView.insertAdjacentHTML('beforeend', renderHint(window.matchMedia(TOUCH_LABEL_QUERY).matches));
   window.setTimeout(() => document.querySelector('.kiosk-hint')?.remove(), 4000);
 }
 
@@ -449,6 +450,7 @@ async function mountKiosk() {
     });
     state.kiosk.setHits(state.hits);
     state.kiosk.setDiscs(state.discs);
+    state.kiosk.setLabels(hotspotEntries());
     // canvas lettering needs its faces loaded first (Cyrillic subsets too)
     Promise.all([
       document.fonts.ready,
