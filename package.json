@@ -10,9 +10,13 @@
     "validate:content": "node scripts/validate-content.mjs",
     "build:art": "python3 scripts/build-hero.py && python3 scripts/build-underground.py",
     "vendor:three": "node scripts/vendor-three.mjs",
-    "build:kiosk": "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender} -b --factory-startup --python-exit-code 1 --python scripts/kiosk/build.py"
+    "build:kiosk": "${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender} -b --factory-startup --python-exit-code 1 --python scripts/kiosk/build.py",
+    "vendor:fonts": "node scripts/vendor-fonts.mjs"
   },
   "devDependencies": {
+    "@fontsource/pt-mono": "^5.3.0",
+    "@fontsource/pt-sans": "^5.3.0",
+    "@fontsource/pt-sans-narrow": "^5.3.0",
     "vite": "^8.2.1"
   },
   "dependencies": {
