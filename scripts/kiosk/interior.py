@@ -39,8 +39,6 @@ def _room(M, rng):
         room.box((w, 0.3, h), (-1.12, 0.73, PLINTH + h / 2 + sum((0.22, 0.21)[:k])), M['cardboard'])
     room.cylinder(0.12, 0.03, (-HW + 0.08, -0.02, 2.1), M['paper'], segments=20, rot=(0.0, math.pi / 2, 0.0))
     room.box((0.01, 0.4, 0.55), (-HW + 0.08, -0.35, 1.75), rng.choice(M['posters']))
-    room.box((0.04, 0.04, 0.04), (HW - 0.1, 0.42, 1.95), M['frame'])
-    room.blob((0.14, 0.36, 0.7), (HW - 0.16, 0.42, 1.55), M['fabric_dark'])
 
     room.finish()
     props.chair(M, CHAIR)
@@ -48,6 +46,7 @@ def _room(M, rng):
     props.stock(M)
     props.cartons(M)
     props.wall_details(M, HW)
+    props.hanging_jacket(M, HW)
 
 
 def _tubes(M):

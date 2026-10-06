@@ -7,6 +7,117 @@ from lib import Merge, empty, material
 
 ROOT = Path(__file__).resolve().parents[2] / 'assets/kiosk'
 
+def hanging_jacket(M, hw):
+    """A short work jacket on a wooden hanger, front facing into the room.
+
+    The old stand-in was one ellipsoid. Separate hanging sleeves, shoulders,
+    an open collar and a zipper give this a recognisable clothing silhouette.
+    It hugs the right wall, clear of the calendar and the back-door route.
+    """
+    cx, cy = hw-.105, .58
+    cloth = material('jacket_fabric', (.14, .18, .23), roughness=.98)
+    lining = material('jacket_lining', (.045, .055, .07), roughness=1)
+    rib = material('jacket_ribbing', (.075, .095, .12), roughness=1)
+    stitch = material('jacket_seam', (.24, .28, .32), roughness=1)
+    zip_metal = material('jacket_zipper', (.50, .51, .49), metallic=.55, roughness=.6)
+    jacket = Merge('hanging_jacket')
+    # z, lateral centre, half-width, thickness radius. Sections are elliptical
+    # rather than spherical; slight uneven folds break up the flat front.
+    rows = [(1.18,0,.148,.022), (1.21,0,.163,.032), (1.36,0,.178,.043),
+            (1.55,0,.19,.047), (1.72,0,.208,.040), (1.79,0,.172,.032),
+            (1.835,0,.070,.021), (1.85,0,.055,.018)]
+
+    def loft(sections, fabric, end_cap=True):
+        vertices, faces = [], []
+        segments = 24
+        for z, centre, width, depth in sections:
+            for i in range(segments):
+                a = 2*math.pi*i/segments
+                fold = .0025*math.sin(a*5+z*17)*math.sin(a)**2
+                vertices.append((cx+(depth+fold)*math.cos(a), cy+centre+width*math.sin(a), z))
+        faces.append(tuple(reversed(range(segments))))
+        for row in range(len(sections)-1):
+            for i in range(segments):
+                j = (i+1)%segments
+                faces.append((row*segments+i,row*segments+j,(row+1)*segments+j,(row+1)*segments+i))
+        if end_cap:
+            faces.append(tuple((len(sections)-1)*segments+i for i in range(segments)))
+        mesh(jacket, vertices, faces, fabric, smooth=True)
+
+    loft(rows, cloth, end_cap=False)
+    loft([(1.177,0,.148,.022), (1.205,0,.162,.031)], rib)
+    for side in (-1,1):
+        sleeve = [(1.20,side*.25,.045,.025), (1.235,side*.253,.051,.029),
+                  (1.43,side*.270,.058,.033), (1.61,side*.250,.077,.035),
+                  (1.735,side*.217,.084,.032), (1.78,side*.173,.064,.027)]
+        loft(sleeve, cloth)
+        loft([(1.194,side*.249,.044,.025), (1.233,side*.253,.051,.029)], rib)
+        # Ribbed cuffs, very small grooves instead of a featureless cylinder.
+        for z in (1.202,1.213,1.224):
+            jacket.bar((cx-.027,cy+side*.249-.035,z),(cx-.027,cy+side*.249+.035,z),.0017,stitch)
+
+    def front(z, offset=0, proud=.004):
+        for low, high in zip(rows,rows[1:]):
+            if low[0] <= z <= high[0]:
+                t = (z-low[0])/(high[0]-low[0])
+                width = low[2]+(high[2]-low[2])*t
+                depth = low[3]+(high[3]-low[3])*t
+                return (cx-depth*math.sqrt(max(.02,1-(offset/width)**2))-proud,cy+offset,z)
+        return (cx-.021-proud,cy+offset,z)
+
+    # Open stand collar, with its dark inner fabric visible from the room.
+    outer, faces = [], []
+    for radius_x, radius_y, z in ((.021,.069,1.827),(.027,.064,1.888),
+                                (.022,.058,1.888),(.016,.063,1.827)):
+        outer.extend((cx+radius_x*math.cos(a*2*math.pi/24),cy+radius_y*math.sin(a*2*math.pi/24),z) for a in range(24))
+    for row in range(4):
+        for i in range(24):
+            j = (i+1)%24
+            faces.append((row*24+i,row*24+j,((row+1)%4)*24+j,((row+1)%4)*24+i))
+    mesh(jacket,outer,faces,rib,smooth=True)
+    # Neck lining closes the deeper torso without filling the collar opening.
+    jacket.blob((.025,.092,.015),(cx,cy,1.835),lining,16,8,True)
+    zip_points = [front(z,0,.006) for z in (1.205,1.36,1.55,1.72,1.79,1.83)]
+    jacket.polyline(zip_points,.012,lining)
+    jacket.polyline([front(p[2],0,.014) for p in zip_points],.003,zip_metal)
+    for k in range(46):
+        z = 1.216+k*.013
+        for offset in (-.004,.004):
+            jacket.box((.002,.004,.002),front(z,offset,.015),zip_metal)
+    jacket.box((.004,.014,.027),front(1.70,0,.020),zip_metal,rot=(.12,0,0))
+    # Two slanted pocket mouths with sewn welts, following the curved front.
+    for side in (-1,1):
+        points = [front(z,side*y,.005) for y,z in ((.065,1.42),(.105,1.447),(.145,1.474))]
+        jacket.polyline(points,.010,lining)
+        jacket.polyline([front(p[2]+.008,p[1]-cy,.006) for p in points],.003,stitch)
+        jacket.polyline([front(z,side*y,.006) for y,z in ((.066,1.413),(.072,1.32),(.133,1.325),(.144,1.464))],.0017,stitch)
+    # A compact waist-length jacket. Keep its hanger at the original hook
+    # height and leave more space between the clothing and the fixed eye.
+    for vertex in jacket.bm.verts:
+        vertex.co.z = 1.95+(vertex.co.z-1.95)*.9
+        vertex.co.y = cy+(vertex.co.y-cy)*.94
+    jacket.finish()
+
+    hanger = Merge('jacket_hanger')
+    wood = material('jacket_hanger_wood', (.45,.30,.16), roughness=.8)
+    for side in (-1,1):
+        hanger.bar((cx+.006,cy,1.858),(cx+.006,cy+side*.215,1.75),.017,wood)
+    hanger.bar((cx+.006,cy-.215,1.75),(cx+.006,cy+.215,1.75),.013,wood)
+    hanger.bar((cx+.006,cy,1.855),(cx+.006,cy,1.933),.003,zip_metal)
+    ring(hanger,(cx+.006,cy,1.94),.023,.002,zip_metal,plane='XZ',
+         start=0,end=math.pi*1.65,steps=18)
+    # A screwed plate and upturned hook attach the hanger to the actual wall.
+    hanger.box((.010,.050,.075),(hw-WALL-.006,cy,1.952),M['frame'])
+    hanger.polyline(((hw-WALL-.014,cy,1.937),(cx+.005,cy,1.92),
+                     (cx-.015,cy,1.92),(cx-.019,cy,1.936)),.005,zip_metal)
+    for z in (1.930,1.974):
+        hanger.cylinder(.003,.002,(hw-WALL-.013,cy,z),zip_metal,segments=10,rot=(0,math.pi/2,0))
+    for vertex in hanger.bm.verts:
+        vertex.co.z = 1.95+(vertex.co.z-1.95)*.9
+        vertex.co.y = cy+(vertex.co.y-cy)*.94
+    hanger.finish()
+
+
 def textured(name, filename):
     mat = material(name, (1,1,1))
     nodes=mat.node_tree.nodes
