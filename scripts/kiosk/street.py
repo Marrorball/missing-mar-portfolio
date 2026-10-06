@@ -12,7 +12,7 @@ from mathutils import Matrix
 from dims import BILLBOARD, BILLBOARD_FACE, HD, HW, LAMP_POST, TERMINAL, TOP
 from can import build_can
 from geometry import catenary, tree_segments
-from lib import Merge, box, empty, screen, text, material, link
+from lib import Merge, box, empty, screen, snow_cap, text, material, link
 
 TREES = ((-6.0, 6.0, 8.0), (5.5, 7.0, 7.0), (-9.0, 2.0, 9.0), (8.0, 1.0, 6.5),
          (-3.0, 11.0, 8.5), (10.0, 9.0, 7.5), (-12.0, 8.0, 8.0))
@@ -251,10 +251,10 @@ def _terminal(M):
     lamp.bar((tx, ty - 0.15, 1.98), (tx, ty - 0.57, 2.06), 0.012, M['frame'])
     lamp.box((0.12, 0.06, 0.025), (tx, ty - 0.57, 2.045), M['bulb'])
     lamp.finish()
-    snow = Merge('terminal_snow')
-    snow.blob((0.72, 0.54, 0.09), (tx, ty, 1.975), M['snow'], 18, 8, True)
-    snow.blob((0.15, 0.08, 0.035), (tx, ty - 0.57, 2.065), M['snow'], 12, 6, True)
-    snow.finish()
+    snow_cap('terminal_snow', (0.66, 0.5), 0.045, 1.97, M['snow'], loc=(tx, ty, 0.0), overhang=0.015, lumps=3, seed=9,
+             grid=0.025)
+    snow_cap('terminal_lamp_snow', (0.12, 0.06), 0.015, 2.058, M['snow'], loc=(tx, ty - 0.57, 0.0), overhang=0.006,
+             lumps=1, seed=3, grid=0.012)
 
 
 def build(M):

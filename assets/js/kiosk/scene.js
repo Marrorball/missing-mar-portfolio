@@ -23,6 +23,7 @@ import { addLights, addSky, addSnow, createComposer, flicker, setupShadows, weat
 import { QUALITY, qualityTier, tvWarmUp } from './weather.js';
 import { drawPosterWear } from './poster.js';
 import { drawNeighbour } from './neighbours.js';
+import { drawNotice, packNotices } from './notices.js';
 
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
@@ -646,6 +647,63 @@ export async function createKioskScene({
     return paintAnchor(name, draw, { transparent: false, lit: true, glow: 0.08, pickAs });
   }
 
+  // The small notices all over the shutters: one atlas, one mesh, paper lit
+  // like the shutter paint (call once the fonts are in).
+  const noticeResources = [];
+  function paintNotices() {
+    const anchors = [];
+    root.traverse(object => {
+      if (object.name.startsWith('shutter_notice_')) anchors.push(object);
+    });
+    if (!anchors.length) return;
+    const { width, height, cells } = packNotices(anchors.map(anchor => anchor.userData));
+    const sheet = document.createElement('canvas');
+    sheet.width = width;
+    sheet.height = height;
+    const context = sheet.getContext('2d');
+    anchors.forEach((anchor, index) => {
+      const cell = cells[index];
+      context.save();
+      context.translate(cell.x, cell.y);
+      drawNotice(context, cell.w, cell.h, anchor.userData.design ?? index, { torn: Boolean(anchor.userData.torn), seed: index + 3 });
+      context.restore();
+    });
+    const texture = new THREE.CanvasTexture(sheet);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 4;
+    const positions = [];
+    const uvs = [];
+    const indices = [];
+    const corner = new THREE.Vector3();
+    anchors.forEach((anchor, index) => {
+      const { width: w, height: h } = anchor.userData;
+      const cell = cells[index];
+      const [u0, u1] = [cell.x / width, (cell.x + cell.w) / width];
+      const [v0, v1] = [1 - (cell.y + cell.h) / height, 1 - cell.y / height];
+      anchor.updateWorldMatrix(true, false);
+      const base = positions.length / 3;
+      for (const [x, y, u, v] of [[-w / 2, h / 2, u0, v1], [w / 2, h / 2, u1, v1], [w / 2, -h / 2, u1, v0], [-w / 2, -h / 2, u0, v0]]) {
+        corner.set(x, y, 0.002).applyMatrix4(anchor.matrixWorld);
+        positions.push(corner.x, corner.y, corner.z);
+        uvs.push(u, v);
+      }
+      indices.push(base, base + 3, base + 2, base, base + 2, base + 1);
+    });
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    const material = new THREE.MeshStandardMaterial({ map: texture, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.92,
+      emissive: 0xffffff, emissiveMap: texture, emissiveIntensity: 0.06 });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = 'shutter_notices';
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    noticeResources.push(texture, geometry, material);
+    renderer.shadowMap.needsUpdate = true;
+  }
+
   // The TV is dark until someone steps into the kiosk, then it blinks and
   // comes on by itself with the channel list.
   let tvPicture = null;
@@ -1044,6 +1102,7 @@ export async function createKioskScene({
   return {
     focus,
     paintSheet,
+    paintNotices,
     setTvPicture,
     purr,
     snapshot,
@@ -1066,6 +1125,7 @@ export async function createKioskScene({
       artworkMaterials.forEach(material => material.dispose());
       artworkPlanes.forEach(plane => plane.geometry.dispose());
       billboardResources.forEach(resource => resource.dispose());
+      noticeResources.forEach(resource => resource.dispose());
       observer.disconnect();
       renderer.setAnimationLoop(null);
       controls.dispose();

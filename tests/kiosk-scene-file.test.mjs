@@ -169,6 +169,14 @@ test('the back doorway has a click area as big as the opening', () => {
   assert.ok(doorway, 'hs_doorway');
 });
 
+test('the shutters carry a crowd of small notices instead of plain boxes and 3D lettering', () => {
+  const nodes = gltf().nodes;
+  const notices = nodes.filter(node => node.name.startsWith('shutter_notice_'));
+  assert.ok(notices.length >= 16, `${notices.length} notices`);
+  assert.ok(notices.every(node => node.extras.width > 0.1 && node.extras.design >= 0));
+  assert.ok(!nodes.some(node => /^ad_\d$|^posters_/.test(node.name)), 'old ads and poster boxes gone');
+});
+
 test('the walk round the kiosk has its waypoints', () => {
   const all = names();
   for (const name of ['front_left', 'side_left', 'front_right', 'side_right', 'door_out', 'doorway', 'door_in']) {

@@ -170,3 +170,45 @@ def screen(name, loc, width, height, rot_z=0.0, parent=None):
     obj['width'] = width
     obj['height'] = height
     return obj
+
+
+def snow_cap(name, size, depth, top, mat, loc=(0.0, 0.0, 0.0), parent=None, overhang=0.02, lumps=4, seed=7,
+             grid=0.03):
+    """A layer of snow lying on a flat top of `size` (width, length): flat
+    and lumpy in the middle, rounded down at the edges and drooping a little
+    over them, the way snow settles on a box, not a ball on top of it."""
+    import random
+    rng = random.Random(seed)
+    width, length = size[0] + 2 * overhang, size[1] + 2 * overhang
+    bumps = [(rng.uniform(-0.4, 0.4) * size[0], rng.uniform(-0.4, 0.4) * size[1],
+              rng.uniform(0.15, 0.35) * min(size), rng.uniform(0.15, 0.4) * depth) for _ in range(lumps)]
+    softness = max(0.012, 0.35 * depth)
+
+    def height(x, y):
+        edge = min(size[0] / 2 - abs(x), size[1] / 2 - abs(y))       # inside the top: > 0
+        if edge < 0:
+            return -1.4 * (-edge) - 0.004                              # droops over the rim
+        lump = sum(h * math.exp(-((x - bx) ** 2 + (y - by) ** 2) / (r * r)) for bx, by, r, h in bumps)
+        return depth * (1 - math.exp(-edge / softness)) + lump * min(1.0, edge / (3 * softness))
+
+    nx, ny = max(6, int(width / grid)), max(6, int(length / grid))
+    bm = bmesh.new()
+    rows = []
+    for j in range(ny + 1):
+        row = []
+        for i in range(nx + 1):
+            x, y = (i / nx - 0.5) * width, (j / ny - 0.5) * length
+            row.append(bm.verts.new((x, y, top + height(x, y))))
+        rows.append(row)
+    for j in range(ny):
+        for i in range(nx):
+            bm.faces.new((rows[j][i], rows[j][i + 1], rows[j + 1][i + 1], rows[j + 1][i]))
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    mesh.materials.append(mat)
+    obj = link(bpy.data.objects.new(name, mesh), parent)
+    obj.location = loc
+    return obj

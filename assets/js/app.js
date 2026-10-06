@@ -423,6 +423,7 @@ async function paintSheets() {
     name: owner.name, role: owner.role, location: owner.location, links, photo
   }), 'hs_flyer');
   state.kiosk?.paintSheet('screen_price', drawPriceSheet, 'hs_pricelist');
+  state.kiosk?.paintNotices();
   state.kiosk?.setTvPicture((context, width, height) => drawTeletext(context, width, height,
     projects.map((project, index) => ({ number: channelNumber(index), title: project.title || '' }))));
 }

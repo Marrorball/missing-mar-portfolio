@@ -11,7 +11,7 @@ on the stand picks the rack.
 import math
 
 from dims import RACK, RACK_FACES, RACK_POCKETS, RACK_ROW_STEP, RACK_TOP_ROW
-from lib import Merge, box, empty, material, text
+from lib import Merge, box, empty, material, snow_cap, text
 
 CORE = 0.125           # half-width of the square sheet core
 DISC_OUT = 0.18        # disc cases stand in front of the core
@@ -75,11 +75,10 @@ def build(M):
     header.box((side, side, height), (0.0, 0.0, header_z), lightbox)
     header.box((side + 0.02, side + 0.02, 0.02), (0.0, 0.0, header_z + height / 2 + 0.01), M['frame'])
     header.box((side + 0.02, side + 0.02, 0.02), (0.0, 0.0, header_z - height / 2 - 0.01), M['frame'])
-    header.cylinder(0.035, 0.03, (0.0, 0.0, header_z + height / 2 + 0.035), M['frame'], segments=12)
+    header.cylinder(0.03, 0.06, (0.0, 0.0, header_z + height / 2 + 0.05), M['frame'], segments=12)   # socket above the snow
     header.finish(parent=stand)
-    snow = Merge('rack_snow')
-    snow.blob((side + 0.05, side + 0.05, 0.07), (0.0, 0.0, header_z + height / 2 + 0.03), M['snow'], 18, 8, True)
-    snow.finish(parent=stand)
+    snow_cap('rack_snow', (side + 0.02, side + 0.02), 0.025, header_z + height / 2 + 0.02, M['snow'],
+             parent=stand, overhang=0.012, lumps=3, seed=4, grid=0.02)
     for face, angle, out, at in _faces():
         # text faces -Y unturned; face 0 looks down -Y, the others follow round
         text(f'rack_header_text_{face}', 'ВСЕ ПРОЕКТЫ', at(side / 2 + 0.004, 0.0, header_z), 0.038,
@@ -87,4 +86,4 @@ def build(M):
     # on the axis, so the light the site puts here stays put while the rack turns
     bulb = Merge('bulb_rack')
     bulb.blob((0.06, 0.06, 0.075), (0.0, 0.0, 0.0), M['bulb'], 14, 8, True)
-    bulb.finish((0.0, 0.0, header_z + height / 2 + 0.085), parent=rack)
+    bulb.finish((0.0, 0.0, header_z + height / 2 + 0.115), parent=rack)

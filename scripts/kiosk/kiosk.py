@@ -8,10 +8,9 @@ import random
 from dims import (D, DOOR_L, DOOR_OPEN_DEG, DOOR_R, DOOR_TOP, GLASS_HIGH, GLASS_LOW, HD, HW,
                   PLINTH, TOP, W, WALL, WINDOW_L, WINDOW_R, WINDOW_TOP)
 from geometry import grille_segments
-from lib import Merge, box, cylinder, empty, link, material, screen, text
+from lib import Merge, box, cylinder, empty, link, material, screen, snow_cap, text
 
 SHEET = (0.4, 0.5625)    # flyer and price list: big enough to read from the street, 32:45
-ADS = ('СДАМ\nКВАРТИРУ', 'РЕМОНТ\nКОМПЬЮТЕРОВ', 'КУПЛЮ ВОЛОСЫ\nДОРОГО')
 
 
 def _shell(M):
@@ -102,6 +101,45 @@ def _window(M):
     text('away_text', 'ОТОШЁЛ\n5 МИН', (0.0, -0.007, 0.0), 0.045, M['paper'], parent=away)
 
 
+NOTICE_SIZES = ((0.15, 0.21), (0.21, 0.15), (0.17, 0.24), (0.14, 0.14), (0.19, 0.26), (0.24, 0.17))
+
+
+def _notices(side, out, hinge, rng):
+    """Small street notices pasted over each other on the shutter, painted by
+    the site (assets/js/kiosk/notices.js): one anchor each with its size, a
+    slight tilt and which notice it is. Clear of the flyer, the marker
+    contacts, the price sheet and the row of three ads."""
+    def blocked(x, z, w, h):
+        def hits(cx, cz, half_w, half_h):
+            return abs(x - cx) < half_w + w / 2 and abs(z - cz) < half_h + h / 2
+        if side == 'left':
+            return hits(0.45, 1.55, SHEET[0] / 2 + 0.02, SHEET[1] / 2 + 0.02) or hits(0.45, 1.02, 0.28, 0.14)
+        return hits(-0.5, 1.55, SHEET[0] / 2 + 0.02, SHEET[1] / 2 + 0.02) or z + h / 2 > 1.95
+
+    placed = []
+    if side == 'right':
+        # the classic three, in a row along the top
+        for design, x in zip((0, 1, 2), (-0.19, -0.5, -0.81)):
+            placed.append((x, 2.08, 0.26, 0.19, rng.uniform(-0.05, 0.05), design))
+    tries = 0
+    while len(placed) < 11 and tries < 400:
+        tries += 1
+        w, h = rng.choice(NOTICE_SIZES)
+        x = out * rng.uniform(0.04 + w / 2, 0.96 - w / 2)
+        z = rng.uniform(0.92 + h / 2, 2.3 - h / 2)
+        if blocked(x, z, w, h):
+            continue
+        # a little overlap is how notices grow on a shutter; a lot hides them
+        if any(abs(x - px) < (w + pw) * 0.38 and abs(z - pz) < (h + ph) * 0.38 for px, pz, pw, ph, *_ in placed):
+            continue
+        placed.append((x, z, w, h, rng.uniform(-0.09, 0.09), 3 + (len(placed) * 5 + (0 if side == 'left' else 2)) % 11))
+    for index, (x, z, w, h, tilt, design) in enumerate(placed):
+        anchor = screen(f'shutter_notice_{side}_{index}', (x, 0.0245 + index * 0.0007, z), w, h, rot_z=math.pi, parent=hinge)
+        anchor.rotation_euler[1] = tilt
+        anchor['design'] = design
+        anchor['torn'] = int(rng.random() < 0.35)
+
+
 def _shutters(M):
     for side, rot, out, seed in (('left', 190, 1, 11), ('right', 170, -1, 23)):
         hinge = empty(f'shutter_{side}_hinge', (out * -HW, -HD, 0.0), rot_z=math.radians(rot))
@@ -115,27 +153,7 @@ def _shutters(M):
             trim.cylinder(0.02, 0.12, (0.0, -0.03, z), M['frame'])
         trim.finish(parent=hinge)
 
-        rng = random.Random(seed)
-        posters = Merge(f'posters_{side}')
-        for index in range(12):
-            w, h = rng.uniform(0.12, 0.3), rng.uniform(0.1, 0.3)
-            x, z = out * rng.uniform(0.15, 0.85), rng.uniform(1.0, 2.2)
-            if side == 'left' and abs(x - 0.45) < 0.32 and abs(z - 1.55) < 0.42:
-                continue  # the flyer lives here
-            if side == 'left' and abs(x - 0.45) < 0.3 and z < 1.25:
-                continue  # marker contacts live here
-            if side == 'right' and (abs(x + 0.5) < 0.32 and abs(z - 1.55) < 0.42 or z > 1.85):
-                continue  # the price sheet and the three ads live here
-            depth = 0.024 + index * 0.0006
-            posters.box((w, 0.004, h), (x, depth, z), rng.choice(M['posters']), rot=(0.0, rng.uniform(-0.12, 0.12), 0.0))
-            if rng.random() < 0.4:
-                for k in range(6):
-                    posters.box((w / 7, 0.003, 0.05), (x - w / 2 + (k + 0.75) * w / 6.5, depth + 0.001, z - h / 2 - 0.03), M['paper'])
-        if side == 'right':
-            for index, (body, x) in enumerate(zip(ADS, (-0.19, -0.5, -0.81))):
-                posters.box((0.28, 0.004, 0.2), (x, 0.026, 2.07), M['paper'])
-                text(f'ad_{index}', body, (x, 0.03, 2.09), 0.026, M['ink'], parent=hinge, rot_z=math.pi)
-        posters.finish(parent=hinge)
+        _notices(side, out, hinge, random.Random(seed))
 
         if side == 'left':
             # the sheet is printed by the site (assets/js/kiosk/paper.js)
@@ -149,43 +167,8 @@ def _shutters(M):
 
 
 def _roof_snow(M):
-    """One continuous blanket over the roof: thickest in the middle, rounded
-    down to the edges with a slight lip hanging over them, lumpy on top."""
-    import bmesh
-    import bpy
-    width, depth = W + 0.34, D + 0.34
-    nx, ny = 36, 26
-    base = TOP + 0.1
-    bm = bmesh.new()
-    rng = random.Random(7)
-    bumps = [(rng.uniform(-1.4, 1.4), rng.uniform(-0.9, 0.9), rng.uniform(0.25, 0.6), rng.uniform(0.01, 0.035))
-             for _ in range(12)]
-
-    def height(x, y):
-        # distance to the nearest edge, 0 at the rim
-        edge = min(width / 2 - abs(x), depth / 2 - abs(y))
-        body = 0.11 * (1 - math.exp(-max(edge, 0) / 0.12))
-        lumps = sum(h * math.exp(-((x - bx) ** 2 + (y - by) ** 2) / (r * r)) for bx, by, r, h in bumps)
-        return body + lumps * min(1, edge / 0.25)
-
-    grid = []
-    for j in range(ny + 1):
-        row = []
-        for i in range(nx + 1):
-            x = (i / nx - 0.5) * width
-            y = (j / ny - 0.5) * depth
-            row.append(bm.verts.new((x, y, base + height(x, y) - 0.012)))
-        grid.append(row)
-    for j in range(ny):
-        for i in range(nx):
-            bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
-    mesh = bpy.data.meshes.new('roof_snow')
-    bm.to_mesh(mesh)
-    bm.free()
-    for polygon in mesh.polygons:
-        polygon.use_smooth = True
-    mesh.materials.append(M['snow'])
-    link(bpy.data.objects.new('roof_snow', mesh))
+    """One continuous blanket over the roof, lumpy and a little overhanging."""
+    snow_cap('roof_snow', (W + 0.3, D + 0.3), 0.11, TOP + 0.1, M['snow'], overhang=0.03, lumps=12, grid=0.08)
 
 
 def _roof_and_lamp(M):

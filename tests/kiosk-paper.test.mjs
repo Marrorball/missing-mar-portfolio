@@ -31,7 +31,8 @@ function recorder() {
       measureText: text => ({ width: text.length * 10 }),
       drawImage: (...args) => images.push(args),
       getImageData: (x, y, w, h) => ({ data: new Uint8ClampedArray(Math.max(1, w * h) * 4) }),
-      createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) })
+      createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+      createRadialGradient: () => ({ addColorStop: () => {} })
     }, { get: (target, key) => (key in target ? target[key] : noop), set: () => true })
   };
 }
@@ -82,4 +83,21 @@ test('the neighbours are silhouettes cropped by the sill, one with a lit cigaret
   calls.length = 0;
   drawNeighbour(context, 1024, 1229, 'looking');
   assert.ok(!calls.some(([name]) => name === 'arc'));
+});
+
+test('street notices: the 2000s classics, packed into one atlas without overlaps', async () => {
+  const { NOTICES, drawNotice, packNotices } = await import('../assets/js/kiosk/notices.js');
+  const titles = NOTICES.map(notice => notice.title);
+  for (const title of ['СДАМ КВАРТИРУ', 'ПОХУДЕЙ СЕЙЧАС!', 'ПРОПАЛ КОТ', 'КУПЛЮ ВОЛОСЫ ДОРОГО']) assert.ok(titles.includes(title), title);
+  const { width, height, cells } = packNotices([{ width: 0.2, height: 0.28 }, { width: 1.5, height: 0.2 }, { width: 0.15, height: 0.21 }]);
+  assert.ok(cells.every(cell => cell.x + cell.w <= width && cell.y + cell.h <= height));
+  for (let i = 0; i < cells.length; i += 1) {
+    for (let j = i + 1; j < cells.length; j += 1) {
+      const [a, b] = [cells[i], cells[j]];
+      assert.ok(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y, 'no overlap');
+    }
+  }
+  const { context, texts } = recorder();
+  drawNotice(context, 220, 300, 3, { torn: true, seed: 5 });
+  assert.ok(texts.includes('ПОХУДЕЙ СЕЙЧАС!'));
 });

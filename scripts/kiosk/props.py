@@ -25,7 +25,7 @@ def mesh(batch, vertices, faces, mat, uvs=None, smooth=False):
 
 def uv(cell,u,v):
     # Padding protects adjacent atlas tiles from minification bleeding.
-    return ((cell%4+(4+248*u)/256)/4, 1-(cell//4+(4+248*(1-v))/256)/2)
+    return ((cell%4+(4+248*u)/256)/4, 1-(cell//4+(4+248*(1-v))/256)/4)
 
 def label(batch, cell, vertices, coords=None):
     mesh(batch,vertices,[(0,1,2,3)],textured('retail_print','props-atlas.png'),
@@ -85,17 +85,127 @@ def pack(batch, loc, width=.13, height=.2, depth=.05, cell=0):
         for row in range(n):
             a=row*stride+col; mesh(batch,[vertices[a],vertices[a+stride],vertices[a+stride+surface],vertices[a+surface]],[(0,1,2,3)],material('packet_side',(.64,.48,.17)))
 
-def bottle(batch, loc, height, M, cell=3):
-    r=.034; x,y,z=loc
-    lathe(batch,[(0,r*.8),(.012,r),(height*.55,r),(height*.65,r*.95),(height*.76,r*.45),(height*.93,r*.4)],loc,M['bottle_green'],16)
-    for h in (.02,height*.52,height*.58): ring(batch,(x,y,z+h),r,.0015,M['bottle_green'],steps=12)
-    lathe(batch,[(0,.015),(.016,.015)],(x,y,z+height*.92),M['plastic_light'],16)
-    # Cylindrical label with a real radius, printed from either side.
-    for side in (-1,1):
-        for k in range(8):
-            a=math.pi*k/8+(0 if side==1 else math.pi); b=a+math.pi/8
-            vs=[(x+.0347*math.cos(t),y+.0347*math.sin(t),z+h) for h,t in [(height*.22,a),(height*.22,b),(height*.5,b),(height*.5,a)]]
-            label(batch,cell,vs,[(k/8,0),((k+1)/8,0),((k+1)/8,1),(k/8,1)])
+def wrap(batch, cell, centre, r0, r1, z0, z1, segments=8):
+    """A printed label round a cylinder or a cone (radius r0 at z0, r1 at
+    z1), printed on both halves so it reads from any side."""
+    x, y, z = centre
+    for side in (0, 1):
+        for k in range(segments):
+            a = math.pi * k / segments + side * math.pi
+            b = a + math.pi / segments
+            vs = [(x + r * math.cos(t), y + r * math.sin(t), z + h) for h, r, t in
+                  [(z0, r0, a), (z0, r0, b), (z1, r1, b), (z1, r1, a)]]
+            label(batch, cell, vs, [(k / segments, 0), ((k + 1) / segments, 0), ((k + 1) / segments, 1), (k / segments, 1)])
+
+
+def _metal():
+    return material('crown_cap_metal', (0.7, 0.68, 0.6), roughness=0.3, metallic=0.85)
+
+
+def bottle(batch, loc, height, M, cell=8, glass=None):
+    """A half-litre glass bottle with a crown cap: lemonade, beer, tarhun."""
+    r = .034; x, y, z = loc
+    glass = glass or M['bottle_green']
+    lathe(batch, [(0, r * .8), (.012, r), (height * .55, r), (height * .65, r * .95), (height * .76, r * .45),
+                  (height * .93, r * .4)], loc, glass, 16)
+    ring(batch, (x, y, z + .02), r, .0015, glass, steps=12)
+    lathe(batch, [(0, .0145), (.011, .0145)], (x, y, z + height * .925), _metal(), 14)
+    ring(batch, (x, y, z + height * .925 + .003), .0148, .0016, _metal(), steps=14)
+    wrap(batch, cell, loc, r + .0008, r + .0008, height * .2, height * .5)
+
+
+def pet(batch, loc, height, cell, M):
+    """A litre plastic bottle of fizzy pop, tinted plastic, coloured cap."""
+    r = .041; x, y, z = loc
+    plastic = material('pet_green', (0.32, 0.62, 0.36), roughness=0.18)
+    lathe(batch, [(0, r * .75), (.01, r * .92), (.02, r), (height * .62, r), (height * .7, r * .9),
+                  (height * .86, r * .42), (height * .93, r * .34)], loc, plastic, 16)
+    for h in (height * .08, height * .15):
+        ring(batch, (x, y, z + h), r, .002, plastic, steps=14)
+    lathe(batch, [(0, .016), (.018, .016)], (x, y, z + height * .93), material('pet_cap', (0.8, 0.12, 0.1)), 14)
+    wrap(batch, cell, loc, r + .0008, r + .0008, height * .3, height * .58)
+
+
+def can(batch, loc, height, cell, M):
+    """A 0.33 can with its print wrapped round it."""
+    r = .033; x, y, z = loc
+    silver = material('can_silver', (0.72, 0.74, 0.76), roughness=0.3, metallic=0.8)
+    lathe(batch, [(0, r * .82), (.008, r), (height - .012, r), (height - .004, r * .86), (height, r * .86)], loc, silver, 16)
+    ring(batch, (x, y, z + height), r * .86, .0015, silver, steps=16)
+    wrap(batch, cell, loc, r + .0006, r + .0006, .01, height - .014)
+
+
+def carton(batch, loc, cell, M, w=.07, d=.06, h=.17):
+    """A litre of juice in a gable-top carton."""
+    x, y, z = loc
+    white = material('carton_white', (0.93, 0.92, 0.88))
+    batch.box((w, d, h), (x, y, z + h / 2), white)
+    for side in (-1, 1):
+        coords = [(0, 0), (1, 0), (1, 1), (0, 1)] if side == -1 else [(1, 0), (0, 0), (0, 1), (1, 1)]
+        label(batch, cell, [(x - w / 2 + .002, y + side * (d / 2 + .0006), z + .004), (x + w / 2 - .002, y + side * (d / 2 + .0006), z + .004),
+                            (x + w / 2 - .002, y + side * (d / 2 + .0006), z + h - .004), (x - w / 2 + .002, y + side * (d / 2 + .0006), z + h - .004)], coords)
+    ridge = z + h + .028
+    mesh(batch, [(x - w / 2, y - d / 2, z + h), (x + w / 2, y - d / 2, z + h), (x + w / 2, y, ridge), (x - w / 2, y, ridge),
+                 (x - w / 2, y + d / 2, z + h), (x + w / 2, y + d / 2, z + h)],
+         [(0, 1, 2, 3), (3, 2, 5, 4), (0, 3, 4), (1, 5, 2)], white)
+    batch.box((w, .003, .012), (x, y, ridge + .004), white)
+
+
+def noodle_cup(batch, loc, cell, M, h=.1):
+    """Instant noodles: a tapered foam cup with a foil lid."""
+    x, y, z = loc
+    foam = material('cup_foam', (0.95, 0.94, 0.9))
+    lathe(batch, [(0, .034), (h, .046)], loc, foam, 18)
+    wrap(batch, cell, loc, .0348, .0468, .006, h - .006)
+    batch.cylinder(.048, .003, (x, y, z + h + .0015), material('foil_lid', (0.82, 0.82, 0.84), metallic=0.7, roughness=0.35), segments=18)
+
+
+def gum_box(batch, loc, cell, M):
+    """An open shop box of gum with its printed lid flipped up behind."""
+    x, y, z = loc
+    w, d, h = .11, .065, .035
+    pink = material('gum_box_pink', (0.93, 0.55, 0.68))
+    batch.box((w, d, .005), (x, y, z + .0025), pink)
+    batch.box((w, .004, h), (x, y - d / 2, z + h / 2), pink)
+    for sx in (-1, 1):
+        batch.box((.004, d, h), (x + sx * w / 2, y, z + h / 2), pink)
+    label(batch, cell, [(x - w / 2, y - d / 2 - .0026, z + .002), (x + w / 2, y - d / 2 - .0026, z + .002),
+                        (x + w / 2, y - d / 2 - .0026, z + h), (x - w / 2, y - d / 2 - .0026, z + h)], [(0, .1), (1, .1), (1, .55), (0, .55)])
+    lid = [(x - w / 2, y + d / 2, z + h), (x + w / 2, y + d / 2, z + h), (x + w / 2, y + d / 2 + .018, z + h + .05), (x - w / 2, y + d / 2 + .018, z + h + .05)]
+    mesh(batch, lid, [(0, 1, 2, 3)], pink)
+    label(batch, cell, [(px, py - .002, pz) for px, py, pz in lid])
+    for k in range(8):
+        batch.box((.0105, .046, .028), (x - w / 2 + .011 + k * .0125, y + .002, z + .019),
+                  M['goods_palette'][4] if k % 2 else material('gum_white', (0.95, 0.95, 0.93)))
+
+
+def lollipops(batch, loc, M):
+    """A spinning stand of lollipops stuck into a ball, a kiosk counter classic."""
+    x, y, z = loc
+    batch.cylinder(.05, .012, (x, y, z + .006), M['ink'], segments=18)
+    batch.cylinder(.006, .17, (x, y, z + .09), M['frame'], segments=8)
+    batch.blob((.085, .085, .075), (x, y, z + .2), material('lolly_holder', (0.95, 0.94, 0.9)), 14, 8, True)
+    colours = [M['goods_palette'][i] for i in (0, 1, 3, 4, 9, 6)]
+    for k in range(16):
+        a = k * 2.399
+        tilt = .25 + .9 * ((k * 7) % 5) / 5
+        dx, dy, dz = math.cos(a) * math.sin(tilt), math.sin(a) * math.sin(tilt), math.cos(tilt)
+        start = (x + dx * .03, y + dy * .03, z + .2 + dz * .028)
+        end = (x + dx * .085, y + dy * .085, z + .2 + dz * .07)
+        batch.bar(start, end, .003, material('lolly_stick', (0.95, 0.95, 0.93)))
+        batch.blob((.026, .026, .026), end, colours[k % len(colours)], 10, 6, True)
+
+
+def choc_display(batch, loc, cell, M, count=4):
+    """Chocolate bars standing in their open display tray."""
+    x, y, z = loc
+    batch.box((.15, .07, .018), (x, y, z + .009), material('choc_tray', (0.55, 0.12, 0.13)))
+    for k in range(count):
+        yy = y - .024 + k * .016
+        batch.box((.14, .011, .07), (x, yy, z + .018 + .035), M['ink'])
+        label(batch, cell, [(x - .07, yy - .0058, z + .019), (x + .07, yy - .0058, z + .019),
+                            (x + .07, yy - .0058, z + .087), (x - .07, yy - .0058, z + .087)])
+
 
 def jar(batch,loc,M,cell=4,height=.16):
     x,y,z=loc; r=.047
@@ -207,8 +317,8 @@ def stock(M):
             x=-1.31+k*.148
             if row==2: continue
             if row%2==0: jar(packs,(x,.82,base),M,cell=4,height=.19 if row==0 else .16)
-            elif k%3==0: bottle(packs,(x,.82,base),.24,M)
-            else: pack(packs,(x,.82,base),width=.122,height=.21,depth=.058,cell=k%2)
+            elif k%3==0: bottle(packs,(x,.82,base),.24,M,cell=9,glass=M['bottle_brown'])
+            else: pack(packs,(x,.82,base),width=.122,height=.21,depth=.058,cell=(11,12,0,1)[k%4])
     # Tea cartons belong in the scene, but now have folds and actual printed fronts.
     for k in range(7):
         x=-1.32+k*.20; packs.box((.155,.16,.15),(x,.82,1.7),M['goods_palette'][3])
