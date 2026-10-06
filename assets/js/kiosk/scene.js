@@ -70,7 +70,8 @@ export async function createKioskScene({
   onHover = () => {},
   onPick = () => {},
   onRackFace = () => {},
-  onEmptyClick = () => {}
+  onEmptyClick = () => {},
+  onArrive = () => {}
 }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(container.clientWidth, container.clientHeight, false);
@@ -411,6 +412,7 @@ export async function createKioskScene({
 
   function arrive(name, { landed = false } = {}) {
     applyLimits(name);
+    onArrive(name);
     if (screens[name]) {
       sizeScreen(name);
       if (name !== 'billboard' || !billboardMotion) showScreen(name, { landed });
@@ -793,6 +795,7 @@ export async function createKioskScene({
 
 
   const carried = new THREE.Vector3();
+  const side = new THREE.Vector3();
   const flat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
   let lastFrame = 0;
   const frame = () => {
@@ -841,7 +844,8 @@ export async function createKioskScene({
       // you round the kiosk and drops into the player as you reach the TV.
       const t = Math.min((performance.now() - movingDisc.start) / movingDisc.duration, 1);
       const carry = carried.copy(camera.position)
-        .addScaledVector(camera.getWorldDirection(heading), 0.62)
+        .addScaledVector(camera.getWorldDirection(heading), 0.7)
+        .addScaledVector(side.set(1, 0, 0).applyQuaternion(camera.quaternion), 0.14)
         .addScaledVector(camera.up, -0.2);
       const disc = movingDisc.mesh;
       disc.position.lerpVectors(movingDisc.from, carry, smoothstep(0, 0.2, t));
@@ -850,7 +854,9 @@ export async function createKioskScene({
       disc.quaternion.copy(camera.quaternion);
       if (t > 0.78) disc.quaternion.slerp(flat, smoothstep(0.78, 0.95, t));
       disc.rotateZ(t * 9);
-      disc.scale.setScalar(1 - smoothstep(0.9, 1, t));
+      // small in the hand so it doesn't fill the view, full size again in the tray
+      const inHand = smoothstep(0.08, 0.2, t) - smoothstep(0.78, 0.92, t);
+      disc.scale.setScalar((1 - 0.5 * inHand) * (1 - smoothstep(0.92, 1, t)));
       if (t === 1) cancelDisc();
     }
     const now = performance.now() / 1000;

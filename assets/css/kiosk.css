@@ -353,3 +353,15 @@ body.is-pointing .kiosk-stage canvas {
 @media (prefers-reduced-motion: reduce) {
   .kiosk-hint { animation: none; }
 }
+
+/* the remote and the rack's arrows wait until you get there */
+.tv-remote,
+.rack-controls,
+.kiosk-inside-hint { transition: opacity .3s; }
+
+body.is-travelling .tv-remote,
+body.is-travelling .rack-controls,
+body.is-travelling .kiosk-inside-hint {
+  opacity: 0;
+  pointer-events: none;
+}

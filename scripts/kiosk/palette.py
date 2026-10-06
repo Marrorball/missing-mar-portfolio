@@ -39,7 +39,7 @@ def make_materials():
         'wood': material('wood', (0.45, 0.33, 0.22)),
         'cardboard': material('cardboard', (0.62, 0.47, 0.30)),
         'device': material('device', (0.18, 0.19, 0.21)),
-        'tv_plastic': material('tv_plastic', (0.035, 0.035, 0.04), roughness=0.45),
+        'tv_plastic': material('tv_plastic', (0.008, 0.008, 0.009), roughness=0.32),
         'terminal_orange': material('terminal_orange', (0.88, 0.29, 0.045), roughness=0.72),
         'plastic_light': material('plastic_light', (0.78, 0.78, 0.74)),
         'screen': material('screen', (0.35, 0.55, 0.70), emission=0.6),

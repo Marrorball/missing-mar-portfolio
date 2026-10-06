@@ -146,6 +146,8 @@ function focusPreset(name, options) {
   }
   state.preset = name;
   state.hash = currentHash();
+  // no scene, no journey: the remote must not wait for an arrival that never comes
+  document.body.classList.toggle('is-travelling', Boolean(state.kiosk));
   state.kiosk?.focus(name, options);
   document.querySelector('#kiosk-closeup-slot').innerHTML = chromeFor(name);
 }
@@ -209,6 +211,7 @@ function arriveBack(entry) {
   }
   state.preset = entry.preset;
   state.hash = currentHash();
+  document.body.classList.add('is-travelling');
   state.kiosk.restore(entry.view);
   document.querySelector('#kiosk-closeup-slot').innerHTML = chromeFor(entry.preset);
 }
@@ -372,6 +375,7 @@ async function mountKiosk() {
       onHover: showLabel,
       onPick: runAction,
       onEmptyClick: goBack,
+      onArrive: () => document.body.classList.remove('is-travelling'),
       onRackFace: face => {
         state.rackFace = face;
         const title = document.querySelector('#rack-face');
