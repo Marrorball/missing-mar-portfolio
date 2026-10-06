@@ -35,13 +35,13 @@ export async function createKioskScene({ container, url, onProgress = () => {}, 
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(SKY);
-  scene.fog = new THREE.Fog(SKY, 14, 34);
+  scene.fog = new THREE.Fog(SKY, 18, 90);
   scene.add(new THREE.HemisphereLight(0xaac4ff, 0x2a2a33, 1.6));
   const warm = new THREE.PointLight(0xffb259, 8, 6, 1.4);
   warm.position.set(0, 2.1, 0);
   scene.add(warm);
 
-  const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.05, 80);
+  const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.05, 160);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.enablePan = false;
