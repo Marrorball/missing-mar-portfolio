@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
+import { POCKETS_PER_FACE, RACK_FACES } from '../assets/js/kiosk/discs.js';
 import { HOTSPOTS, PRESETS } from '../assets/js/kiosk/hotspots.js';
 import { SLOT_COUNT } from '../assets/js/kiosk/slots.js';
 
@@ -13,20 +14,37 @@ function gltf() {
   return JSON.parse(buffer.subarray(20, 20 + jsonLength).toString('utf8'));
 }
 
+const names = () => new Set(gltf().nodes.map(node => node.name));
+
 test('the kiosk scene exports every hotspot, slot and camera preset', () => {
-  const names = new Set(gltf().nodes.map(node => node.name));
-  for (const node of Object.keys(HOTSPOTS)) assert.ok(names.has(node), node);
-  for (let index = 0; index < SLOT_COUNT; index += 1) assert.ok(names.has(`slot_${index}`), `slot_${index}`);
+  const all = names();
+  for (const node of Object.keys(HOTSPOTS)) assert.ok(all.has(node), node);
+  for (let index = 0; index < SLOT_COUNT; index += 1) assert.ok(all.has(`slot_${index}`), `slot_${index}`);
   for (const preset of PRESETS) {
-    assert.ok(names.has(`cam_${preset}`), `cam_${preset}`);
-    assert.ok(names.has(`tgt_${preset}`), `tgt_${preset}`);
+    assert.ok(all.has(`cam_${preset}`), `cam_${preset}`);
+    assert.ok(all.has(`tgt_${preset}`), `tgt_${preset}`);
+  }
+});
+
+test('the rack holds a disc in every pocket and the player sits under the TV', () => {
+  const all = names();
+  for (const node of ['dvd_rack', 'hs_rack', 'dvd_player', 'tv_screen', 'terminal_screen']) assert.ok(all.has(node), node);
+  for (let index = 0; index < RACK_FACES * POCKETS_PER_FACE; index += 1) assert.ok(all.has(`disc_${index}`), `disc_${index}`);
+});
+
+test('screens carry their size for the in-scene pages', () => {
+  const nodes = gltf().nodes;
+  for (const name of ['screen_tv', 'screen_terminal', 'screen_billboard']) {
+    const node = nodes.find(entry => entry.name === name);
+    assert.ok(node, name);
+    assert.ok(node.extras?.width > 0 && node.extras?.height > 0, `${name} size`);
   }
 });
 
 test('the detail pass is in the scene', () => {
-  const names = new Set(gltf().nodes.map(node => node.name));
-  for (const node of ['kiosk_grille', 'kiosk_ribs', 'goods_fill', 'price_tags', 'interior', 'trees', 'buildings', 'snow_drifts', 'terminal_details']) {
-    assert.ok(names.has(node), node);
+  const all = names();
+  for (const node of ['kiosk_grille', 'kiosk_ribs', 'goods_fill', 'price_tags', 'interior', 'trees', 'buildings', 'snow_drifts', 'terminal_details', 'billboard_frame']) {
+    assert.ok(all.has(node), node);
   }
 });
 

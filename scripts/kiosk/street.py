@@ -1,13 +1,13 @@
 """Everything around the kiosk: snow, drifts, a trodden path, the lamp post
-and its cable, a power line, a bench, a bin, bare trees, panel blocks far
-away, and the payment terminal hotspot."""
+and its cable, a power line, a bench, a bin, bare trees, the billboard, panel
+blocks far away, and the payment terminal hotspot."""
 
 import math
 import random
 
-from dims import HD, HW, LAMP_POST, TERMINAL, TOP
+from dims import BILLBOARD, BILLBOARD_FACE, HD, HW, LAMP_POST, TERMINAL, TOP
 from geometry import catenary, tree_segments
-from lib import Merge, box, text
+from lib import Merge, box, screen, text
 
 TREES = ((-6.0, 6.0, 8.0), (5.5, 7.0, 7.0), (-9.0, 2.0, 9.0), (8.0, 1.0, 6.5),
          (-3.0, 11.0, 8.5), (10.0, 9.0, 7.5), (-12.0, 8.0, 8.0))
@@ -40,6 +40,8 @@ def _snow(M, rng):
         x, y = math.cos(angle) * radius, math.sin(angle) * radius
         if y < -1.0 and abs(x) < 4.5:
             continue  # keep the approach and the camera clear
+        if abs(x - BILLBOARD[0]) < 3.2 and abs(y - BILLBOARD[1]) < 2.0:
+            continue  # keep the billboard legs clear
         drifts.blob((rng.uniform(2.0, 4.0), rng.uniform(1.5, 3.0), rng.uniform(0.4, 0.9)), (x, y, 0.0), M['snow'])
         placed += 1
     drifts.finish()
@@ -96,6 +98,25 @@ def _trees(M, rng):
     trees.finish()
 
 
+def _billboard(M):
+    bx, by = BILLBOARD
+    width, height, centre = BILLBOARD_FACE
+    bottom, top = centre - height / 2, centre + height / 2
+    frame = Merge('billboard_frame')
+    for x in (-1.6, 1.6):
+        frame.cylinder(0.14, bottom + 0.1, (x, 0.25, (bottom + 0.1) / 2), M['frame'], segments=10)
+    for z in (bottom - 0.05, top + 0.05):
+        frame.box((width + 0.2, 0.25, 0.1), (0.0, 0.0, z), M['frame'])
+    for x in (-width / 2 - 0.05, width / 2 + 0.05):
+        frame.box((0.1, 0.25, height), (x, 0.0, centre), M['frame'])
+    for x in (-1.6, 0.0, 1.6):
+        frame.bar((x, 0.0, top + 0.1), (x, -0.6, top + 0.35), 0.04, M['frame'])
+        frame.box((0.3, 0.15, 0.08), (x, -0.62, top + 0.33), M['frame'])
+    frame.finish((bx, by, 0.0))
+    box('hs_billboard', (width, 0.12, height), (bx, by + 0.08, centre), M['device'])
+    screen('screen_billboard', (bx, by - 0.1, centre), width, height)
+
+
 def _blocks(M, rng):
     blocks = Merge('buildings')
     for x, y, w, d, h in BLOCKS:
@@ -113,18 +134,19 @@ def _blocks(M, rng):
 def _terminal(M):
     tx, ty = TERMINAL
     terminal = box('hs_terminal', (0.62, 0.45, 1.75), (tx, ty, 0.875), M['device'])
+    box('terminal_screen', (0.45, 0.02, 0.32), (0.0, -0.235, 0.35), M['screen'], parent=terminal)
     parts = Merge('terminal_details')
     front = -0.235
-    parts.box((0.66, 0.5, 0.22), (0.0, 0.0, 0.985), M['sign'])                    # light box on top
-    parts.box((0.45, 0.02, 0.32), (0.0, front, 0.35), M['screen'])
+    parts.box((0.66, 0.5, 0.22), (0.0, 0.0, 0.985), M['sign'])
     for row in range(4):
         for col in range(3):
             parts.box((0.05, 0.015, 0.035), (-0.07 + col * 0.07, front, 0.08 - row * 0.05), M['plastic_light'])
-    parts.box((0.2, 0.02, 0.04), (0.0, front, -0.2), M['ink'])                      # banknote slot
-    parts.box((0.12, 0.02, 0.02), (0.0, front, -0.32), M['ink'])                    # receipt slot
-    parts.box((0.7, 0.5, 0.06), (0.0, 0.0, -0.845), M['frame'])                     # base
+    parts.box((0.2, 0.02, 0.04), (0.0, front, -0.2), M['ink'])
+    parts.box((0.12, 0.02, 0.02), (0.0, front, -0.32), M['ink'])
+    parts.box((0.7, 0.5, 0.06), (0.0, 0.0, -0.845), M['frame'])
     parts.finish(parent=terminal)
     text('terminal_label', 'ОПЛАТА', (0.0, -0.255, 0.985), 0.09, M['ink'], parent=terminal)
+    screen('screen_terminal', (tx, ty - 0.247, 1.225), 0.45, 0.32)
 
 
 def build(M):
@@ -133,5 +155,6 @@ def build(M):
     _lamp_and_wires(M)
     _bench_and_bin(M)
     _trees(M, rng)
+    _billboard(M)
     _blocks(M, rng)
     _terminal(M)

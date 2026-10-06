@@ -13,9 +13,17 @@ DOOR_OPEN_DEG = -115
 
 SHELF_Y = -HD + 0.2                # centre line of the showcase shelves
 SHELF_LEVELS = (0.98, 1.30, 1.62, 1.94)
-SLOT_LEVEL = 1.30                  # the shelf that carries the projects
+SLOT_LEVEL = 1.30                  # the shelf that carries the hits
 SLOT_COUNT = 8
 SLOT_XS = tuple(-1.2 + index * (2.4 / (SLOT_COUNT - 1)) for index in range(SLOT_COUNT))
 
+CHAIR = (-0.3, 0.25)
+TV = (-1.22, 0.3, 1.75)            # centre of the TV body, screen faces +X
+RACK = (0.6, 0.25)                 # DVD rack, visible through the back door
+RACK_FACES, RACK_POCKETS = 4, 8
+RACK_TOP_ROW, RACK_ROW_STEP = 1.43, 0.27
+
 LAMP_POST = (-3.2, -1.6)
 TERMINAL = (3.0, -0.35)
+BILLBOARD = (0.0, 6.0)
+BILLBOARD_FACE = (4.8, 2.4, 4.2)   # width, height, centre height

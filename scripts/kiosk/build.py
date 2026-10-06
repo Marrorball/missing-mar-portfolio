@@ -3,7 +3,8 @@
 Run with `npm run build:kiosk`. The scene is rebuilt from the modules in this
 folder on every run, so a change is a parameter edit, never a hand-patched
 file. Node names are the contract with the site: hs_* are hotspots, slot_*
-shelf slots, cam_*/tgt_* camera presets (see assets/js/kiosk/hotspots.js).
+showcase hits, disc_* rack pockets, screen_* page anchors (size in extras),
+cam_*/tgt_* camera presets (see assets/js/kiosk/hotspots.js).
 """
 
 import os
@@ -26,10 +27,11 @@ OUT = os.path.join(ROOT, 'assets', 'kiosk', 'kiosk.glb')
 CAMERAS = {
     'home': ((3.4, -7.2, 2.1), (0.0, 0.0, 1.4)),
     'showcase': ((0.3, -3.0, 1.65), (0.0, -0.9, 1.5)),
-    'flyer': ((-1.7, -3.1, 1.65), (-1.94, -1.11, 1.55)),
-    'terminal': ((3.7, -2.7, 1.5), (3.0, -0.55, 1.2)),
-    'pricelist': ((-0.75, -2.2, 1.3), (-0.9, -0.95, 1.12)),
-    'inside': ((1.15, 0.8, 1.6), (0.1, -0.1, 1.35)),
+    'inside': ((1.15, 0.8, 1.6), (-0.3, 0.0, 1.4)),
+    'rack': ((0.6, 1.75, 1.2), (0.6, 0.25, 1.05)),
+    'tv': ((-0.42, 0.3, 1.76), (-1.02, 0.3, 1.76)),
+    'billboard': ((0.0, 1.4, 4.2), (0.0, 6.0, 4.2)),
+    'terminal': ((3.0, -1.35, 1.25), (3.0, -0.6, 1.225)),
 }
 
 
@@ -54,6 +56,7 @@ def export():
         export_apply=True,
         export_cameras=False,
         export_lights=False,
+        export_extras=True,
     )
     print(f'kiosk exported: {OUT}')
 

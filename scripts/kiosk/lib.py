@@ -158,3 +158,12 @@ def text(name, body, loc, size, mat, parent=None, rot_z=0.0, bold=True):
     obj.location = loc
     obj.rotation_euler = (0.0, 0.0, rot_z)
     return obj
+
+
+def screen(name, loc, width, height, rot_z=0.0):
+    """Anchor for an in-scene HTML page: the centre of the screen, facing its
+    local -Y. The size travels to the site as glTF extras."""
+    obj = empty(name, loc, rot_z=rot_z)
+    obj['width'] = width
+    obj['height'] = height
+    return obj
