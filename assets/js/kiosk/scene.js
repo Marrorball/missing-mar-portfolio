@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { TOUCH_LABEL_QUERY, placeLabels, selectLabels } from './touch-labels.js';
 import { RACK_FACES } from './discs.js';
 import { coverDescriptor, drawCover } from './covers.js';
 import { lookDirection, turnLook } from './look.js';
@@ -92,52 +91,6 @@ export async function createKioskScene({
   const screenLayer = document.createElement('div');
   screenLayer.className = 'kiosk-screens';
   container.appendChild(screenLayer);
-
-  const touchLabels = document.createElement('div');
-  touchLabels.className = 'kiosk-touch-labels is-moving';
-  touchLabels.setAttribute('role', 'group');
-  touchLabels.setAttribute('aria-label', 'Объекты ларька');
-  touchLabels.hidden = true;
-  container.appendChild(touchLabels);
-  const touchInput = window.matchMedia(TOUCH_LABEL_QUERY);
-  let labelEntries = [];
-  let labelStamp = '';
-  let labelCheckAt = 0;
-  let labelPose = '';
-  let labelSettledAt = 0;
-  const refreshLabels = () => { labelStamp = ''; labelCheckAt = 0; };
-  touchInput.addEventListener('change', refreshLabels);
-  document.fonts.ready.then(refreshLabels);
-  function setLabels(entries) {
-    touchLabels.replaceChildren();
-    labelEntries = entries.flatMap(entry => {
-      const object = root.getObjectByName(entry.node);
-      if (!object) return [];
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'kiosk-touch-label';
-      button.dataset.action = 'kiosk-pick';
-      button.dataset.node = entry.node;
-      const caption = document.createElement('span');
-      caption.textContent = entry.label;
-      button.appendChild(caption);
-      button.hidden = true;
-      touchLabels.appendChild(button);
-      const bounds = new THREE.Box3().setFromObject(object);
-      // Store sample points in object space so rotating rack discs follow it.
-      const center = bounds.getCenter(new THREE.Vector3());
-      const samples = [center.clone()];
-      for (const axis of ['x', 'y', 'z']) {
-        for (const edge of ['min', 'max']) {
-          const point = center.clone();
-          point[axis] = bounds[edge][axis];
-          samples.push(point);
-        }
-      }
-      return [{ ...entry, object, button, caption, samples: samples.map(point => object.worldToLocal(point)) }];
-    });
-    refreshLabels();
-  }
 
   const scene = new THREE.Scene();
 
@@ -380,83 +333,17 @@ export async function createKioskScene({
     return name && allowedIn(current, name) ? name : null;
   }
 
-  const labelPoint = new THREE.Vector3();
-  function updateTouchLabels(now) {
-    const hidden = !touchInput.matches || Boolean(flight) || Boolean(screens[current])
-      || Boolean(document.querySelector('.screen-flat, #contact-card, .kiosk-note, #kiosk-explore[open]'));
-    touchLabels.hidden = hidden;
-    if (hidden) {
-      labelPose = '';
-      touchLabels.classList.add('is-moving');
-      return;
-    }
-    const stamp = [current, ...camera.position.toArray(), ...camera.quaternion.toArray(), camera.fov,
-      canvas.clientWidth, canvas.clientHeight, rack?.rotation.y]
-      .map(value => typeof value === 'number' ? value.toFixed(2) : value).join(',');
-    // Keep labels still instead of chasing the camera and hopping between
-    // alternate anchors. Fade back in once the gesture/damping has settled.
-    if (stamp !== labelPose || down) {
-      labelPose = stamp;
-      labelSettledAt = now + 260;
-      touchLabels.classList.add('is-moving');
-      return;
-    }
-    if (now < labelSettledAt || now < labelCheckAt) return;
-    labelCheckAt = now + 120;
-    if (stamp === labelStamp) {
-      touchLabels.classList.remove('is-moving');
-      return;
-    }
-    labelStamp = stamp;
-    root.updateMatrixWorld(true);
-    camera.updateMatrixWorld();
-    const rect = canvas.getBoundingClientRect();
-    const footerTop = document.querySelector('.kiosk-help')?.getBoundingClientRect().top ?? rect.bottom;
-    const candidates = [];
-    const used = new Set();
-    for (const entry of labelEntries) {
-      entry.button.hidden = true;
-      if (!isShown(entry.object) || !allowedIn(current, entry.node)) continue;
-      // Room details are labelled once inside; the away note already has
-      // its own readable paper sign and needs no second sign over the fascia.
-      if (entry.node === 'hs_sign_away') continue;
-      if (['hs_tv', 'hs_radio', 'hs_cat', 'hs_calendar'].includes(entry.node)
-        && !['inside', 'cat'].includes(current)) continue;
-      // The overview labels the rack/window as a whole. Individual covers
-      // become readable buttons when looking at the rack or showcase.
-      if (/^(slot|disc)_/.test(entry.node) && !['rack', 'showcase'].includes(current)) continue;
-      if (used.has(entry.label)) continue;
-      for (const sample of entry.samples) {
-        labelPoint.copy(sample);
-        entry.object.localToWorld(labelPoint);
-        labelPoint.project(camera);
-        if (labelPoint.z < -1 || labelPoint.z > 1 || Math.abs(labelPoint.x) > 1 || Math.abs(labelPoint.y) > 1) continue;
-        const x = (labelPoint.x + 1) * rect.width / 2;
-        const y = (1 - labelPoint.y) * rect.height / 2;
-        const picked = pick(rect.left + x, rect.top + y);
-        if (picked !== entry.node && !(entry.node === 'hs_showcase' && picked?.startsWith('slot_'))) continue;
-        entry.caption.textContent = /^hs_(backdoor|doorway)$/.test(entry.node) && current === 'inside'
-          ? 'Выйти на улицу' : entry.label;
-        // Measure in the same synchronous pass, before the browser paints.
-        entry.button.hidden = false;
-        candidates.push({ ...entry, x, y, width: entry.button.offsetWidth, height: entry.button.offsetHeight });
-        entry.button.hidden = true;
-        used.add(entry.label);
-        break;
+  function pickTouch(x, y) {
+    const direct = pick(x, y);
+    if (direct) return direct;
+    // A little tolerance for a fingertip, using the same occlusion-aware rays.
+    for (const radius of [7, 14]) {
+      for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+        const name = pick(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
+        if (name) return name;
       }
     }
-    const selected = selectLabels(candidates, { width: rect.width, height: rect.height, preset: current });
-    const placed = placeLabels(selected, { width: rect.width, bottom: footerTop - rect.top - 8 });
-    for (const entry of placed) {
-      const { button, x, y, anchorX, anchorY, width, height } = entry;
-      button.style.transform = `translate(${x}px, ${y}px)`;
-      const dx = anchorX - x - width / 2;
-      const dy = anchorY - y - height / 2;
-      button.style.setProperty('--stem-length', `${Math.hypot(dx, dy)}px`);
-      button.style.setProperty('--stem-angle', `${Math.atan2(dy, dx)}rad`);
-      button.hidden = false;
-    }
-    touchLabels.classList.remove('is-moving');
+    return null;
   }
 
   let movingDisc = null;
@@ -656,18 +543,46 @@ export async function createKioskScene({
     prepareFlightOrientation(flight);
   }
 
-  function focus(name, { instant = false, lookAt = null } = {}) {
-    let view = screenView(name) || presets[name];
-    const object = lookAt && root.getObjectByName(lookAt);
-    if (name === 'inside' && object && view) {
-      view = { ...view, target: new THREE.Box3().setFromObject(object).getCenter(new THREE.Vector3()) };
+  // Fit the interactive street objects into portrait/short screens; background
+  // buildings/trees must not force the kiosk into a tiny distant speck.
+  function fitSmallOverview(view, fov) {
+    if (camera.aspect >= 1 && container.clientHeight >= 500) return view;
+    const points = [];
+    for (const name of ['hs_showcase', 'hs_flyer', 'hs_pricelist', 'hs_rack', 'hs_terminal', 'hs_billboard']) {
+      const object = root.getObjectByName(name);
+      if (!object) continue;
+      const bounds = new THREE.Box3().setFromObject(object);
+      for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y])
+        for (const z of [bounds.min.z, bounds.max.z]) points.push(new THREE.Vector3(x, y, z));
     }
+    const fit = new THREE.PerspectiveCamera(fov, camera.aspect, 0.05, 160);
+    const target = view.target.clone();
+    const position = view.position.clone();
+    const project = () => {
+      fit.position.copy(position); fit.lookAt(target); fit.updateMatrixWorld();
+      return points.map(point => point.clone().project(fit));
+    };
+    const initial = project();
+    const middle = (Math.min(...initial.map(p => p.x)) + Math.max(...initial.map(p => p.x))) / 2;
+    const shift = new THREE.Vector3(1, 0, 0).applyQuaternion(fit.quaternion)
+      .multiplyScalar(middle * position.distanceTo(target) * Math.tan(fov * Math.PI / 360) * camera.aspect);
+    position.add(shift); target.add(shift);
+    for (let step = 0; step < 24; step++) {
+      if (project().every(p => Math.abs(p.x) <= 0.93 && p.y >= -0.72 && p.y <= 0.93)) break;
+      position.sub(target).multiplyScalar(1.05).add(target);
+    }
+    return { target, position };
+  }
+
+  function focus(name, { instant = false } = {}) {
+    let view = screenView(name) || presets[name];
     if (!view) return;
     if (name === 'home') {
       const scale = overviewScale(presetLimits(name).fov, camera.aspect);
       view = { target: view.target, position: view.position.clone().sub(view.target).multiplyScalar(scale).add(view.target) };
     }
     const fov = screens[name] ? SCREEN_FOV : fitFov(presetLimits(name).fov, camera.aspect);
+    if (name === 'home') view = fitSmallOverview(view, fov);
     travel(name, view, fov, { instant });
   }
 
@@ -1031,6 +946,7 @@ export async function createKioskScene({
     }
   });
   canvas.addEventListener('pointermove', event => {
+    if (down && Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6) down.dragged = true;
     if (down && current === 'inside' && !flight) {
       insidePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       if (pinch && insidePointers.size === 2) {
@@ -1078,7 +994,7 @@ export async function createKioskScene({
       if (current === 'rack' && rack) snapRack();
       return;
     }
-    const name = pick(event.clientX, event.clientY);
+    const name = event.pointerType === 'touch' ? pickTouch(event.clientX, event.clientY) : pick(event.clientX, event.clientY);
     if (name) onPick(name);
     else if (!flight && (presetLimits(current).locked || current === 'showcase')) onEmptyClick();
     else if (!flight && current === 'inside' && towardStreet(event.clientX, event.clientY)) onStreetClick();
@@ -1236,7 +1152,6 @@ export async function createKioskScene({
     sky.position.copy(camera.position);
     snow.update(dt, now);
     if (!reducedMotion) flicker(flickering, now);
-    updateTouchLabels(performance.now());
     composer.render();
   };
   renderer.setAnimationLoop(frame);
@@ -1281,7 +1196,6 @@ export async function createKioskScene({
     playDisc,
     cancelDisc,
     pageScroller: name => screens[name]?.scroller || null,
-    setLabels,
     setHits: hits => showOnly(/^slot_\d+$/, hits),
     setDiscs: discs => showOnly(/^disc_\d+$/, discs),
     dispose() {
@@ -1298,8 +1212,6 @@ export async function createKioskScene({
       renderer.dispose();
       canvas.remove();
       screenLayer.remove();
-      touchInput.removeEventListener('change', refreshLabels);
-      touchLabels.remove();
     }
   };
 }

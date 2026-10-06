@@ -1,5 +1,4 @@
 import { escapeHtml } from '../render.js';
-import { HOTSPOTS } from './hotspots.js';
 
 const BACK_ICON = '<i class="ph ph-arrow-left" aria-hidden="true"></i>';
 
@@ -9,27 +8,8 @@ export function renderHelpBar() {
     <a href="#about">Обо мне</a>
     <button type="button" data-action="contacts-card" aria-expanded="false" aria-controls="contact-card">Контакты</button>
     <button type="button" data-action="kiosk-help">Как тут ходить?</button>
-    <button type="button" class="kiosk-explore-toggle" data-action="kiosk-explore" aria-haspopup="dialog" aria-controls="kiosk-explore">Осмотреть</button>
     <button type="button" data-action="kiosk-inside">Внутрь</button>
   </nav>`;
-}
-
-export function renderExploreMenu(projects = [], inside = false) {
-  const names = { hs_flyer: 'Листок с контактами', hs_billboard: 'Баннер — обо мне',
-    hs_pricelist: 'Листок с прайсом', hs_terminal: 'Пополнение баланса',
-    hs_sign_away: 'Табличка «Отошёл»', hs_backdoor: inside ? 'Выйти на улицу' : 'Зайти внутрь' };
-  const group = (title, nodes) => `<section><h3>${title}</h3><div class="kiosk-explore-grid">${nodes.map(node =>
-    `<button type="button" data-action="kiosk-explore-pick" data-node="${node}">${escapeHtml(names[node] || HOTSPOTS[node].label)}</button>`
-  ).join('')}</div></section>`;
-  return `<dialog class="kiosk-explore" id="kiosk-explore" aria-labelledby="kiosk-explore-title">
-    <header><h2 id="kiosk-explore-title">Осмотреть ларёк</h2><button type="button" data-action="kiosk-explore-close" aria-label="Закрыть список объектов">×</button></header>
-    <div class="kiosk-explore-scroll">
-      ${group('На улице', ['hs_rack', 'hs_showcase', 'hs_flyer', 'hs_billboard', 'hs_pricelist', 'hs_terminal', 'hs_backdoor', 'hs_sign_away'])}
-      ${group('Внутри', ['hs_tv', 'hs_cat', 'hs_radio', 'hs_calendar'])}
-      <section><h3>Все проекты</h3><div class="kiosk-explore-grid">${projects.map(project =>
-        `<a href="#project/${encodeURIComponent(project.id)}">${escapeHtml(project.title)}</a>`).join('')}</div></section>
-    </div>
-  </dialog>`;
 }
 
 export function renderContactCard(links = []) {
@@ -54,10 +34,8 @@ export function renderRackControls(title = '') {
   </div>`;
 }
 
-export function renderHint(touch = false) {
-  return `<div class="kiosk-hint" role="status">${touch
-    ? 'Поворачивай пальцем. Всё доступно в «Осмотреть»'
-    : 'Крути мышкой и нажимай на то, что светится'}</div>`;
+export function renderHint() {
+  return '<div class="kiosk-hint" role="status">Крути мышкой и нажимай на то, что светится</div>';
 }
 
 export function renderNote(text = '') {

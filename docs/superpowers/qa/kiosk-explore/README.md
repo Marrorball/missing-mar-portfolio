@@ -1,3 +1,5 @@
+> Retired at user request. Touch labels/menu have been removed; current behavior is documented in `../kiosk-direct-touch/README.md`. The screenshots below record the discarded implementation.
+
 # Complete touch exploration
 
 The touch help bar now has an «Осмотреть» button opening a native modal dialog. Its list exposes all 12 unique fixed objects (door aliases are deduplicated) and all 7 projects independently of camera orientation, occlusion and the two/three-label limit. The main phone view now prioritises the contacts flyer and project rack. Small labels still fade during camera gestures.
