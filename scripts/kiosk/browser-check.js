@@ -1,7 +1,7 @@
 // Run with Playwright MCP browser_run_code_unsafe(filename: this file).
 async (page) => {
   const base = 'http://localhost:5173/missing-mar-portfolio/';
-  const out = '/Users/mar/Documents/ChatGPT/des/missing-mar-portfolio/docs/superpowers/qa/kiosk-continuation';
+  const out = '/Users/mar/Documents/ChatGPT/des/missing-mar-portfolio/docs/superpowers/qa/kiosk-refined';
   const checks = [];
   const assert = (value, label) => {
     if (!value) throw new Error(label);
@@ -12,7 +12,13 @@ async (page) => {
     await page.waitForFunction(() => window.__kiosk);
     await page.evaluate(() => document.fonts.ready);
   };
-  const shot = name => page.screenshot({ path: `${out}/${name}.png`, scale: 'css' });
+  const arrived = () => page.waitForFunction(() => window.__kiosk && !window.__kiosk.inFlight);
+  let captureUnavailable = false;
+  const shot = async name => {
+    if (captureUnavailable) return;
+    try { await page.screenshot({ path: `${out}/${name}.png`, scale: 'css', timeout: 2500 }); }
+    catch { captureUnavailable = true; } // Native preview provides visual QA if headless capture stalls.
+  };
   const hit = name => page.evaluate(name => {
     const k = window.__kiosk;
     const n = k.scene.getObjectByName(name);
@@ -28,21 +34,34 @@ async (page) => {
   await ready();
   await shot('desktop-home');
   await page.getByRole('button', { name: 'Внутрь', exact: true }).click();
-  await page.waitForTimeout(1300);
+  await arrived();
+  const eye = await page.evaluate(() => window.__kiosk.camera.position.toArray());
+  const direction = await page.evaluate(() => window.__kiosk.controls.target.clone().sub(window.__kiosk.camera.position).normalize().toArray());
+  await page.mouse.move(800, 400);
+  await page.mouse.down();
+  await page.mouse.move(1300, 400, { steps: 12 });
+  await page.mouse.up();
+  const turned = await page.evaluate(() => ({ eye: window.__kiosk.camera.position.toArray(),
+    direction: window.__kiosk.controls.target.clone().sub(window.__kiosk.camera.position).normalize().toArray() }));
+  assert(eye.every((v, i) => Math.abs(v - turned.eye[i]) < 1e-8), 'inside drag keeps the eye inside the room');
+  assert(direction.reduce((s, v, i) => s + v * turned.direction[i], 0) < 0.3, 'inside drag turns freely past 90 degrees');
+  await page.getByRole('button', { name: 'Внутрь', exact: true }).click();
+  await arrived();
   const cat = await hit('hs_cat');
   assert(cat.name === 'hs_cat', 'cat is visible and clickable inside');
-  await page.mouse.click(cat.x, cat.y);
-  await page.locator('.kiosk-note').filter({ hasText: 'Рыжий' }).waitFor();
   await shot('desktop-inside');
+  await page.mouse.click(cat.x, cat.y);
+  await arrived();
+  await shot('desktop-cat');
   await page.keyboard.press('Escape');
   assert(await page.locator('.kiosk-back').count() === 0, 'Escape exits the room');
   await page.getByRole('button', { name: 'Проекты', exact: true }).click();
-  await page.waitForTimeout(1300);
+  await arrived();
   const disc = await hit('disc_0');
   assert(disc.name === 'disc_0', 'street rack disc is unobstructed');
   await shot('desktop-rack');
   await page.getByRole('button', { name: 'Следующая сторона' }).click();
-  await page.waitForTimeout(700);
+  await page.waitForFunction(() => Math.abs(window.__kiosk.scene.getObjectByName('dvd_rack').rotation.y + Math.PI / 2) < 0.005);
   const graphic = await hit('disc_8');
   assert(graphic.name === 'disc_8', 'spun graphic face is clickable');
   await shot('desktop-rack-graphic');
@@ -67,9 +86,9 @@ async (page) => {
   assert(await page.evaluate(() => window.__kiosk.scene.getObjectByName('screen_billboard').children.every(n => Math.abs(n.rotation.y - 4 * Math.PI / 3) < 0.01)), 'all billboard slats turn to the price face');
   await shot('desktop-price');
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(1300);
+  await arrived();
   await page.setViewportSize({ width: 900, height: 900 });
-  await page.waitForTimeout(200);
+  await page.waitForFunction(() => window.__kiosk.camera.aspect === 1 && !window.__kiosk.inFlight);
   assert(await page.evaluate(() => window.__kiosk.camera.fov > 59), 'resize updates FOV without moving the camera');
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -79,11 +98,11 @@ async (page) => {
   assert(await page.evaluate(() => [...document.querySelectorAll('.kiosk-help button,.kiosk-help a')].every(n => n.getBoundingClientRect().height >= 44)), 'phone navigation targets are at least 44 px');
   await shot('phone-home');
   await page.getByRole('button', { name: 'Внутрь', exact: true }).click();
-  await page.waitForTimeout(1300);
+  await arrived();
   await shot('phone-inside');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Проекты', exact: true }).click();
-  await page.waitForTimeout(1300);
+  await arrived();
   const phoneDisc = await hit('disc_0');
   assert(phoneDisc.name === 'disc_0', 'phone rack disc is unobstructed');
   await shot('phone-rack');
@@ -127,5 +146,5 @@ async (page) => {
     }
     requestAnimationFrame(frame);
   }));
-  return { checks, browserFramesPerSecond: frames, screenshots: out };
+  return { checks, browserFramesPerSecond: frames, captureUnavailable, screenshots: out };
 }

@@ -92,6 +92,13 @@ test('inside the kiosk the camera is held close and the lens is wider', () => {
   assert.ok(presetLimits('home').maxPolarAngle < Math.PI / 2);
 });
 
+test('inside offers a fixed-eye full look-around rather than a restricted orbit', () => {
+  assert.equal(presetLimits('inside').lookAround, true);
+  assert.equal(presetLimits('inside').azimuthSpan, undefined);
+  assert.equal(HOTSPOTS.hs_showcase.label, 'Витрина');
+  assert.equal(HOTSPOTS.hs_rack.label, 'Все проекты');
+});
+
 test('a portrait screen widens the lens so the kiosk still fits across', () => {
   assert.equal(fitFov(40, 1.6), 40);
   assert.equal(fitFov(40, 2.4), 40);

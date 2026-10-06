@@ -87,6 +87,7 @@ export function addLights(scene, root, quality) {
   const inside = ['bulb_0', 'bulb_1', 'bulb_2'].map(name => point(scene, root, name, { color: WARM, intensity: 2.2, distance: 5 }));
   point(scene, root, 'bulb_outside', { color: WARM, intensity: 1.6, distance: 4 });
   point(scene, root, 'bulb_rack', { color: WARM, intensity: 0.30, distance: 3 });
+  point(scene, root, 'light_terminal', { color: 0xffdfbd, intensity: 0.85, distance: 3.5, drop: 0 });
   // the showcase light over the shelves, so the goods face the street lit
   point(scene, root, 'light_window', { color: WARM, intensity: 2.4, distance: 2.6, drop: 0.02 });
   spot(scene, root, 'light_window', 'light_window_target', { color: WARM, intensity: 32, distance: 9, angle: 0.9, shadow: quality.shadows });
@@ -164,13 +165,22 @@ const WEATHERING = {
   metal: `
     float rust = smoothstep(0.6, 0.85, weatherFbm(vWeatherPos * 6.0));
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.28, 0.13, 0.06), rust * 0.8);`,
+  orange: `
+    float terminalScratch = smoothstep(0.72, 0.82, weatherFbm(vWeatherPos * 22.0));
+    float terminalLow = 1.0 - smoothstep(0.1, 0.55, vWeatherPos.y);
+    float terminalRust = smoothstep(0.67, 0.82, weatherFbm(vWeatherPos * 7.0) * 0.75 + terminalLow * 0.25);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.36, 0.37, 0.35), terminalScratch * 0.45);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.27, 0.12, 0.04), terminalRust * 0.40);`,
   snow: `
-    diffuseColor.rgb *= 0.9 + 0.12 * weatherFbm(vWeatherPos * vec3(0.6, 1.0, 0.6));`
+    float snowGrain = weatherFbm(vWeatherPos * 65.0);
+    diffuseColor.rgb *= 0.92 + 0.10 * weatherFbm(vWeatherPos * vec3(0.6, 1.0, 0.6));
+    diffuseColor.rgb *= 0.985 + snowGrain * 0.028;`
 };
 
 const KIND_BY_MATERIAL = {
   paint: 'paint',
   paint_dark: 'paint',
+  terminal_orange: 'orange',
   frame: 'metal',
   snow: 'snow',
   snow_trodden: 'snow'
@@ -218,18 +228,29 @@ export function addSnow(scene, count, { moving = true } = {}) {
   const positions = flakePositions(count);
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('flakeSize', new THREE.BufferAttribute(Float32Array.from({ length: count }, () => 0.5 + Math.random() * 0.9), 1));
   const flakes = new THREE.Points(geometry, new THREE.PointsMaterial({
     color: 0xe6ecff,
-    size: 0.045,
+    size: 0.027,
     map: flakeSprite(),
     transparent: true,
-    opacity: 0.9,
+    opacity: 0.72,
     depthWrite: false
   }));
+  flakes.material.onBeforeCompile = shader => {
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float flakeSize;\nvarying float vFlakeFade;')
+      .replace('gl_PointSize = size;', 'gl_PointSize = size * flakeSize;')
+      .replace('#include <fog_vertex>', '#include <fog_vertex>\ngl_PointSize = min(gl_PointSize, 5.0);\nvFlakeFade = smoothstep(0.35, 1.5, -mvPosition.z);');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vFlakeFade;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= vFlakeFade;');
+  };
+  flakes.material.customProgramCacheKey = () => 'natural-snow';
   flakes.name = 'snowfall';
   flakes.frustumCulled = false;
   scene.add(flakes);
-  const speeds = Float32Array.from({ length: count }, () => 0.35 + Math.random() * 0.35);
+  const speeds = Float32Array.from({ length: count }, () => 0.28 + Math.random() * 0.42);
   return {
     update(dt, t) {
       if (!moving) return;

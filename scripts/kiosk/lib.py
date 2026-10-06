@@ -74,10 +74,12 @@ class Merge:
         )['verts']
         self._place(verts, Matrix.Translation(loc) @ Euler(rot).to_matrix().to_4x4(), mat)
 
-    def blob(self, size, loc, mat):
-        verts = bmesh.ops.create_uvsphere(self.bm, u_segments=10, v_segments=6, radius=0.5)['verts']
+    def blob(self, size, loc, mat, segments=10, rings=6, smooth=False):
+        verts = bmesh.ops.create_uvsphere(self.bm, u_segments=segments, v_segments=rings, radius=0.5)['verts']
         bmesh.ops.scale(self.bm, vec=Vector(size), verts=verts)
         self._place(verts, Matrix.Translation(loc), mat)
+        for face in {face for vert in verts for face in vert.link_faces}:
+            face.smooth = smooth
 
     def bar(self, start, end, thickness, mat):
         start, end = Vector(start), Vector(end)
@@ -135,15 +137,16 @@ def _sign_font():
     return None
 
 
-def text(name, body, loc, size, mat, parent=None, rot_z=0.0, bold=True):
+def text(name, body, loc, size, mat, parent=None, rot_z=0.0, bold=True, font_path=None, curve_resolution=12, extrusion=0.004):
     """Upright text facing -Y (rot_z=math.pi faces +Y), baked to a mesh."""
     curve = bpy.data.curves.new(name, 'FONT')
     curve.body = body
     curve.size = size
     curve.align_x = 'CENTER'
     curve.align_y = 'CENTER'
-    curve.extrude = 0.004
-    font = _sign_font() if bold else None
+    curve.extrude = extrusion
+    curve.resolution_u = curve_resolution
+    font = bpy.data.fonts.load(font_path, check_existing=True) if font_path else (_sign_font() if bold else None)
     if font is not None:
         curve.font = font
     source = link(bpy.data.objects.new(name + '_curve', curve))

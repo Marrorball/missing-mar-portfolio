@@ -5,8 +5,8 @@ export const SNOW_BOUNDS = { x: 12, y: 9, z: 12 };
 export const KIOSK_FOOTPRINT = { x: 1.75, z: 1.25 };   // half sizes, roof overhang included
 
 export const QUALITY = {
-  high: { shadows: true, bloom: true, flakes: 3500 },
-  low: { shadows: false, bloom: false, flakes: 1200 }
+  high: { shadows: true, bloom: true, flakes: 4200 },
+  low: { shadows: false, bloom: false, flakes: 1500 }
 };
 
 export function insideFootprint(x, z, footprint = KIOSK_FOOTPRINT) {

@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RACK_FACES } from './discs.js';
 import { coverDescriptor, drawCover } from './covers.js';
+import { lookDirection, turnLook } from './look.js';
 import {
   PRESETS,
   SCREENS,
@@ -217,6 +218,15 @@ export async function createKioskScene({
   }
 
   let current = 'home';
+  let insideLook = { yaw: 0, pitch: 0 };
+  const insidePointers = new Map();
+  let pinch = null;
+  function lookInside(dx, dy) {
+    if (current !== 'inside' || flight) return;
+    insideLook = turnLook(insideLook, dx, dy);
+    controls.target.copy(camera.position).add(new THREE.Vector3(...lookDirection(insideLook)).multiplyScalar(1.8));
+    camera.lookAt(controls.target);
+  }
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   function pick(clientX, clientY) {
@@ -289,7 +299,12 @@ export async function createKioskScene({
 
   function applyLimits(name) {
     const limits = presetLimits(name);
-    controls.enabled = !limits.locked;
+    controls.enabled = !limits.locked && !limits.lookAround;
+    if (limits.lookAround) {
+      const direction = controls.target.clone().sub(camera.position).normalize();
+      insideLook = { yaw: Math.atan2(direction.x, direction.z), pitch: Math.asin(direction.y) };
+      return;
+    }
     if (limits.locked) return;
     controls.minDistance = limits.minDistance;
     controls.maxDistance = limits.maxDistance;
@@ -327,6 +342,8 @@ export async function createKioskScene({
       && controls.target.distanceTo(view.target) < 1e-3
       && Math.abs(camera.fov - fov) < 1e-3;
     current = name;
+    insidePointers.clear();
+    pinch = null;
     if (name !== 'tv') cancelDisc();
     if (name === 'home') turnBillboard(0);
     if (alreadyThere) {
@@ -505,10 +522,33 @@ export async function createKioskScene({
 
   let down = null;
   canvas.addEventListener('pointerdown', event => {
-    down = { x: event.clientX, y: event.clientY, lastX: event.clientX };
+    down = { x: event.clientX, y: event.clientY, lastX: event.clientX, lastY: event.clientY, dragged: false };
+    if (current === 'inside') {
+      insidePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (insidePointers.size === 2) {
+        const [a, b] = [...insidePointers.values()];
+        pinch = { distance: Math.hypot(a.x - b.x, a.y - b.y), fov: camera.fov };
+        down.dragged = true;
+      }
+    }
     canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener('pointermove', event => {
+    if (down && current === 'inside' && !flight) {
+      insidePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pinch && insidePointers.size === 2) {
+        const [a, b] = [...insidePointers.values()];
+        const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+        camera.fov = THREE.MathUtils.clamp(pinch.fov * pinch.distance / distance, 52, 84);
+        camera.updateProjectionMatrix();
+        down.dragged = true;
+      } else {
+        lookInside(event.clientX - down.lastX, event.clientY - down.lastY);
+      }
+      down.lastX = event.clientX;
+      down.lastY = event.clientY;
+      return;
+    }
     if (down && current === 'rack' && rack) {
       rack.rotation.y += (event.clientX - down.lastX) * 0.01;
       rackTarget = rack.rotation.y;
@@ -526,10 +566,19 @@ export async function createKioskScene({
   });
   canvas.addEventListener('pointerup', event => {
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    insidePointers.delete(event.pointerId);
+    if (current === 'inside' && insidePointers.size === 1) {
+      const point = [...insidePointers.values()][0];
+      down = { x: point.x, y: point.y, lastX: point.x, lastY: point.y, dragged: true };
+      pinch = null;
+      return;
+    }
     if (!down) return;
     const moved = Math.hypot(event.clientX - down.x, event.clientY - down.y);
+    const dragged = down.dragged;
     down = null;
-    if (moved > 6) {
+    pinch = null;
+    if (moved > 6 || dragged) {
       if (current === 'rack' && rack) snapRack();
       return;
     }
@@ -538,8 +587,16 @@ export async function createKioskScene({
   });
   canvas.addEventListener('pointercancel', () => {
     down = null;
+    insidePointers.clear();
+    pinch = null;
     if (current === 'rack' && rack) snapRack();
   });
+  canvas.addEventListener('wheel', event => {
+    if (current !== 'inside' || flight) return;
+    event.preventDefault();
+    camera.fov = THREE.MathUtils.clamp(camera.fov + event.deltaY * 0.035, 52, 84);
+    camera.updateProjectionMatrix();
+  }, { passive: false });
 
   const resize = () => {
     const width = container.clientWidth;
@@ -563,7 +620,8 @@ export async function createKioskScene({
   observer.observe(container);
 
   // Dev server only: handles for profiling from the console.
-  if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera, controls, pick };
+  if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera, controls, pick,
+    get inFlight() { return Boolean(flight); } };
 
   let lastFrame = 0;
   renderer.setAnimationLoop(() => {
@@ -583,7 +641,6 @@ export async function createKioskScene({
     } else if (controls.enabled) {
       controls.update();
     }
-    if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * 0.15;
     if (billboardMotion) {
       let complete = true;
       billboardSlats.forEach((slat, index) => {
@@ -610,7 +667,9 @@ export async function createKioskScene({
       if (t === 1) cancelDisc();
     }
     const now = performance.now() / 1000;
-    const dt = Math.min(now - (lastFrame || now), 0.1);
+    const elapsed = now - (lastFrame || now);
+    const dt = Math.min(elapsed, 0.1);
+    if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * (1 - Math.exp(-elapsed * 10));
     lastFrame = now;
     sky.position.copy(camera.position);
     snow.update(dt, now);
@@ -621,6 +680,7 @@ export async function createKioskScene({
   return {
     focus,
     spinRack,
+    lookInside,
     setPage,
     setWallText,
     setBillboardAd,

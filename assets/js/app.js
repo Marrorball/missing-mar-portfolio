@@ -115,7 +115,7 @@ function rackTitle(face) {
 }
 
 function chromeFor(name) {
-  if (name === 'inside') return renderBackButton();
+  if (name === 'inside') return renderBackButton() + '<div class="kiosk-inside-hint">Тяни мышью или пальцем — осмотрись вокруг. Можно и стрелками.</div>';
   if (!LOCKED_PRESETS.includes(name)) return '';
   if (name === 'rack') return renderBackButton() + renderRackControls(rackTitle(state.rackFace));
   if (name === 'tv') return renderBackButton() + renderRemote();
@@ -367,6 +367,10 @@ document.addEventListener('keydown', event => {
   }
   const horizontal = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0;
   const vertical = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
+  if (state.preset === 'inside' && (horizontal || vertical)) {
+    event.preventDefault();
+    state.kiosk?.lookInside(horizontal * 60, -vertical * 60);
+  }
   if (state.preset === 'rack' && horizontal) state.kiosk?.spinRack(horizontal);
   if (state.preset === 'tv' && horizontal) changeChannel(horizontal);
   if (['tv', 'billboard', 'terminal', 'flyer'].includes(state.preset) && vertical) {

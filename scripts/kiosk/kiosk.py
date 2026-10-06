@@ -80,7 +80,7 @@ def _sign(M):
     for x in (-(W + 0.2) / 2, (W + 0.2) / 2):
         trim.box((0.04, 0.04, 0.6), (x, y, TOP + 0.38), M['frame'])
     trim.finish()
-    text('kiosk_sign_text', 'У МАРАТА', (0.0, -HD - 0.16, TOP + 0.38), 0.34, M['ink'])
+    text('kiosk_sign_text', 'ДИЗАЙН У МАРА', (0.0, -HD - 0.16, TOP + 0.38), 0.255, M['ink'])
     text('glass_tag', 'missing mar', (1.05, -HD - 0.012, GLASS_LOW + 0.12), 0.06, M['paper'], bold=False)
 
 
@@ -160,7 +160,7 @@ def _roof_and_lamp(M):
     rng = random.Random(7)
     for _ in range(14):
         snow.blob((rng.uniform(0.5, 1.2), rng.uniform(0.5, 1.0), rng.uniform(0.08, 0.16)),
-                  (rng.uniform(-1.2, 1.2), rng.uniform(-0.75, 1.0), TOP + 0.1), M['snow'])
+                  (rng.uniform(-1.2, 1.2), rng.uniform(-0.75, 1.0), TOP + 0.1), M['snow'], 16, 10, True)
     snow.finish()
 
     lamp = Merge('lamp_outside')

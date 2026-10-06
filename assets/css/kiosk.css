@@ -275,7 +275,23 @@ body.is-pointing .kiosk-stage canvas {
   outline-offset: 2px;
 }
 
+.kiosk-inside-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 84px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 8px 12px;
+  background: rgba(14, 18, 28, .8);
+  color: #f3ecdf;
+  font: 12px/1.5 var(--mono);
+  text-align: center;
+  transform: translateX(-50%);
+}
+.kiosk-chrome .kiosk-inside-hint { pointer-events: none; }
+
 @media (max-width: 640px) {
+  .kiosk-inside-hint { bottom: calc(124px + env(safe-area-inset-bottom)); }
   .rack-controls { bottom: calc(116px + env(safe-area-inset-bottom)); }
   .contact-card, .kiosk-note { bottom: calc(122px + env(safe-area-inset-bottom)); }
   .kiosk-help { bottom: calc(12px + env(safe-area-inset-bottom)); }

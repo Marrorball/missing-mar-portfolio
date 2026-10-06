@@ -1,7 +1,7 @@
-export const PRESETS = ['home', 'showcase', 'inside', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
+export const PRESETS = ['home', 'showcase', 'inside', 'cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
 
 // Close-ups hold the camera still: you read or spin something, you don't orbit.
-export const LOCKED_PRESETS = ['rack', 'tv', 'billboard', 'terminal', 'flyer'];
+export const LOCKED_PRESETS = ['cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
 
 // Close-ups that show a page, and the Blender anchor the page sits on.
 export const SCREENS = {
@@ -16,16 +16,16 @@ export const SCREENS = {
 export const SCREEN_FILL = 0.74;
 
 export const HOTSPOTS = {
-  hs_showcase: { label: 'Хиты', action: { type: 'focus', preset: 'showcase' } },
+  hs_showcase: { label: 'Витрина', action: { type: 'focus', preset: 'showcase' } },
   hs_flyer: { label: 'Контакты', action: { type: 'route', hash: '#contact' } },
   hs_billboard: { label: 'Обо мне', action: { type: 'route', hash: '#about' } },
   hs_pricelist: { label: 'Прайс', action: { type: 'route', hash: '#price' } },
   hs_terminal: { label: 'Терминал', action: { type: 'focus', preset: 'terminal' } },
   hs_backdoor: { label: 'Заглянуть внутрь', action: { type: 'focus', preset: 'inside' } },
-  hs_rack: { label: 'Все диски', action: { type: 'focus', preset: 'rack' } },
+  hs_rack: { label: 'Все проекты', action: { type: 'focus', preset: 'rack' } },
   hs_tv: { label: 'Телевизор', action: { type: 'route', hash: '#catalog' } },
   hs_radio: { label: 'Радио', action: { type: 'note', text: 'Радио пока молчит.' } },
-  hs_cat: { label: 'Рыжий спит', action: { type: 'note', text: 'Рыжий греется у обогревателя. Тс-с, пусть спит.' } },
+  hs_cat: { label: 'Рыжий спит', action: { type: 'focus', preset: 'cat' } },
   hs_sign_away: {
     label: 'Отошёл',
     action: { type: 'note', text: 'Марат отошёл: ищет команду. Контакты — на терминале справа.' }
@@ -43,9 +43,8 @@ export const ROUTE_PRESETS = {
 };
 
 const OUTSIDE = { fov: 40, minDistance: 1.2, maxDistance: 17, minPolarAngle: 0.45, maxPolarAngle: 1.52 };
-// Inside, the camera stands in the back corner: a wide lens and a short leash
-// so turning around never pushes it through a wall.
-const INSIDE = { fov: 72, minDistance: 1.65, maxDistance: 1.95, minPolarAngle: 1.05, maxPolarAngle: 1.85, azimuthSpan: 0.32 };
+// Look around from one eye point instead of orbiting through the walls.
+const INSIDE = { fov: 72, lookAround: true, minDistance: 1.65, maxDistance: 1.95 };
 const CLOSE_UP = { fov: 40, locked: true };
 
 const DESIGN_ASPECT = 1.6;
@@ -111,6 +110,7 @@ export function pickHotspot(names = []) {
 // In a close-up only the object you came to look at answers the mouse; the
 // overview and the inside answer everything.
 const CLOSE_UP_TARGETS = {
+  cat: /^hs_cat$/,
   rack: /^(disc_\d+|hs_rack)$/,
   tv: /^hs_tv$/,
   billboard: /^hs_billboard$/,

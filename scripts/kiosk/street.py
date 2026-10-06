@@ -5,9 +5,11 @@ blocks far away, and the payment terminal hotspot."""
 import math
 import random
 
+import bpy
+
 from dims import BILLBOARD, BILLBOARD_FACE, HD, HW, LAMP_POST, TERMINAL, TOP
 from geometry import catenary, tree_segments
-from lib import Merge, box, empty, screen, text
+from lib import Merge, box, empty, screen, text, material, link
 
 TREES = ((-6.0, 6.0, 8.0), (5.5, 7.0, 7.0), (-9.0, 2.0, 9.0), (8.0, 1.0, 6.5),
          (-3.0, 11.0, 8.5), (10.0, 9.0, 7.5), (-12.0, 8.0, 8.0))
@@ -18,22 +20,33 @@ POWER_POLES = ((-14.0, 10.0), (0.0, 12.0), (14.0, 10.0))
 
 def _snow(M, rng):
     box('ground_snow', (140.0, 140.0, 0.02), (0.0, 0.0, -0.01), M['snow'])
-    trodden = Merge('snow_trodden')
-    for k in range(9):
-        t = k / 8
-        trodden.blob((1.3 - t * 0.4, 0.9, 0.01), (0.2 + t * 2.0, -1.6 - t * 5.0, 0.002), M['snow_trodden'])
-    trodden.finish()
+    # One continuous, irregular compressed path, rather than overlapping
+    # circles that looked like a row of stepping stones in the warm light.
+    vertices, faces = [], []
+    for k in range(33):
+        t = k / 32
+        cx, cy = 0.15 + 1.6 * t, -1.50 - 4.6 * t
+        width = (0.92 - t * 0.20) * (0.96 + 0.045 * math.sin(k * 0.79))
+        if t > 0.92:
+            width *= max(0.04, (1 - t) / 0.08)
+        vertices.extend(((cx - width / 2, cy, 0.003), (cx + width / 2, cy, 0.003)))
+        if k:
+            faces.append((2 * k - 2, 2 * k - 1, 2 * k + 1, 2 * k))
+    mesh = bpy.data.meshes.new('snow_trodden')
+    mesh.from_pydata(vertices, [], faces)
+    mesh.materials.append(M['snow_trodden'])
+    link(bpy.data.objects.new('snow_trodden', mesh))
 
     drifts = Merge('snow_drifts')
     edge = 0.2
     for k in range(10):
         x = -HW + k * (2 * HW / 9)
         if not 0.1 < x < 1.5:
-            drifts.blob((0.7, 0.45, 0.35), (x, HD + edge, 0.0), M['snow'])
-        drifts.blob((0.6, 0.4, 0.22), (x, -HD - edge - 0.1, 0.0), M['snow'])
+            drifts.blob((0.7, 0.45, 0.35), (x, HD + edge, 0.0), M['snow'], 16, 10, True)
+        drifts.blob((0.6, 0.4, 0.22), (x, -HD - edge - 0.1, 0.0), M['snow'], 16, 10, True)
     for y in (-0.6, 0.0, 0.6):
-        drifts.blob((0.45, 0.7, 0.35), (-HW - edge, y, 0.0), M['snow'])
-        drifts.blob((0.45, 0.7, 0.35), (HW + edge, y, 0.0), M['snow'])
+        drifts.blob((0.45, 0.7, 0.35), (-HW - edge, y, 0.0), M['snow'], 16, 10, True)
+        drifts.blob((0.45, 0.7, 0.35), (HW + edge, y, 0.0), M['snow'], 16, 10, True)
     placed = 0
     while placed < 14:
         angle, radius = rng.uniform(0.0, 2 * math.pi), rng.uniform(4.0, 14.0)
@@ -42,9 +55,17 @@ def _snow(M, rng):
             continue  # keep the approach and the camera clear
         if abs(x - BILLBOARD[0]) < 3.2 and abs(y - BILLBOARD[1]) < 2.0:
             continue  # keep the billboard legs clear
-        drifts.blob((rng.uniform(2.0, 4.0), rng.uniform(1.5, 3.0), rng.uniform(0.4, 0.9)), (x, y, 0.0), M['snow'])
+        drifts.blob((rng.uniform(2.0, 4.0), rng.uniform(1.5, 3.0), rng.uniform(0.4, 0.9)), (x, y, 0.0), M['snow'], 16, 10, True)
         placed += 1
     drifts.finish()
+    footprints = Merge('snow_footprints')
+    pressed = material('snow_pressed', (0.61, 0.64, 0.69), roughness=0.98)
+    for step in range(16):
+        t = step / 15
+        px, py = 0.15 + 1.6 * t + (-0.11 if step % 2 else 0.11), -1.6 - 4.2 * t
+        footprints.blob((0.12, 0.24, 0.005), (px, py, 0.008), pressed, 12, 8, True)
+        footprints.blob((0.09, 0.085, 0.005), (px, py + 0.12, 0.008), pressed, 10, 6, True)
+    footprints.finish()
 
 
 def _lamp_and_wires(M):
@@ -138,11 +159,14 @@ def _blocks(M, rng):
 
 def _terminal(M):
     tx, ty = TERMINAL
-    terminal = box('hs_terminal', (0.62, 0.45, 1.75), (tx, ty, 0.875), M['device'])
+    terminal = box('hs_terminal', (0.62, 0.45, 1.75), (tx, ty, 0.875), M['terminal_orange'])
+    bevel = terminal.modifiers.new('rounded battered edges', 'BEVEL')
+    bevel.width = 0.025
+    bevel.segments = 2
     box('terminal_screen', (0.45, 0.02, 0.32), (0.0, -0.235, 0.35), M['screen'], parent=terminal)
     parts = Merge('terminal_details')
     front = -0.235
-    parts.box((0.66, 0.5, 0.22), (0.0, 0.0, 0.985), M['sign'])
+    parts.box((0.66, 0.5, 0.22), (0.0, 0.0, 0.985), M['terminal_orange'])
     for row in range(4):
         for col in range(3):
             parts.box((0.05, 0.015, 0.035), (-0.07 + col * 0.07, front, 0.08 - row * 0.05), M['plastic_light'])
@@ -150,8 +174,50 @@ def _terminal(M):
     parts.box((0.12, 0.02, 0.02), (0.0, front, -0.32), M['ink'])
     parts.box((0.7, 0.5, 0.06), (0.0, 0.0, -0.845), M['frame'])
     parts.finish(parent=terminal)
+    exposed = material('terminal_exposed', (0.31, 0.32, 0.30), metallic=0.55, roughness=0.85)
+    wear = Merge('terminal_wear')
+    for cx, z, w in [(-0.27, -0.63, 0.05), (0.26, -0.53, 0.055), (-0.275, 0.04, 0.045),
+                     (0.25, 0.60, 0.035), (-0.18, -0.20, 0.025)]:
+        wear.box((w, 0.006, 0.025), (cx, -0.229, z), exposed, rot=(0, 0.12, 0.1))
+        wear.bar((cx - w / 2, -0.234, z - 0.013), (cx + w / 2, -0.234, z + 0.015), 0.004, M['ink'])
+    for z in (-0.62, 0.64):
+        for cx in (-0.255, 0.255):
+            wear.cylinder(0.009, 0.006, (cx, -0.232, z), exposed, segments=10, rot=(math.pi / 2, 0, 0))
+    wear.finish(parent=terminal)
     text('terminal_label', 'ОПЛАТА', (0.0, -0.255, 0.985), 0.09, M['ink'], parent=terminal)
     screen('screen_terminal', (tx, ty - 0.247, 1.225), 0.45, 0.32)
+    empty('light_terminal', (tx, ty - 0.60, 2.06))
+    lamp = Merge('terminal_lamp')
+    lamp.bar((tx, ty - 0.15, 1.98), (tx, ty - 0.57, 2.06), 0.012, M['frame'])
+    lamp.box((0.12, 0.06, 0.025), (tx, ty - 0.57, 2.045), M['bulb'])
+    lamp.finish()
+
+
+def _cola(M):
+    red = material('cola_red', (0.68, 0.016, 0.025), emission=0.10, roughness=0.35, metallic=0.25)
+    print_ink = material('cola_print', (0.98, 0.96, 0.91), emission=0.12)
+    silver = material('cola_silver', (0.62, 0.66, 0.69), roughness=0.25, metallic=0.8)
+    can = empty('cola_can', (2.025, -2.035, 0.67), rot_z=0.24)
+    body = Merge('cola_body')
+    body.cylinder(0.065, 0.205, (0, 0, 0.115), red, segments=40)
+    for z in (0.018, 0.211):
+        body.cylinder(0.061, 0.018, (0, 0, z), silver, segments=40)
+        body.cylinder(0.0655, 0.005, (0, 0, z + 0.006), silver, segments=40)
+    body.finish(parent=can)
+    tab = Merge('cola_pull_tab')
+    tab.blob((0.025, 0.045, 0.005), (0, 0, 0.225), silver, 20, 10, True)
+    tab.blob((0.010, 0.019, 0.006), (0, 0.004, 0.227), M['ink'], 16, 8, True)
+    tab.finish(parent=can)
+    label = text('cola_label', 'Coca-Cola', (0, -0.067, 0.12), 0.025, print_ink, parent=can,
+                 font_path='/System/Library/Fonts/Supplemental/Brush Script.ttf', curve_resolution=3, extrusion=0.0002)
+    # Wrap the lettering to the cylindrical surface instead of floating on a card.
+    for vertex in label.data.vertices:
+        dx = vertex.co.x
+        vertex.co.y += 0.065 - math.sqrt(max(0.0001, 0.065 ** 2 - dx ** 2))
+    wave = Merge('cola_wave')
+    wave.polyline([(-0.045 + i * 0.0075, -math.sqrt(0.065 ** 2 - (-0.045 + i * 0.0075) ** 2) - 0.001,
+                    0.06 + 0.009 * math.sin(i * 0.5)) for i in range(13)], 0.003, print_ink)
+    wave.finish(parent=can)
 
 
 def build(M):
@@ -163,3 +229,4 @@ def build(M):
     _billboard(M)
     _blocks(M, rng)
     _terminal(M)
+    _cola(M)

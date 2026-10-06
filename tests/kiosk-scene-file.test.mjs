@@ -82,3 +82,19 @@ test('the curled cat has a bed inside and does not obstruct the back entrance', 
   assert.ok(cat.translation[0] < -0.5 && Math.abs(cat.translation[2]) < 1);
   assert.ok(cat.translation[1] > 0.12 && cat.translation[1] < 0.5);
 });
+
+test('the revised cat has a smooth continuous tail, sleeping face and tucked paws', () => {
+  const all = names();
+  for (const name of ['cat_body', 'cat_head', 'cat_tail', 'cat_eye_left', 'cat_eye_right', 'cat_paw_left', 'cat_paw_right']) assert.ok(all.has(name), name);
+});
+
+test('a cola can sits by the bin and the terminal has orange paint and wear', () => {
+  const json = gltf();
+  assert.ok(names().has('cola_can'));
+  assert.ok(names().has('cola_label'));
+  assert.ok(names().has('terminal_wear'));
+  const paint = json.materials.find(mat => mat.name === 'terminal_orange');
+  assert.ok(paint, 'orange paint');
+  const [r, g, b] = paint.pbrMetallicRoughness.baseColorFactor;
+  assert.ok(r > g * 2 && g > b * 2);
+});
