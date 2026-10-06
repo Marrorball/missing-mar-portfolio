@@ -1146,7 +1146,7 @@
   border-top: .5cqw dashed #555;
 }
 
-.flyer-tabs button {
+.flyer-tabs a {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -1159,12 +1159,12 @@
   writing-mode: vertical-rl;
 }
 
-.flyer-tabs button:first-child { border-left: 0; }
+.flyer-tabs a:first-child { border-left: 0; }
 
-.flyer-tabs button span { display: block; }
+.flyer-tabs a span { display: block; }
 
-.flyer-tabs button:hover,
-.flyer-tabs button:focus-visible {
+.flyer-tabs a:hover,
+.flyer-tabs a:focus-visible {
   background: #e3dccb;
   outline: none;
 }

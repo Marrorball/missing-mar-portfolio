@@ -20,7 +20,7 @@ test('the help bar sends projects to the rack, about to the billboard, contacts 
   assert.match(html, /data-action="kiosk-inside">Внутрь</);
 });
 
-test('the contact card opens links in one click and offers copying', () => {
+test('the contact card opens every contact directly without copy buttons', () => {
   const html = renderContactCard([
     { kind: 'telegram', label: 'Telegram', value: '@mar<b>', href: 'https://t.me/mar' },
     { kind: 'email', label: 'Почта', value: 'a@b.cd', href: 'mailto:a@b.cd' }
@@ -29,7 +29,7 @@ test('the contact card opens links in one click and offers copying', () => {
   assert.match(html, /href="https:\/\/t\.me\/mar" target="_blank" rel="noreferrer"/);
   assert.match(html, /href="mailto:a@b\.cd">/);
   assert.match(html, /@mar&lt;b&gt;/);
-  assert.match(html, /data-action="copy-contact" data-value="a@b\.cd"/);
+  assert.doesNotMatch(html, /<button|copy-contact|Скопировать/);
 });
 
 test('close-ups get a way back and the rack gets its spin controls', () => {

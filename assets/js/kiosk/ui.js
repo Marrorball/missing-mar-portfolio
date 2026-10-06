@@ -17,7 +17,6 @@ export function renderContactCard(links = []) {
     <ul>
       ${links.map(link => `<li>
         <a href="${escapeHtml(link.href)}"${link.kind === 'email' ? '' : ' target="_blank" rel="noreferrer"'}><small>${escapeHtml(link.label)}</small>${escapeHtml(link.value)}</a>
-        <button type="button" data-action="copy-contact" data-value="${escapeHtml(link.value)}">Скопировать</button>
       </li>`).join('')}
     </ul>
   </div>`;

@@ -106,7 +106,7 @@ test('terminal and flyer both carry clickable contacts', () => {
   const terminal = renderTerminalScreen(links);
   assert.match(terminal, /href="https:\/\/t\.me\/marrorball" target="_blank" rel="noreferrer"/);
   assert.match(terminal, /href="mailto:a@b\.cd">/);
-  assert.match(terminal, /class="terminal-bar"><span>Оплата услуг/);
+  assert.match(terminal, /class="terminal-bar"><span>Пополнение баланса/);
   assert.match(terminal, /data-action="kiosk-back"/);
 
   const flyer = renderFlyer(links, { name: 'Марат', role: 'Designer', location: 'Москва', profileImage: '/p.jpg' });
@@ -114,8 +114,10 @@ test('terminal and flyer both carry clickable contacts', () => {
   assert.match(flyer, /class="flyer-tape flyer-tape-left"/);
   assert.match(flyer, /Нашедшего просьба написать/);
   assert.match(flyer, /href="https:\/\/t\.me\/marrorball"/);
-  assert.match(flyer, /data-action="copy-contact" data-value="@marrorball"/);
-  assert.match(flyer, /data-value="a@b\.cd" aria-label="Скопировать a@b\.cd"><span>a@b\.cd<\/span>/);
+  const slips = flyer.match(/<div class="flyer-tabs"[^>]*>([\s\S]*?)<\/div>/)[1];
+  assert.match(slips, /href="https:\/\/t\.me\/marrorball" target="_blank" rel="noreferrer"/);
+  assert.match(slips, /href="mailto:a@b\.cd" aria-label="Открыть Почта: a@b\.cd"><span>a@b\.cd<\/span>/);
+  assert.doesNotMatch(slips, /<button|copy-contact|Скопировать/);
   const long = renderFlyer([{ kind: 'email', label: 'Почта', value: 'marrorball@gmail.com', href: 'mailto:marrorball@gmail.com' }]);
   assert.match(long, /<span>marrorball<\/span><span>@gmail\.com<\/span>/, 'long contacts wrap on the slip');
 });

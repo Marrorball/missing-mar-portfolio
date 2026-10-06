@@ -289,15 +289,6 @@ function toggleContactCard(force) {
   if (open) slot.querySelector('a')?.focus();
 }
 
-async function copyContact(value) {
-  try {
-    await navigator.clipboard.writeText(value);
-    showNote(`Скопировано: ${value}`);
-  } catch {
-    showNote(value);
-  }
-}
-
 function changeChannel(step) {
   const { projects } = state.bundle;
   if (!projects.length) return;
@@ -513,7 +504,6 @@ document.addEventListener('click', event => {
   if (action === 'tv-menu') window.location.hash = '#catalog';
   if (action === 'tv-chapter') showChapter(element.dataset.chapter);
   if (action === 'contacts-card') toggleContactCard();
-  if (action === 'copy-contact') copyContact(element.dataset.value);
 });
 
 document.addEventListener('keydown', event => {

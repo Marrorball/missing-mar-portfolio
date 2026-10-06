@@ -140,8 +140,19 @@ def _window(M):
     box('card_knock', (0.36, 0.005, 0.09), (0.0, -HD - 0.04, WINDOW_TOP + 0.09), M['paper'])
     text('card_knock_text', 'СТУЧИТЕ', (0.0, -HD - 0.044, WINDOW_TOP + 0.09), 0.05, M['ink'])
 
-    away = box('hs_sign_away', (0.3, 0.01, 0.18), (0.0, -HD + 0.06, 1.2), M['away'])
-    text('away_text', 'ОТОШЁЛ\n5 МИН', (0.0, -0.007, 0.0), 0.045, M['paper'], parent=away)
+    # A paper note on the serving pane, in front of the glass and clear of
+    # the grille. Its width fits inside the opening between the two rails.
+    paper = material('away_paper', (0.96, 0.96, 0.93), roughness=0.95)
+    away = box('hs_sign_away', (0.49, 0.004, 0.22), (0.0, -HD - 0.065, 1.19), paper)
+    text('away_text', 'ОТОШЁЛ', (0.0, -0.005, 0.046), 0.10, M['ink'], parent=away,
+         extrusion=0.0002)
+    text('away_minutes', 'НА 5 МИНУТ', (0.0, -0.005, -0.053), 0.066, M['ink'], parent=away,
+         extrusion=0.0002)
+    tape = Merge('away_tape')
+    tape_mat = material('away_tape', (0.82, 0.79, 0.64), roughness=0.9)
+    for x, angle in ((-.16, -.09), (.16, .07)):
+        tape.box((.065, .002, .048), (x, -.0055, .106), tape_mat, rot=(0, angle, 0))
+    tape.finish(parent=away)
 
 
 NOTICE_SIZES = ((0.15, 0.21), (0.21, 0.15), (0.17, 0.24), (0.14, 0.14), (0.19, 0.26), (0.24, 0.17))

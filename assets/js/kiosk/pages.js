@@ -171,7 +171,7 @@ export function renderPageBoard(page = {}) {
 
 export function renderTerminalScreen(links = []) {
   return `<article class="terminal-page">
-    <header class="terminal-bar"><span>Оплата услуг</span><span>Шаг 1 из 1</span></header>
+    <header class="terminal-bar"><span>Пополнение баланса</span><span>Шаг 1 из 1</span></header>
     <h1>Связаться с Маратом</h1>
     <p class="terminal-lead">Выберите способ связи</p>
     <div class="terminal-buttons">
@@ -200,8 +200,8 @@ export function renderFlyer(links = [], owner = {}) {
     <ul class="flyer-contacts">
       ${links.map(link => `<li><a href="${escapeHtml(link.href)}"${externalAttrs(link)}>${escapeHtml(link.label)}: ${escapeHtml(link.value)}</a></li>`).join('')}
     </ul>
-    <div class="flyer-tabs" aria-label="Оторвать контакт">
-      ${links.map(link => `<button type="button" data-action="copy-contact" data-value="${escapeHtml(link.value)}" aria-label="Скопировать ${escapeHtml(link.value)}">${tearOffLines(link.value).map(line => `<span>${escapeHtml(line)}</span>`).join('')}</button>`).join('')}
+    <div class="flyer-tabs" aria-label="Открыть контакт">
+      ${links.map(link => `<a href="${escapeHtml(link.href)}"${externalAttrs(link)} aria-label="Открыть ${escapeHtml(link.label)}: ${escapeHtml(link.value)}">${tearOffLines(link.value).map(line => `<span>${escapeHtml(line)}</span>`).join('')}</a>`).join('')}
     </div>
   </article>`;
 }

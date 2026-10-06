@@ -229,7 +229,7 @@ def _terminal(M):
         for cx in (-0.255, 0.255):
             wear.cylinder(0.009, 0.006, (cx, -0.232, z), exposed, segments=10, rot=(math.pi / 2, 0, 0))
     wear.finish(parent=terminal)
-    text('terminal_label', 'ОПЛАТА', (0.0, -0.255, 0.985), 0.09, M['ink'], parent=terminal)
+    text('terminal_label', 'ПОПОЛНЕНИЕ\nБАЛАНСА', (0.0, -0.255, 0.985), 0.068, M['ink'], parent=terminal)
     screen('screen_terminal', (tx, ty - 0.247, 1.225), 0.45, 0.32)
     empty('light_terminal', (tx, ty - 0.60, 2.06))
     lamp = Merge('terminal_lamp')

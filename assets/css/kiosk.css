@@ -283,10 +283,6 @@ body.is-pointing .kiosk-stage canvas {
 }
 
 .contact-card li {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 6px;
   border-bottom: 1px dashed rgba(29, 26, 22, .3);
 }
 
@@ -295,9 +291,11 @@ body.is-pointing .kiosk-stage canvas {
 }
 
 .contact-card a {
-  flex: 1;
   display: grid;
+  min-height: 44px;
+  padding: 10px 6px;
   color: inherit;
+  overflow-wrap: anywhere;
 }
 
 .contact-card small {
@@ -308,20 +306,10 @@ body.is-pointing .kiosk-stage canvas {
   opacity: .7;
 }
 
-.contact-card button {
-  min-height: 36px;
-  padding: 6px 10px;
-  color: var(--tag-ink);
-  background: transparent;
-  border: 1px solid rgba(29, 26, 22, .4);
-  font: var(--tag-font);
-  font-size: 13px;
-  text-transform: uppercase;
-}
-
+.contact-card a:hover,
 .contact-card a:focus-visible,
-.contact-card button:hover,
-.contact-card button:focus-visible {
+.contact-card a:active {
+  background: rgba(29, 26, 22, .05);
   outline: 2px solid #1c1408;
   outline-offset: 2px;
 }
