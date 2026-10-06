@@ -50,7 +50,7 @@ def make_materials():
         'bark': material('bark', (0.12, 0.11, 0.10)),
         'building': material('building', (0.30, 0.32, 0.36)),
         'window_dark': material('window_dark', (0.06, 0.07, 0.10)),
-        'window_lit': material('window_lit', (1.0, 0.70, 0.40), emission=3.0),
+        'window_lit': material('window_lit', (1.0, 0.70, 0.40), emission=1.6),
         'goods': material('goods', (0.85, 0.72, 0.45)),
     }
     m['goods_palette'] = [material(name, color) for name, color in GOODS_COLORS.items()]

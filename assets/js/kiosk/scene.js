@@ -52,8 +52,10 @@ export async function createKioskScene({
   renderer.setSize(container.clientWidth, container.clientHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
-  const quality = QUALITY[qualityTier({ width: window.innerWidth, cores: navigator.hardwareConcurrency || 8 })];
+  renderer.toneMappingExposure = 0.95;
+  // `?quality=low` forces the light tier (debugging, slow machines).
+  const forced = new URLSearchParams(window.location.search).get('quality');
+  const quality = QUALITY[forced in QUALITY ? forced : qualityTier({ width: window.innerWidth, cores: navigator.hardwareConcurrency || 8 })];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   container.appendChild(renderer.domElement);
   const canvas = renderer.domElement;
@@ -397,6 +399,9 @@ export async function createKioskScene({
   };
   const observer = new ResizeObserver(resize);
   observer.observe(container);
+
+  // Dev server only: handles for profiling from the console.
+  if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera };
 
   let lastFrame = 0;
   renderer.setAnimationLoop(() => {

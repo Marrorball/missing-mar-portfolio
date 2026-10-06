@@ -84,12 +84,14 @@ export function addLights(scene, root, quality) {
   moon.position.set(-8, 14, -6);
   scene.add(moon);
 
-  const inside = ['bulb_0', 'bulb_1', 'bulb_2'].map(name => point(scene, root, name, { color: WARM, intensity: 6, distance: 6 }));
-  point(scene, root, 'bulb_outside', { color: WARM, intensity: 5, distance: 5 });
-  spot(scene, root, 'light_window', 'light_window_target', { color: WARM, intensity: 40, distance: 9, angle: 0.8, shadow: quality.shadows });
-  spot(scene, root, 'light_street', 'light_street_target', { color: SODIUM, intensity: 90, distance: 12, angle: 0.95 });
+  const inside = ['bulb_0', 'bulb_1', 'bulb_2'].map(name => point(scene, root, name, { color: WARM, intensity: 2.2, distance: 5 }));
+  point(scene, root, 'bulb_outside', { color: WARM, intensity: 1.6, distance: 4 });
+  // the showcase light over the shelves, so the goods face the street lit
+  point(scene, root, 'light_window', { color: WARM, intensity: 2.4, distance: 2.6, drop: 0.02 });
+  spot(scene, root, 'light_window', 'light_window_target', { color: WARM, intensity: 32, distance: 9, angle: 0.9, shadow: quality.shadows });
+  spot(scene, root, 'light_street', 'light_street_target', { color: SODIUM, intensity: 22, distance: 11, angle: 0.9 });
   for (let index = 0; index < 3; index += 1) {
-    spot(scene, root, `light_billboard_${index}`, 'light_billboard_target', { color: 0xdfe6ff, intensity: 25, distance: 7, angle: 0.7 });
+    spot(scene, root, `light_billboard_${index}`, 'light_billboard_target', { color: 0xdfe6ff, intensity: 3.5, distance: 6, angle: 0.7 });
   }
 
   // The flickering bulb gets its own material so the others stay steady.
@@ -108,7 +110,7 @@ export function flicker(state, t) {
 // Static scene: the shadow map is rendered once, after everything is placed.
 export function setupShadows(renderer, root, quality) {
   renderer.shadowMap.enabled = quality.shadows;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.shadowMap.autoUpdate = false;
   const centre = new THREE.Vector3();
   root.traverse(object => {
@@ -244,7 +246,7 @@ export function addSnow(scene, count, { moving = true } = {}) {
 export function createComposer(renderer, scene, camera, width, height, quality) {
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  if (quality.bloom) composer.addPass(new UnrealBloomPass(new THREE.Vector2(width, height), 0.55, 0.6, 0.85));
+  if (quality.bloom) composer.addPass(new UnrealBloomPass(new THREE.Vector2(width, height), 0.32, 0.45, 1.1));
   composer.addPass(new OutputPass());
   return composer;
 }
