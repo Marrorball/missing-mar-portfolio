@@ -1,14 +1,26 @@
-export const PRESETS = ['home', 'showcase', 'inside', 'rack', 'tv', 'billboard', 'terminal'];
+export const PRESETS = ['home', 'showcase', 'inside', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
 
 // Close-ups hold the camera still: you read or spin something, you don't orbit.
-export const LOCKED_PRESETS = ['rack', 'tv', 'billboard', 'terminal'];
+export const LOCKED_PRESETS = ['rack', 'tv', 'billboard', 'terminal', 'flyer'];
+
+// Close-ups that show a page, and the Blender anchor the page sits on.
+export const SCREENS = {
+  tv: 'screen_tv',
+  billboard: 'screen_billboard',
+  terminal: 'screen_terminal',
+  flyer: 'screen_flyer'
+};
+
+// How much of the viewport a screen may take: room is left for the way back
+// and the TV remote.
+export const SCREEN_FILL = 0.74;
 
 export const HOTSPOTS = {
   hs_showcase: { label: 'Хиты', action: { type: 'focus', preset: 'showcase' } },
-  hs_flyer: { label: 'Обо мне', action: { type: 'route', hash: '#about' } },
+  hs_flyer: { label: 'Контакты', action: { type: 'route', hash: '#contact' } },
   hs_billboard: { label: 'Обо мне', action: { type: 'route', hash: '#about' } },
   hs_pricelist: { label: 'Прайс', action: { type: 'route', hash: '#price' } },
-  hs_terminal: { label: 'Контакты', action: { type: 'route', hash: '#contact' } },
+  hs_terminal: { label: 'Терминал', action: { type: 'focus', preset: 'terminal' } },
   hs_backdoor: { label: 'Заглянуть внутрь', action: { type: 'focus', preset: 'inside' } },
   hs_rack: { label: 'Все диски', action: { type: 'focus', preset: 'rack' } },
   hs_tv: { label: 'Телевизор', action: { type: 'route', hash: '#catalog' } },
@@ -26,7 +38,7 @@ export const ROUTE_PRESETS = {
   catalog: 'tv',
   about: 'billboard',
   price: 'billboard',
-  contact: 'terminal'
+  contact: 'flyer'
 };
 
 const OUTSIDE = { fov: 40, minDistance: 1.2, maxDistance: 9, minPolarAngle: 0.45, maxPolarAngle: 1.52 };
@@ -44,6 +56,14 @@ export function fitFov(fov, aspect) {
   if (aspect >= DESIGN_ASPECT) return fov;
   const half = Math.atan(Math.tan((fov * Math.PI) / 360) * (DESIGN_ASPECT / aspect));
   return Math.min((half * 360) / Math.PI, MAX_FOV);
+}
+
+// Distance at which a width×height screen fills `fill` of the view.
+export function fitDistance(width, height, vfovDeg, aspect, fill = 1) {
+  const tangent = Math.tan((vfovDeg * Math.PI) / 360);
+  const vertical = height / (2 * tangent);
+  const horizontal = width / (2 * tangent * aspect);
+  return Math.max(vertical, horizontal) / fill;
 }
 
 export function presetLimits(preset) {
@@ -85,7 +105,8 @@ const CLOSE_UP_TARGETS = {
   rack: /^(disc_\d+|hs_rack)$/,
   tv: /^hs_tv$/,
   billboard: /^hs_billboard$/,
-  terminal: /^hs_terminal$/
+  terminal: /^hs_terminal$/,
+  flyer: /^hs_flyer$/
 };
 
 export function allowedIn(preset, name) {

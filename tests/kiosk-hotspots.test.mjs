@@ -2,9 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   HOTSPOTS,
+  LOCKED_PRESETS,
   PRESETS,
   ROUTE_PRESETS,
+  SCREENS,
   allowedIn,
+  fitDistance,
   fitFov,
   hotspotForNode,
   isPickable,
@@ -98,4 +101,26 @@ test('a close-up only answers to its own object', () => {
   assert.equal(allowedIn('terminal', 'hs_flyer'), false);
   assert.equal(allowedIn('home', 'hs_showcase'), true);
   assert.equal(allowedIn('inside', 'disc_0'), true);
+});
+
+test('every screen is a locked close-up with a camera preset', () => {
+  for (const preset of Object.keys(SCREENS)) {
+    assert.ok(PRESETS.includes(preset), preset);
+    assert.ok(LOCKED_PRESETS.includes(preset), preset);
+  }
+  assert.equal(SCREENS.flyer, 'screen_flyer');
+});
+
+test('contacts live on the flyer, the terminal is a place to walk to', () => {
+  assert.equal(ROUTE_PRESETS.contact, 'flyer');
+  assert.equal(hotspotForNode('hs_flyer').action.hash, '#contact');
+  assert.deepEqual(hotspotForNode('hs_terminal').action, { type: 'focus', preset: 'terminal' });
+  assert.equal(allowedIn('flyer', 'hs_flyer'), true);
+  assert.equal(allowedIn('flyer', 'hs_showcase'), false);
+});
+
+test('the camera backs off just enough for a screen to fit', () => {
+  assert.ok(Math.abs(fitDistance(0.32, 0.24, 40, 1.6) - 0.3297) < 0.001);   // height-bound
+  assert.ok(Math.abs(fitDistance(0.32, 0.24, 40, 0.5) - 0.8792) < 0.001);   // width-bound
+  assert.ok(Math.abs(fitDistance(0.32, 0.24, 40, 1.6, 0.5) - 0.6594) < 0.001);
 });
