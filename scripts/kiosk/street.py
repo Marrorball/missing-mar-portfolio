@@ -172,9 +172,67 @@ def _billboard(M):
     empty('light_billboard_target', (bx, by, centre))
 
 
+def _window_person(M, wx, face, wz, smoking):
+    """Waist-up silhouettes against the apartment light, facing the street.
+
+    The lit pane is behind the figure; the sill hides the cropped lower body.
+    At this distance the head/shoulders and bent arms carry the pose.
+    """
+    person = Merge('window_person_smoking' if smoking else 'window_person_looking')
+    clothes = material('window_person_clothes', (0.018, 0.024, 0.034))
+    skin = material('window_person_skin', (0.15, 0.11, 0.085))
+    hair = material('window_person_hair', (0.017, 0.014, 0.018))
+    y = -0.08
+    hx = 0.035 if smoking else -0.055
+    person.blob((.37, .15, .65), (-.03, y, -.20), clothes, 12, 8, True)
+    person.blob((.43, .16, .23), (-.03, y, .035), clothes, 12, 8, True)
+    person.cylinder(.052, .10, (hx, y, .17), skin, segments=10)
+    person.blob((.20, .16, .235), (hx, y-.012, .31), skin, 12, 8, True)
+    person.blob((.215, .16, .15), (hx-.018, y+.005, .375), hair, 12, 8, True)
+    # Small profile: a visible nose and a slight turn rather than a round dot.
+    direction = 1 if smoking else -1
+    person.blob((.065, .11, .055), (hx+direction*.094, y-.03, .30), skin, 8, 6, True)
+    person.bar((-.20, y, .02), (-.25, y-.025, -.30), .105, clothes)
+    person.bar((-.25, y-.025, -.30), (-.20, y-.04, -.55), .085, clothes)
+    person.blob((.10, .075, .065), (-.20, y-.04, -.55), skin, 8, 6, True)
+    if smoking:
+        person.bar((.16, y, .015), (.28, y-.02, -.16), .105, clothes)
+        person.bar((.28, y-.02, -.16), (.19, y-.06, .23), .085, clothes)
+        person.blob((.09, .07, .10), (.19, y-.065, .24), skin, 8, 6, True)
+        cigarette = material('window_cigarette', (.76, .70, .58), emission=.2)
+        ember = material('window_cigarette_ember', (1, .16, .025), emission=1.2)
+        person.bar((.19, y-.09, .27), (.30, y-.09, .27), .017, cigarette)
+        person.blob((.023, .025, .025), (.30, y-.09, .27), ember, 8, 6, True)
+        smoke = material('window_smoke', (.28, .31, .36), emission=.25)
+        person.polyline(((.31, y-.09, .30), (.34, y-.09, .36), (.32, y-.09, .42),
+                         (.34, y-.09, .48), (.40, y-.09, .53), (.42, y-.09, .61)), .015, smoke)
+    else:
+        person.bar((.15, y, .025), (.23, y-.025, -.34), .11, clothes)
+        person.bar((.23, y-.025, -.34), (.16, y-.04, -.55), .085, clothes)
+        person.blob((.10, .075, .065), (.16, y-.04, -.55), skin, 8, 6, True)
+    obj = person.finish((wx, face, wz))
+    obj['pose'] = 'smoking' if smoking else 'looking_out'
+
+    trim = Merge('window_occupied_trim_smoking' if smoking else 'window_occupied_trim_looking')
+    frame = material('apartment_window_frame', (.19, .20, .23))
+    curtain = material('apartment_curtain', (.24, .20, .17), emission=.15)
+    for side in (-1, 1):
+        trim.box((.045, .06, 1.43), (side*.60, -.115, 0), frame)
+        trim.box((.10, .012, 1.30), (side*.53, -.047, 0), curtain)
+    trim.box((1.25, .17, .07), (0, -.11, -.68), frame)
+    trim.box((1.25, .06, .045), (0, -.115, .70), frame)
+    trim.finish((wx, face, wz))
+
+
 def _blocks(M, rng):
     blocks = Merge('buildings')
-    for x, y, w, d, h in BLOCKS:
+    # Two neighbours only; colours use their own seed so the existing lit/dark
+    # pattern and unrelated street props stay stable between rebuilds.
+    neighbours = {(0, 2, 7): True, (1, 6, 1): False}
+    light_rng = random.Random(204)
+    tones = ['window_lit', 'window_lit', 'window_amber', 'window_soft_white',
+             'window_cool', 'window_dim_warm']
+    for building, (x, y, w, d, h) in enumerate(BLOCKS):
         blocks.box((w, d, h), (x, y, h / 2), M['building'])
         face = y - d / 2 - 0.03
         floors, columns = int(h // 3), int(w // 2.4)
@@ -182,7 +240,13 @@ def _blocks(M, rng):
             for column in range(columns):
                 wx = x - w / 2 + 1.2 + column * (w - 2.4) / max(columns - 1, 1)
                 lit = rng.random() < 0.18
-                blocks.box((1.2, 0.06, 1.4), (wx, face, 1.8 + floor * 3), M['window_lit'] if lit else M['window_dark'])
+                wz = 1.8 + floor * 3
+                occupant = neighbours.get((building, floor, column))
+                tone = light_rng.choice(tones) if lit else 'window_dark'
+                if occupant is not None:
+                    tone = 'window_amber' if occupant else 'window_soft_white'
+                    _window_person(M, wx, face, wz, occupant)
+                blocks.box((1.2, 0.06, 1.4), (wx, face, wz), M[tone])
     blocks.finish()
 
 

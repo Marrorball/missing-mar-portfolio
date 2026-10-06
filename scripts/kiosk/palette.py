@@ -53,6 +53,10 @@ def make_materials():
         'building': material('building', (0.30, 0.32, 0.36)),
         'window_dark': material('window_dark', (0.06, 0.07, 0.10)),
         'window_lit': material('window_lit', (1.0, 0.70, 0.40), emission=1.6),
+        'window_amber': material('window_amber', (1.0, 0.49, 0.16), emission=0.85),
+        'window_soft_white': material('window_soft_white', (0.93, 0.88, 0.72), emission=0.90),
+        'window_cool': material('window_cool', (0.48, 0.68, 0.84), emission=0.65),
+        'window_dim_warm': material('window_dim_warm', (0.62, 0.36, 0.19), emission=0.55),
         'goods': material('goods', (0.85, 0.72, 0.45)),
     }
     m['goods_palette'] = [material(name, color) for name, color in GOODS_COLORS.items()]
