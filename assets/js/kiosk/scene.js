@@ -278,7 +278,6 @@ export async function createKioskScene({
   function spinRack(step) {
     rackFace = (((rackFace + step) % RACK_FACES) + RACK_FACES) % RACK_FACES;
     rackTarget += -step * QUARTER;
-    if (reducedMotion && rack) rack.rotation.y = rackTarget;
     onRackFace(rackFace);
   }
   function snapRack() {
@@ -357,7 +356,6 @@ export async function createKioskScene({
 
   function playDisc(nodeName) {
     cancelDisc();
-    if (reducedMotion) return;
     const source = root.getObjectByName(nodeName);
     const player = root.getObjectByName('dvd_player');
     const texture = source?.children.find(child => child.material?.map)?.material.map;
@@ -384,8 +382,11 @@ export async function createKioskScene({
     // The centred physical screen must leave room for Back and the footer,
     // including a short landscape phone viewport.
     const usableHeight = Math.max(80, 2 * Math.min(height / 2 - 76, footerTop - rect.top - 12 - height / 2));
-    const fill = Math.min(SCREEN_FILL, usableHeight / height);
-    const distance = fitDistance(screen.width, screen.height, SCREEN_FOV, camera.aspect, fill);
+    const horizontalFill = container.clientWidth <= 760 ? 0.86 : SCREEN_FILL;
+    const verticalFill = Math.min(horizontalFill, usableHeight / height);
+    const distance = Math.max(
+      fitDistance(screen.width, 0, SCREEN_FOV, camera.aspect, horizontalFill),
+      fitDistance(0, screen.height, SCREEN_FOV, camera.aspect, verticalFill));
     return { position: screen.center.clone().addScaledVector(screen.normal, distance), target: screen.center.clone() };
   }
 
@@ -581,7 +582,7 @@ export async function createKioskScene({
     return { target, position };
   }
 
-  function focus(name, { instant = false } = {}) {
+  function destinationView(name) {
     let view = screenView(name) || presets[name];
     if (!view) return;
     if (name === 'home') {
@@ -590,7 +591,12 @@ export async function createKioskScene({
     }
     const fov = screens[name] ? SCREEN_FOV : fitFov(presetLimits(name).fov, camera.aspect);
     if (name === 'home') view = fitSmallOverview(view, fov);
-    travel(name, view, fov, { instant });
+    return { view, fov };
+  }
+
+  function focus(name, { instant = false } = {}) {
+    const destination = destinationView(name);
+    if (destination) travel(name, destination.view, destination.fov, { instant });
   }
 
   function travel(name, view, fov, { instant = false, look = null } = {}) {
@@ -607,8 +613,9 @@ export async function createKioskScene({
       arrive(name); // e.g. switching channels: the TV stays on
       return;
     }
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (instant || reduced) {
+    // Navigation stays animated at the user's request; reduced motion still
+    // controls ambient snow, flicker and other continuous decoration.
+    if (instant) {
       showScreen(null);
       current = name;
       flight = null;
@@ -842,8 +849,7 @@ export async function createKioskScene({
     if (face === billboardFace) return;
     billboardFace = face;
     const target = face * Math.PI * 2 / 3;
-    if (reducedMotion || !billboardSlats.length) {
-      billboardSlats.forEach(slat => { slat.rotation.y = target; });
+    if (!billboardSlats.length) {
       billboardMotion = null;
       return;
     }
@@ -1054,10 +1060,22 @@ export async function createKioskScene({
     }
   }
 
+  let viewportWidth = container.clientWidth;
+  let viewportHeight = container.clientHeight;
   const resize = () => {
+    if (viewportWidth === container.clientWidth && viewportHeight === container.clientHeight) return;
+    viewportWidth = container.clientWidth;
+    viewportHeight = container.clientHeight;
     applySize();
     if (flight) {
-      focus(current, { instant: true });
+      const remaining = Math.max(300, flight.duration - (performance.now() - flight.start));
+      const leavingPage = flight.leavingPage;
+      const destination = destinationView(current);
+      if (destination) {
+        fly(current, destination.view, destination.fov);
+        flight.duration = remaining;
+        flight.leavingPage = leavingPage;
+      }
       return;
     }
     if (screens[current] || current === 'home') {
@@ -1166,7 +1184,9 @@ export async function createKioskScene({
   // Dev server only: handles for profiling from the console; `frame` steps
   // the loop by hand when the tab is hidden and the browser stops drawing.
   if (import.meta.env?.DEV) window.__kiosk = { scene, renderer, composer, camera, controls, pick, frame,
-    get inFlight() { return Boolean(flight); }, get current() { return current; } };
+    get inFlight() { return Boolean(flight); },
+    get isAnimating() { return Boolean(flight || billboardMotion || movingDisc); },
+    get current() { return current; } };
 
   // neighbours at two lit windows across the street
   for (const pose of ['smoking', 'looking']) {

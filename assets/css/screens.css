@@ -1367,7 +1367,7 @@
 
 /* Size content to the physical screen, which can be much smaller than the
    viewport. Keep the same scene screens on phones instead of flat pages. */
-@container kiosk-screen (max-width: 360px) {
+@container kiosk-screen (max-width: 480px) {
   .ttx { padding: 8px; font-size: clamp(11px, 4.6cqw, 16px); }
   .ttx h1 { padding: 5px 6px; font-size: clamp(12px, 7cqw, 26px); }
   .ttx-head { flex-wrap: wrap; gap: 4px 8px; font-size: 11px; }
@@ -1375,14 +1375,56 @@
   .ttx-list a { grid-template-columns: 2ch minmax(0, 1fr); gap: 2px 8px; padding: 6px 2px; }
   .ttx-meta { grid-column: 2; font-size: 11px; }
   .ttx-list a span { overflow-wrap: anywhere; }
-  .terminal-bar { gap: 8px; padding: 8px 10px; font-size: 16px; }
-  .terminal-bar span:last-child { font-size: 11px; }
-  .terminal-page h1 { margin: 10px 10px 2px; font-size: 20px; }
-  .terminal-lead { margin: 0 10px 8px; font-size: 12px; }
-  .terminal-buttons { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; gap: 8px; padding: 0 10px; }
-  .terminal-button { min-height: 56px; padding: 8px 10px; font-size: 18px; }
-  .terminal-button small { font-size: 12px; }
-  .board-page h1 { font-size: clamp(18px, 9cqw, 32px); }
-  .board-stamp { font-size: 16px; }
-  .tv-page h1 { font-size: clamp(18px, 8cqw, 28px); }
+}
+
+/* Compact composition for the real, small scene screens: headings, photo,
+   menus and contact choices share the space instead of filling it alone. */
+@container kiosk-screen (max-width: 480px) {
+  .board-page { padding: 8px 10px 16px; font-size: 12px; line-height: 1.4; }
+  .board-tabs { margin-bottom: 8px; border-bottom-width: 2px; }
+  .board-tabs a { flex: 1; justify-content: center; min-height: 32px; padding: 4px 6px; font-size: 12px; letter-spacing: .03em; }
+  .board-hero { grid-template-columns: minmax(50px, 23%) minmax(0, 1fr); gap: 7px 10px; }
+  .board-photo { grid-column: 1; grid-row: 1; margin: 0; box-shadow: 3px 3px 0 var(--poster-red); }
+  .board-head { grid-column: 2; grid-row: 1 / span 2; min-width: 0; }
+  .board-page h1 { margin-bottom: 5px; font-size: clamp(16px, 6cqw, 22px); line-height: 1; overflow-wrap: anywhere; }
+  .board-role { margin-bottom: 6px; padding: 3px 4px; font-size: 10px; letter-spacing: .02em; }
+  .board-page .rich-content p { margin-bottom: 6px; font-size: 12px; line-height: 1.4; }
+  .board-status { font-size: 11px; }
+  .board-stamp { position: static; grid-column: 1; grid-row: 2; margin: 5px 0 0; padding: 4px; border-width: 2px; font-size: 10px; }
+  .board-resume { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 12px; padding-top: 8px; border-top-width: 2px; }
+  .board-resume h2 { font-size: 15px; }
+  .board-resume h3 { font-size: 12px; }
+  .board-resume small { font-size: 10px; }
+  .board-price-columns { gap: 0 12px; }
+  .board-price-list li { padding-top: 8px; font-size: 14px; }
+  .board-price-note { font-size: 12px; margin-top: 12px; }
+  .board-price .board-stamp { position: absolute; top: 44px; right: 12px; }
+  .terminal-page { padding-bottom: 6px; font-size: 12px; }
+  .terminal-bar { padding: 4px 8px; font-size: 12px; letter-spacing: .02em; }
+  .terminal-bar span:last-child { display: none; }
+  .terminal-page h1 { margin: 3px 8px; font-size: 13px; line-height: 1.1; }
+  .terminal-lead, .terminal-foot { display: none; }
+  .terminal-buttons { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; gap: 4px; padding: 0 8px; }
+  .terminal-button { grid-template-columns: 64px minmax(0, 1fr); align-items: center; min-height: 44px; padding: 6px 8px; gap: 5px; border-width: 1px; border-radius: 3px; box-shadow: 0 2px 0 #c9590c; font-size: 13px; }
+  .terminal-button small { font-size: 10px; line-height: 1.25; }
+  .tv-page { padding: 0 10px 18px; font-size: 13px; line-height: 1.4; }
+  .tv-osd { margin: 0 -10px 8px; padding: 8px 10px; gap: 6px; font-size: 11px; letter-spacing: .03em; }
+  .tv-kicker { font-size: 11px; letter-spacing: .06em; }
+  .tv-page h1 { margin-bottom: 7px; font-size: clamp(18px, 7cqw, 25px); text-shadow: 1px 1px 0 #b3171b; }
+  .tv-chapters { margin: 12px 0; padding: 8px; border-width: 1px; }
+  .tv-chapters ol { grid-template-columns: minmax(0, 1fr); }
+  .tv-chapters button { font-size: 13px; }
+  .tv-page .rich-content p, .tv-page .cs-text { font-size: 13px; line-height: 1.4; }
+  .tv-page .rich-content li { font-size: 13px; line-height: 1.4; }
+  .tv-page .cs-section-title { font-size: 14px; }
+  .tv-frame-osd { font-size: 10px; right: 6px; }
+  .tv-page .cs-row-2 { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 6px 8px; }
+  .tv-page .cs-card { gap: 8px; min-width: 0; }
+  .tv-page .cs-card-title { font-size: 11px; letter-spacing: .02em; }
+  .tv-page .cs-card-text { min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
+}
+
+@media (max-width: 760px) {
+  .tv-remote { bottom: calc(80px + env(safe-area-inset-bottom)); width: min(330px, calc(100vw - 24px)); grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; padding: 6px; }
+  .tv-remote button { min-width: 0; padding: 6px 2px; font-size: 12px; }
 }

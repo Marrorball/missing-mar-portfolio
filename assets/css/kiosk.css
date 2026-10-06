@@ -345,3 +345,10 @@ body.is-travelling .rack-controls {
 @media (max-width: 640px) and (hover: none), (max-width: 640px) and (any-pointer: coarse) {
   .kiosk-help { grid-template-columns: repeat(4, 1fr); }
 }
+
+@media (max-width: 640px) {
+  .rack-controls { bottom: calc(80px + env(safe-area-inset-bottom)); max-width: calc(100vw - 24px); font-size: 12px; }
+  .rack-controls span { min-width: 0; flex: 1; }
+  .rack-controls button { flex-shrink: 0; }
+  .contact-card, .kiosk-note { bottom: calc(80px + env(safe-area-inset-bottom)); }
+}
