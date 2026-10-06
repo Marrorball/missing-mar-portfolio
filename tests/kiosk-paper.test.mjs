@@ -115,3 +115,11 @@ test('graffiti on both walls draws without trouble', async () => {
     assert.ok(!texts.includes('ЦОЙ ЖИВ'));
   }
 });
+
+test('stickers: «ДАША — НЯША» and the pink ones', async () => {
+  const { STICKERS, drawSticker } = await import('../assets/js/kiosk/stickers.js');
+  assert.deepEqual(STICKERS, ['dasha', 'heart', 'bunny', 'star']);
+  const { context, texts } = recorder();
+  for (const kind of STICKERS) drawSticker(context, 512, 300, kind);
+  for (const text of ['ДАША —', 'НЯША', 'НЯ!', 'КАВАЙ']) assert.ok(texts.includes(text), text);
+});

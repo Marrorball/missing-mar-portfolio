@@ -98,6 +98,16 @@ def _graffiti():
     screen('graffiti_left', (-HW - 0.037, 0.08, 1.12), 1.6, 0.9, rot_z=-math.pi / 2)
 
 
+def _stickers():
+    """Anchors for vinyl stickers (assets/js/kiosk/stickers.js), all on the
+    left side wall with the graffiti; the front stays clean."""
+    side = -HW - 0.039          # on the faces of the corrugation
+    for kind, y, z, w, h, tilt in (('dasha', -0.6, 0.56, 0.17, 0.095, -0.06), ('star', -0.22, 0.44, 0.085, 0.085, 0.2),
+                                   ('bunny', 0.3, 0.52, 0.1, 0.1, -0.1), ('heart', 0.66, 0.6, 0.075, 0.075, 0.12)):
+        anchor = screen(f'sticker_{kind}', (side, y, z), w, h, rot_z=-math.pi / 2)
+        anchor.rotation_euler[1] = tilt
+
+
 def _sign(M):
     panel = material('sign_panel', (0.07, 0.075, 0.09), roughness=0.6)
     box('kiosk_signbox', (W + 0.2, 0.3, 0.55), (0.0, -HD, TOP + 0.38), panel)
@@ -239,5 +249,6 @@ def build(M):
     _window(M)
     _shutters(M)
     _graffiti()
+    _stickers()
     _roof_and_lamp(M)
     _back_door(M)

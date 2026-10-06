@@ -187,7 +187,17 @@ test('the serving window stays clear: no project slot stands in it', () => {
 test('the sign is glowing letters, its last two on their own bulbs; graffiti on both sides', () => {
   const json = gltf();
   for (const name of ['sign_glow', 'sign_glow_tail']) assert.ok(json.materials.some(mat => mat.name === name), name);
-  for (const name of ['graffiti_left', 'graffiti_right']) assert.ok(json.nodes.some(node => node.name === name), name);
+  for (const name of ['graffiti_left', 'graffiti_right', 'sticker_dasha', 'sticker_heart', 'sticker_bunny', 'sticker_star']) {
+    assert.ok(json.nodes.some(node => node.name === name), name);
+  }
+});
+
+test('stickers sit on the left wall only, the front stays clean; no dark trodden strip', () => {
+  const nodes = gltf().nodes;
+  const stickers = nodes.filter(node => node.name.startsWith('sticker_'));
+  assert.equal(stickers.length, 4);
+  assert.ok(stickers.every(node => node.translation[0] < -1.5), 'on the left side wall');
+  assert.ok(!nodes.some(node => node.name === 'snow_trodden'));
 });
 
 test('the walk round the kiosk has its waypoints', () => {

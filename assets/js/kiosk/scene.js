@@ -662,8 +662,8 @@ export async function createKioskScene({
   }
 
   // Paint sprayed on a wall: lit like the wall, see-through around it.
-  function paintDecal(name, draw) {
-    const plane = paintAnchor(name, draw, { transparent: true, lit: true });
+  function paintDecal(name, draw, glow = 0) {
+    const plane = paintAnchor(name, draw, { transparent: true, lit: true, glow });
     if (plane) {
       plane.material.depthWrite = false;
       plane.material.polygonOffset = true;

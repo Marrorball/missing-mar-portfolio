@@ -23,22 +23,7 @@ POWER_POLES = ((-14.0, 10.0), (0.0, 12.0), (14.0, 10.0))
 
 def _snow(M, rng):
     box('ground_snow', (140.0, 140.0, 0.02), (0.0, 0.0, -0.01), M['snow'])
-    # One continuous, irregular compressed path, rather than overlapping
-    # circles that looked like a row of stepping stones in the warm light.
-    vertices, faces = [], []
-    for k in range(33):
-        t = k / 32
-        cx, cy = 0.15 + 1.6 * t, -1.50 - 4.6 * t
-        width = (0.92 - t * 0.20) * (0.96 + 0.045 * math.sin(k * 0.79))
-        if t > 0.92:
-            width *= max(0.04, (1 - t) / 0.08)
-        vertices.extend(((cx - width / 2, cy, 0.003), (cx + width / 2, cy, 0.003)))
-        if k:
-            faces.append((2 * k - 2, 2 * k - 1, 2 * k + 1, 2 * k))
-    mesh = bpy.data.meshes.new('snow_trodden')
-    mesh.from_pydata(vertices, [], faces)
-    mesh.materials.append(M['snow_trodden'])
-    link(bpy.data.objects.new('snow_trodden', mesh))
+    # Footprints alone mark the way to the kiosk: no darker trodden strip.
 
     drifts = Merge('snow_drifts')
     edge = 0.2

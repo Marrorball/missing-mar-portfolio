@@ -16,6 +16,7 @@ import {
   renderTvGuide
 } from './kiosk/pages.js';
 import { drawGraffiti } from './kiosk/graffiti.js';
+import { STICKERS, drawSticker } from './kiosk/stickers.js';
 import { drawFlyer, drawPriceSheet } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
 import { isInside } from './kiosk/routes.js';
@@ -427,6 +428,10 @@ async function paintSheets() {
   state.kiosk?.paintNotices();
   for (const side of ['right', 'left']) {
     state.kiosk?.paintDecal(`graffiti_${side}`, (context, width, height) => drawGraffiti(context, width, height, side));
+  }
+  for (const kind of STICKERS) {
+    // glossy vinyl catches a little of the window's light
+    state.kiosk?.paintDecal(`sticker_${kind}`, (context, width, height) => drawSticker(context, width, height, kind), 0.3);
   }
   state.kiosk?.setTvPicture((context, width, height) => drawTeletext(context, width, height,
     projects.map((project, index) => ({ number: channelNumber(index), title: project.title || '' }))));
