@@ -1,6 +1,6 @@
-// Every project is a channel, numbered in content order.
+// Every project is a channel, numbered in content order: 1, 2, 3.
 export function channelNumber(index) {
-  return String(index + 1).padStart(2, '0');
+  return String(index + 1);
 }
 
 export function neighbourId(projects = [], id, step) {

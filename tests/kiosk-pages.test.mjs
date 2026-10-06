@@ -26,7 +26,7 @@ test('a TV channel shows the project under its channel number', () => {
     behance: 'https://www.behance.net/gallery/1',
     sections: [{ id: 'problem', label: '❓ Задача', content: '<p>owner html</p>' }]
   }, { index: 2, category: 'UX/UI проекты' });
-  assert.match(html, /КАНАЛ 03/);
+  assert.match(html, /КАНАЛ 3</);
   assert.match(html, /KORTEX &lt;x&gt;/);
   assert.match(html, /UX\/UI проекты · 2025/);
   assert.match(html, /<li>ИИ<\/li>/);
@@ -64,10 +64,10 @@ test('the TV guide numbers every channel and links to it', () => {
   );
   assert.match(html, /ТЕЛЕПРОГРАММА/);
   assert.match(html, /href="#project\/%D1%83%D1%87%D0%B8%20%D1%80%D1%83"/);
-  assert.match(html, />01<.*Учи\.ру.*UX\/UI · 2026/s);
-  assert.match(html, />02</);
+  assert.match(html, />1<.*Учи\.ру.*UX\/UI · 2026/s);
+  assert.match(html, />2</);
   assert.match(html, /class="ttx-red" href="#about"/);
-  assert.match(html, /class="ttx-blue" href="#project\/%D1%83%D1%87%D0%B8%20%D1%80%D1%83">Канал 01/);
+  assert.match(html, /class="ttx-blue" href="#project\/%D1%83%D1%87%D0%B8%20%D1%80%D1%83">Канал 1/);
 });
 
 test('the billboard shows who Marat is, with tabs for about and price', () => {

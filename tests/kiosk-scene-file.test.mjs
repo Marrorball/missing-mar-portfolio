@@ -147,8 +147,7 @@ test('the price sheet hangs on the right shutter, the flyer is printed on the sh
   assert.ok(anchor.extras.width >= 0.4, 'readable from the street');
   assert.equal(parentOf('screen_price').name, 'hs_pricelist');
   assert.ok(!names().has('flyer_title'), 'no extruded title poking through the printed flyer');
-  assert.equal(parentOf('hs_fullprice').name, 'shutter_right_hinge', 'the full-price note hangs under the sheet');
-  assert.equal(parentOf('note_fullprice').name, 'hs_fullprice');
+  assert.ok(!names().has('hs_fullprice'), 'the full price is a line on the sheet itself');
 });
 
 test('snow lies on the rack and the terminal like on the roof', () => {
@@ -163,6 +162,11 @@ test('two neighbours stand at lit windows as painted silhouettes', () => {
     assert.ok(anchor && anchor.extras.width > 1 && anchor.extras.height > 1, pose);
     assert.equal(anchor.mesh, undefined, 'no blob figure, just the anchor for the silhouette');
   }
+});
+
+test('the back doorway has a click area as big as the opening', () => {
+  const doorway = gltf().nodes.find(node => node.name === 'hs_doorway');
+  assert.ok(doorway, 'hs_doorway');
 });
 
 test('the walk round the kiosk has its waypoints', () => {

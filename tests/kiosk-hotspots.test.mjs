@@ -133,12 +133,18 @@ test('the price list is its own sheet on the right shutter, read up close', () =
   assert.equal(hotspotForNode('hs_pricelist').action.hash, '#price');
   assert.equal(allowedIn('price', 'hs_pricelist'), true);
   assert.equal(allowedIn('price', 'hs_flyer'), false);
+  assert.equal(hotspotForNode('hs_fullprice'), null, 'the full price is a line on the sheet, no separate note');
 });
 
-test('the note under the price list leads to the full list on the billboard', () => {
-  assert.equal(hotspotForNode('hs_fullprice').action.hash, '#pricelist');
-  assert.equal(ROUTE_PRESETS.pricelist, 'billboard');
-  assert.equal(allowedIn('price', 'hs_fullprice'), true);
+test('the whole back doorway is a way in, not just the door leaf', () => {
+  assert.equal(hotspotForNode('hs_doorway').action.preset, 'inside');
+  assert.equal(hotspotForNode('hs_backdoor').action.preset, 'inside');
+});
+
+test('in front of the showcase only the projects answer; a click beside steps back', () => {
+  assert.equal(allowedIn('showcase', 'slot_0'), true);
+  assert.equal(allowedIn('showcase', 'hs_showcase'), false);
+  assert.equal(allowedIn('showcase', 'hs_flyer'), false);
 });
 
 test('contacts live on the flyer, the terminal is a place to walk to', () => {

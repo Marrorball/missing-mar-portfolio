@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawFlyer, drawPriceNote, drawPriceSheet, tearOffLines } from '../assets/js/kiosk/paper.js';
+import { drawFlyer, drawPriceSheet, tearOffLines } from '../assets/js/kiosk/paper.js';
 
 test('a tear-off slip keeps a short contact on one line', () => {
   assert.deepEqual(tearOffLines('@marrorball'), ['@marrorball']);
@@ -63,20 +63,13 @@ test('the price sheet reads ПРАЙС from across the street', () => {
   assert.ok(texts.some(text => /прайс на услуги/.test(text)));
 });
 
-test('the note under the price list points to the full list', () => {
-  const { context, texts } = recorder();
-  drawPriceNote(context, 1024, 444);
-  assert.ok(texts.includes('ПОЛНЫЙ ПРАЙС'));
-  assert.ok(texts.some(text => /ЩИТЕ/.test(text)));
-});
-
 test('the TV inside comes on with the channel list', async () => {
   const { drawTeletext } = await import('../assets/js/kiosk/teletext.js');
   const { context, texts } = recorder();
-  drawTeletext(context, 1024, 768, [{ number: '01', title: 'Kortex' }, { number: '02', title: 'Древо' }]);
+  drawTeletext(context, 1024, 768, [{ number: '1', title: 'Kortex' }, { number: '2', title: 'Древо' }]);
   assert.ok(texts.includes('ТЕЛЕПРОГРАММА'));
   assert.ok(texts.includes('KORTEX') && texts.includes('ДРЕВО'));
-  assert.ok(texts.includes('02'));
+  assert.ok(texts.includes('2'));
 });
 
 test('the neighbours are silhouettes cropped by the sill, one with a lit cigarette', async () => {

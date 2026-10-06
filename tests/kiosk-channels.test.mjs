@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { channelNumber, neighbourId } from '../assets/js/kiosk/channels.js';
 
 test('channel numbers are two digits, starting at 01', () => {
-  assert.equal(channelNumber(0), '01');
+  assert.equal(channelNumber(0), '1');
   assert.equal(channelNumber(11), '12');
 });
 

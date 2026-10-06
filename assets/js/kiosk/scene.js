@@ -169,6 +169,11 @@ export async function createKioskScene({
     if (object.isMesh && !DECOR.test(object.name)) pickTargets.push(object);
   });
 
+  // click areas (the back doorway) are picked but never drawn
+  root.traverse(object => {
+    if (object.isMesh && object.material.name.startsWith('hit_area')) object.material.visible = false;
+  });
+
   weatherMaterials(root);
   const sky = addSky(scene);
   const flickering = addLights(scene, root, quality);
@@ -272,9 +277,31 @@ export async function createKioskScene({
   let insideLook = { yaw: 0, pitch: 0 };
   const insidePointers = new Map();
   let pinch = null;
+  // Zoom inside eases towards its target instead of jumping per wheel notch.
+  const ZOOM = [30, 80];
+  let fovTarget = null;
+  function zoomTo(fov) {
+    fovTarget = THREE.MathUtils.clamp(fov, ...ZOOM);
+  }
+  function easeZoom(dt) {
+    if (fovTarget === null) return;
+    if (flight || current !== 'inside') {
+      fovTarget = null;
+      return;
+    }
+    camera.fov += (fovTarget - camera.fov) * (1 - Math.exp(-dt * 14));
+    if (Math.abs(fovTarget - camera.fov) < 0.02) {
+      camera.fov = fovTarget;
+      fovTarget = null;
+    }
+    camera.updateProjectionMatrix();
+  }
+
   function lookInside(dx, dy) {
     if (current !== 'inside' || flight) return;
-    insideLook = turnLook(insideLook, dx, dy);
+    // zoomed in, the same drag turns the head less, so it stays controllable
+    const scale = camera.fov / presetLimits('inside').fov;
+    insideLook = turnLook(insideLook, dx * scale, dy * scale);
     controls.target.copy(camera.position).add(new THREE.Vector3(...lookDirection(insideLook)).multiplyScalar(1.8));
     camera.lookAt(controls.target);
   }
@@ -777,7 +804,11 @@ export async function createKioskScene({
         down.dragged = true;
       }
     }
-    canvas.setPointerCapture(event.pointerId);
+    try {
+      canvas.setPointerCapture(event.pointerId);
+    } catch {
+      // a pointer the browser no longer tracks: carry on without capture
+    }
   });
   canvas.addEventListener('pointermove', event => {
     if (down && current === 'inside' && !flight) {
@@ -785,8 +816,7 @@ export async function createKioskScene({
       if (pinch && insidePointers.size === 2) {
         const [a, b] = [...insidePointers.values()];
         const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
-        camera.fov = THREE.MathUtils.clamp(pinch.fov * pinch.distance / distance, 52, 84);
-        camera.updateProjectionMatrix();
+        zoomTo(pinch.fov * pinch.distance / distance);
         down.dragged = true;
       } else {
         lookInside(event.clientX - down.lastX, event.clientY - down.lastY);
@@ -830,7 +860,7 @@ export async function createKioskScene({
     }
     const name = pick(event.clientX, event.clientY);
     if (name) onPick(name);
-    else if (!flight && presetLimits(current).locked) onEmptyClick();
+    else if (!flight && (presetLimits(current).locked || current === 'showcase')) onEmptyClick();
     else if (!flight && current === 'inside' && towardStreet(event.clientX, event.clientY)) onStreetClick();
   });
   canvas.addEventListener('pointercancel', () => {
@@ -842,8 +872,9 @@ export async function createKioskScene({
   canvas.addEventListener('wheel', event => {
     if (current !== 'inside' || flight) return;
     event.preventDefault();
-    camera.fov = THREE.MathUtils.clamp(camera.fov + event.deltaY * 0.035, 52, 84);
-    camera.updateProjectionMatrix();
+    // lines or pixels, mouse notch or trackpad pinch (ctrlKey): same feel
+    const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+    zoomTo((fovTarget ?? camera.fov) * Math.exp(delta * (event.ctrlKey ? 0.006 : 0.0012)));
   }, { passive: false });
 
   function applySize() {
@@ -975,6 +1006,7 @@ export async function createKioskScene({
     const now = performance.now() / 1000;
     const elapsed = now - (lastFrame || now);
     keepFrameRate(elapsed * 1000);
+    easeZoom(Math.min(elapsed, 0.1));
     const dt = Math.min(elapsed, 0.1);
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * (1 - Math.exp(-elapsed * 10));
     updateTv(performance.now());

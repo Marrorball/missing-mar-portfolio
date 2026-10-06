@@ -325,7 +325,7 @@
 }
 
 .tv-page .cs-section::before {
-  content: 'КАДР ' counter(shot, decimal-leading-zero);
+  content: 'КАДР ' counter(shot);
   display: block;
   margin-bottom: 4px;
   color: var(--osd);

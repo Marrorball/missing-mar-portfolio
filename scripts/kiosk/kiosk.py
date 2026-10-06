@@ -8,10 +8,9 @@ import random
 from dims import (D, DOOR_L, DOOR_OPEN_DEG, DOOR_R, DOOR_TOP, GLASS_HIGH, GLASS_LOW, HD, HW,
                   PLINTH, TOP, W, WALL, WINDOW_L, WINDOW_R, WINDOW_TOP)
 from geometry import grille_segments
-from lib import Merge, box, cylinder, empty, link, screen, text
+from lib import Merge, box, cylinder, empty, link, material, screen, text
 
 SHEET = (0.4, 0.5625)    # flyer and price list: big enough to read from the street, 32:45
-NOTE = (0.3, 0.13)       # the «полный прайс» note under the price list
 ADS = ('СДАМ\nКВАРТИРУ', 'РЕМОНТ\nКОМПЬЮТЕРОВ', 'КУПЛЮ ВОЛОСЫ\nДОРОГО')
 
 
@@ -125,8 +124,8 @@ def _shutters(M):
                 continue  # the flyer lives here
             if side == 'left' and abs(x - 0.45) < 0.3 and z < 1.25:
                 continue  # marker contacts live here
-            if side == 'right' and (abs(x + 0.5) < 0.32 or z > 1.85):
-                continue  # the price sheet, its note and the three ads live here
+            if side == 'right' and (abs(x + 0.5) < 0.32 and abs(z - 1.55) < 0.42 or z > 1.85):
+                continue  # the price sheet and the three ads live here
             depth = 0.024 + index * 0.0006
             posters.box((w, 0.004, h), (x, depth, z), rng.choice(M['posters']), rot=(0.0, rng.uniform(-0.12, 0.12), 0.0))
             if rng.random() < 0.4:
@@ -147,10 +146,6 @@ def _shutters(M):
             # the price list, mirroring the flyer on the other shutter
             prices = box('hs_pricelist', (SHEET[0], 0.006, SHEET[1]), (-0.5, 0.026, 1.55), M['paper'], parent=hinge)
             screen('screen_price', (0.0, 0.0035, 0.0), *SHEET, rot_z=math.pi, parent=prices)
-            # «полный прайс» note taped a little crooked under the sheet
-            note = box('hs_fullprice', (NOTE[0], 0.005, NOTE[1]), (-0.5, 0.027, 1.12), M['paper'], parent=hinge)
-            note.rotation_euler[1] = -0.05
-            screen('note_fullprice', (0.0, 0.003, 0.0), *NOTE, rot_z=math.pi, parent=note)
 
 
 def _roof_snow(M):
@@ -210,6 +205,10 @@ def _roof_and_lamp(M):
 
 
 def _back_door(M):
+    # an invisible click area filling the opening, so «in» is easy to hit
+    # (the site hides every 'hit_area' material and still picks it)
+    box('hs_doorway', (DOOR_R - DOOR_L + 0.1, 0.2, DOOR_TOP - PLINTH + 0.05),
+        ((DOOR_L + DOOR_R) / 2, HD, (PLINTH + DOOR_TOP) / 2), material('hit_area', (0.0, 0.0, 0.0), alpha=0.0))
     hinge = empty('door_hinge', (DOOR_R, HD, 0.0), rot_z=math.radians(DOOR_OPEN_DEG))
     width = DOOR_R - DOOR_L
     box('hs_backdoor', (width, 0.05, DOOR_TOP - PLINTH), (-width / 2, 0.03, (PLINTH + DOOR_TOP) / 2),

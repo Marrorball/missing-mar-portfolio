@@ -15,7 +15,7 @@ import {
   renderTvChannel,
   renderTvGuide
 } from './kiosk/pages.js';
-import { drawFlyer, drawPriceNote, drawPriceSheet } from './kiosk/paper.js';
+import { drawFlyer, drawPriceSheet } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
 import { isInside } from './kiosk/routes.js';
 import { assignHits } from './kiosk/slots.js';
@@ -52,6 +52,8 @@ const state = {
 };
 
 const TRAIL_LENGTH = 12;
+// the door leaf and the whole opening behind the kiosk
+const DOOR_NODES = new Set(['hs_backdoor', 'hs_doorway']);
 
 function currentHash() {
   return window.location.hash === '#' ? '' : window.location.hash;
@@ -130,7 +132,7 @@ function rackTitle(face) {
 }
 
 function chromeFor(name) {
-  if (name === 'inside') return renderBackButton();
+  if (name === 'inside' || name === 'showcase') return renderBackButton();
   if (!LOCKED_PRESETS.includes(name)) return '';
   if (name === 'rack') return renderBackButton() + renderRackControls(rackTitle(state.rackFace));
   if (name === 'tv') return renderBackButton() + renderRemote();
@@ -244,6 +246,11 @@ function runAction(node) {
   const spot = hotspotForNode(node, state);
   if (!spot) return;
   const { action } = spot;
+  if (DOOR_NODES.has(node)) {
+    if (isInside(state.preset)) exitKiosk();
+    else focusPreset('inside');
+    return;
+  }
   if (/^(slot|disc)_\d+$/.test(node)) state.pendingDisc = node;
   if (node === 'hs_cat') {
     purr();
@@ -266,7 +273,7 @@ function showLabel(node, x, y) {
     label.hidden = true;
     return;
   }
-  label.textContent = spot.label;
+  label.textContent = DOOR_NODES.has(node) && isInside(state.preset) ? 'Выйти на улицу' : spot.label;
   label.style.transform = `translate(${x + 16}px, ${y + 14}px)`;
   label.hidden = false;
 }
@@ -416,7 +423,6 @@ async function paintSheets() {
     name: owner.name, role: owner.role, location: owner.location, links, photo
   }), 'hs_flyer');
   state.kiosk?.paintSheet('screen_price', drawPriceSheet, 'hs_pricelist');
-  state.kiosk?.paintSheet('note_fullprice', drawPriceNote, 'hs_fullprice');
   state.kiosk?.setTvPicture((context, width, height) => drawTeletext(context, width, height,
     projects.map((project, index) => ({ number: channelNumber(index), title: project.title || '' }))));
 }
