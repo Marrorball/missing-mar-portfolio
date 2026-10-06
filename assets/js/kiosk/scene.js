@@ -6,6 +6,7 @@ import { coverDescriptor, drawCover } from './covers.js';
 import { lookDirection, turnLook } from './look.js';
 import { quadTransform } from './quad.js';
 import { walkingRoute } from './routes.js';
+import { flightDuration, flightOrientation, flightProgress, prepareFlightOrientation } from './motion.js';
 import {
   PRESETS,
   SCREENS,
@@ -23,10 +24,6 @@ import { QUALITY, qualityTier, tvWarmUp } from './weather.js';
 
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
-// Straight flights take longer the further they go; walks round the kiosk
-// move at a steady jog.
-const FLIGHT_RANGE = [1.2, 2.2];
-const WALK_RANGE = [1.8, 3.8];
 const QUARTER = Math.PI / 2;
 const SCREEN_FOV = 40;
 
@@ -46,11 +43,6 @@ function isShown(object) {
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
-}
-
-// Gentler in the middle than the cubic: a long walk never sprints.
-function easeInOutSine(t) {
-  return -(Math.cos(Math.PI * t) - 1) / 2;
 }
 
 // The kiosk's footprint in three.js coordinates (3 x 2 m, front at +z).
@@ -424,6 +416,7 @@ export async function createKioskScene({
   }
 
   let flight = null;
+  const destinationCamera = new THREE.PerspectiveCamera();
 
   // Flies to a view; walks round through the back door when the move
   // crosses the walls. `name` is the preset that takes over on arrival.
@@ -446,8 +439,9 @@ export async function createKioskScene({
         false, 'centripetal');
       length = curve.getLength();
     }
-    const [shortest, longest] = curve ? WALK_RANGE : FLIGHT_RANGE;
-    const duration = THREE.MathUtils.clamp((curve ? 0.6 + length * 0.22 : 0.8 + length * 0.12), shortest, longest) * 1000;
+    const duration = flightDuration(length, Boolean(curve));
+    destinationCamera.position.copy(view.position);
+    destinationCamera.lookAt(view.target);
     const page = screens[name] ? name : null;
     if (page) screens[page].landing = pagePixels(page, view.position.distanceTo(screens[page].center));
     flight = {
@@ -456,6 +450,8 @@ export async function createKioskScene({
       duration,
       from,
       fromTarget: controls.target.clone(),
+      fromRotation: camera.quaternion.clone(),
+      toRotation: destinationCamera.quaternion.clone(),
       fromFov: camera.fov,
       to: view.position,
       toTarget: view.target,
@@ -465,6 +461,7 @@ export async function createKioskScene({
       // the page you leave fades off its screen as you step back
       leavingPage: screens[leaving] && leaving !== name && leaving !== 'billboard' ? leaving : null
     };
+    prepareFlightOrientation(flight);
   }
 
   function focus(name, { instant = false } = {}) {
@@ -532,22 +529,17 @@ export async function createKioskScene({
   }
 
   // Position and target along a flight at eased progress k.
-  const ahead = new THREE.Vector3();
-  const heading = new THREE.Vector3();
+  const flightDirection = new THREE.Vector3();
   function flightPose(k) {
-    if (!flight.curve) {
-      camera.position.lerpVectors(flight.from, flight.to, k);
-      controls.target.lerpVectors(flight.fromTarget, flight.toTarget, k);
-      return;
-    }
-    flight.curve.getPointAt(k, camera.position);
-    flight.curve.getTangentAt(Math.min(k, 0.999), heading);
-    heading.y = 0;
-    if (heading.lengthSq() < 1e-6) heading.copy(flight.toTarget).sub(camera.position).setY(0);
-    // look where you walk, level, then settle on what you came for
-    ahead.copy(camera.position).addScaledVector(heading.normalize(), 2);
-    ahead.lerpVectors(flight.fromTarget, ahead, smoothstep(0, 0.14, k));
-    controls.target.lerpVectors(ahead, flight.toTarget, smoothstep(0.66, 0.96, k));
+    if (flight.curve) flight.curve.getPointAt(k, camera.position);
+    else camera.position.lerpVectors(flight.from, flight.to, k);
+    flightOrientation(flight, k, camera.position, camera.quaternion);
+    // Keep a useful orbit target without making it drive the turn itself.
+    const distance = THREE.MathUtils.lerp(
+      flight.from.distanceTo(flight.fromTarget), flight.to.distanceTo(flight.toTarget), k);
+    flightDirection.set(0, 0, -1).applyQuaternion(camera.quaternion);
+    controls.target.copy(camera.position).addScaledVector(flightDirection, Math.max(.25, distance));
+    if (k === 1) controls.target.copy(flight.toTarget);
   }
 
   function setPage(name, html, { switching = false, boardFace = 1 } = {}) {
@@ -842,13 +834,14 @@ export async function createKioskScene({
 
 
   const carried = new THREE.Vector3();
+  const discHeading = new THREE.Vector3();
   const side = new THREE.Vector3();
   const flat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
   let lastFrame = 0;
   const frame = () => {
     if (flight) {
       const t = Math.min((performance.now() - flight.start) / flight.duration, 1);
-      const k = flight.curve ? easeInOutSine(t) : easeInOutCubic(t);
+      const k = flightProgress(t);
       flightPose(k);
       camera.fov = THREE.MathUtils.lerp(flight.fromFov, flight.toFov, k);
       camera.updateProjectionMatrix();
@@ -891,7 +884,7 @@ export async function createKioskScene({
       // you round the kiosk and drops into the player as you reach the TV.
       const t = Math.min((performance.now() - movingDisc.start) / movingDisc.duration, 1);
       const carry = carried.copy(camera.position)
-        .addScaledVector(camera.getWorldDirection(heading), 0.7)
+        .addScaledVector(camera.getWorldDirection(discHeading), 0.7)
         .addScaledVector(side.set(1, 0, 0).applyQuaternion(camera.quaternion), 0.14)
         .addScaledVector(camera.up, -0.2);
       const disc = movingDisc.mesh;

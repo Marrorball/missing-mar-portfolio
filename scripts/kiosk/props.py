@@ -128,20 +128,27 @@ def counter(M,y,z):
     ring(mug,(-.196,y+.05,z+.046),.025,.006,ceramic,plane='XZ',start=-1.9,end=1.9,steps=18)
     mug.finish()
     calc=Merge('counter_calculator')
-    mesh(calc,[(.39,y-.08,z),(.51,y-.08,z),(.51,y+.08,z),(.39,y+.08,z),(.39,y-.08,z+.014),(.51,y-.08,z+.014),(.51,y+.08,z+.035),(.39,y+.08,z+.035)],[(0,3,2,1),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7),(4,5,6,7)],M['ink'])
-    calc.box((.09,.028,.003),(.45,y+.047,z+.033),material('lcd_green',(.42,.51,.35)))
+    # A pocket calculator lies flat. Display is away from the seller (+Y),
+    # with the keypad and operator column facing the working side.
+    calc.box((.12,.16,.014),(.45,y,z+.007),M['ink'])
+    calc.box((.09,.028,.0012),(.45,y-.047,z+.0146),material('lcd_green',(.42,.51,.35)))
     for row in range(4):
-        for col in range(4): calc.box((.019,.018,.005),(.414+col*.024,y-.053+row*.023,z+.019+row*.003),M['plastic_light'] if col<3 else M['away'])
+        for col in range(4):
+            calc.box((.019,.018,.004),(.486-col*.024,y+.053-row*.023,z+.017),M['plastic_light'] if col<3 else M['away'])
     for x in (.42,.442,.464,.486):
-        for zz in (0,.007): calc.bar((x,y+.043+zz,z+.036),(x+.009,y+.043+zz,z+.036),.0013,M['ink'])
+        for dy in (0,.007):
+            calc.bar((x,y-.051+dy,z+.0158),(x+.009,y-.051+dy,z+.0158),.0013,M['ink'])
     calc.finish()
     note=Merge('counter_notebook')
-    note.box((.21,.27,.018),(.12,y+.015,z+.009),material('notebook_cover',(.23,.38,.40)))
-    note.box((.202,.262,.012),(.12,y+.015,z+.016),M['paper'])
-    label(note,6,[(.019,y-.111,z+.023),(.221,y-.111,z+.023),(.221,y+.141,z+.023),(.019,y+.141,z+.023)])
-    for yy in range(10): ring(note,(.02,y-.1+yy*.025,z+.021),.007,.0012,M['frame'],plane='XZ',steps=8)
-    note.bar((.05,y-.04,z+.029),(.205,y+.08,z+.029),.006,material('pen_blue',(.08,.18,.34)))
-    note.bar((.205,y+.08,z+.029),(.22,y+.092,z+.029),.004,M['frame'])
+    # The A6 notebook stays on the free rear half of the counter, clear of goods.
+    nx, ny = .12, y+.072
+    note.box((.21,.18,.018),(nx,ny,z+.009),material('notebook_cover',(.23,.38,.40)))
+    note.box((.202,.174,.012),(nx,ny,z+.016),M['paper'])
+    label(note,6,[(nx-.101,ny-.087,z+.023),(nx+.101,ny-.087,z+.023),(nx+.101,ny+.087,z+.023),(nx-.101,ny+.087,z+.023)],[(1,1),(0,1),(0,0),(1,0)])
+    for yy in range(7): ring(note,(nx+.10,ny-.072+yy*.024,z+.021),.007,.0012,M['frame'],plane='XZ',steps=8)
+    # Pen beside the notebook, not crossing its written page.
+    note.bar((nx-.132,ny-.070,z+.003),(nx-.132,ny+.065,z+.003),.006,material('pen_blue',(.08,.18,.34)))
+    note.bar((nx-.132,ny+.065,z+.003),(nx-.132,ny+.079,z+.003),.004,M['frame'])
     note.finish()
     coins=Merge('counter_loose_change')
     gold=material('coin_brass',(.65,.49,.22),metallic=.65,roughness=.48)
@@ -208,8 +215,13 @@ def wall_details(M,hw):
         clock.bar((x+.003,y+r*math.sin(a),z+r*math.cos(a)),(x+.003,y+(r-.012)*math.sin(a),z+(r-.012)*math.cos(a)),.003,M['ink'])
     clock.bar((x+.005,y,z),(x+.005,y-.064,z+.041),.004,M['ink']); clock.bar((x+.006,y,z),(x+.006,y+.027,z+.042),.006,M['ink']); clock.finish()
     calendar=Merge('calendar_print')
-    label(calendar,7,[(hw-.089,.055,1.42),(hw-.089,-.355,1.42),(hw-.089,-.355,1.98),(hw-.089,.055,1.98)])
-    calendar.finish()
+    x=hw-.090
+    mesh(calendar,[(x,.04,1.427),(x,-.34,1.427),(x,-.34,1.665),(x,.04,1.665)],[(0,1,2,3)],textured('calendar_june_2004','calendar-june-2004.png'),[(0,0),(1,0),(1,1),(0,1)])
+    page=calendar.finish()
+    page['year']=2004; page['month']=6; page['marked_day']=30
+    picture=Merge('calendar_concert_picture')
+    mesh(picture,[(x,.04,1.670),(x,-.34,1.670),(x,-.34,1.928),(x,.04,1.928)],[(0,1,2,3)],textured('calendar_tatu_photo','calendar-tatu.jpg'),[(0,0),(1,0),(1,1),(0,1)])
+    picture.finish()
 
 def soften(obj, amount=.014):
     bevel=obj.modifiers.new('softened_casing_edges','BEVEL'); bevel.width=amount; bevel.segments=3

@@ -56,3 +56,28 @@ for y in range(256):
     for x in range(0,256,2):
         if rng.random()<.23: d.point((x,y),fill='#84918a')
 blanket.save(OUT/'blanket-plaid.png',optimize=True)
+
+# A separate legible calendar grid; the concert photo panel remains a separate
+# image/mesh so month typography and dates are always deterministic.
+import calendar as calendar_dates
+import math
+cal=Image.new('RGB',(512,320),'#f5ecd5'); d=ImageDraw.Draw(cal)
+d.rectangle((0,0,511,319),outline='#a92f27',width=8)
+d.rectangle((0,0,512,60),fill='#a92f27'); centered(d,(256,31),'ИЮНЬ 2004',34,'#fff4dc')
+for col,t in enumerate(['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС']): centered(d,(45+col*70,84),t,22,'#a92f27')
+for row,week in enumerate(calendar_dates.monthcalendar(2004,6)):
+    for col,day in enumerate(week):
+        if not day: continue
+        x,y=45+col*70,126+row*39
+        centered(d,(x,y),str(day),30,'#ae2f26' if col>4 else '#382a24')
+        if day==30:
+            points=[]
+            for k in range(81):
+                a=2*math.pi*k/80; wobble=1.3*math.sin(a*3+.7)+.8*math.sin(a*7)
+                points.append((x+(28+wobble)*math.cos(a),y+(20+wobble)*math.sin(a)))
+            d.line(points,fill='#ca2926',width=4)
+            d.arc((x-29,y-22,x+28,y+21),210,290,fill='#c72a25',width=3)
+cal.save(OUT/'calendar-june-2004.png',optimize=True)
+photo=Image.open(OUT/'props-source/calendar-tatu.jpg').convert('RGB')
+photo.thumbnail((768,526))
+photo.save(OUT/'calendar-tatu.jpg',quality=88,optimize=True)

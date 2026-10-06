@@ -182,3 +182,39 @@ test('loose change sits above the counter instead of inside its top', () => {
     assert.ok(bounds.min[1] >= 1.03 - 1e-6, 'coin bottom clears the 1.03 m counter surface');
   }
 });
+
+function meshBounds(json, name, materialName = null) {
+  const node = json.nodes.find(item => item.name === name);
+  const parts = json.meshes[node.mesh].primitives.filter(p => !materialName || json.materials[p.material].name === materialName);
+  assert.ok(parts.length, name);
+  return { min: [0,1,2].map(i => Math.min(...parts.map(p => json.accessors[p.attributes.POSITION].min[i]))),
+    max: [0,1,2].map(i => Math.max(...parts.map(p => json.accessors[p.attributes.POSITION].max[i]))) };
+}
+
+test('the notebook clears the goods at the seller-facing shelf edge', () => {
+  const json = gltf();
+  const notebook = meshBounds(json, 'counter_notebook');
+  const goods = meshBounds(json, 'goods_fill');
+  assert.ok(notebook.max[2] + .04 < goods.min[2], 'at least 4 cm between notebook and retail packs');
+});
+
+test('the calculator is flat with its display away from the seller and keys nearer', () => {
+  const json = gltf();
+  const body = meshBounds(json, 'counter_calculator');
+  const display = meshBounds(json, 'counter_calculator', 'lcd_green');
+  const keys = meshBounds(json, 'counter_calculator', 'plastic_light');
+  assert.ok(body.max[1] - body.min[1] <= .021, 'at most 21 mm including the keys');
+  assert.ok(display.min[2] > keys.max[2], 'screen at the front, keypad faces the seller');
+});
+
+test('the red calendar carries June 2004 day 30 and an embedded concert photo', () => {
+  const json = gltf();
+  const page = json.nodes.find(node => node.name === 'calendar_print');
+  assert.deepEqual([page.extras.year, page.extras.month, page.extras.marked_day], [2004,6,30]);
+  assert.ok(json.nodes.some(node => node.name === 'calendar_concert_picture'));
+  for (const name of ['calendar_june_2004', 'calendar_tatu_photo']) {
+    const mat = json.materials.find(item => item.name === name);
+    const texture = json.textures[mat?.pbrMetallicRoughness?.baseColorTexture?.index];
+    assert.ok(texture && json.images[texture.source]?.bufferView !== undefined, `${name} embedded`);
+  }
+});
