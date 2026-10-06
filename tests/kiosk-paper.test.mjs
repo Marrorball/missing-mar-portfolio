@@ -116,10 +116,11 @@ test('graffiti on both walls draws without trouble', async () => {
   }
 });
 
-test('stickers: «ДАША — НЯША» and the pink ones', async () => {
+test('stickers: «ДАША — НЯША», cars and Bakugan, no more pink ones', async () => {
   const { STICKERS, drawSticker } = await import('../assets/js/kiosk/stickers.js');
-  assert.deepEqual(STICKERS, ['dasha', 'heart', 'bunny', 'star']);
+  assert.deepEqual(STICKERS, ['dasha', 'turbo', 'tuning', 'bakugan', 'ball']);
   const { context, texts } = recorder();
   for (const kind of STICKERS) drawSticker(context, 512, 300, kind);
-  for (const text of ['ДАША —', 'НЯША', 'НЯ!', 'КАВАЙ']) assert.ok(texts.includes(text), text);
+  for (const text of ['ДАША —', 'НЯША', 'TURBO', 'STREET RACING', 'BAKUGAN', '450 G']) assert.ok(texts.includes(text), text);
+  for (const text of ['НЯ!', 'КАВАЙ']) assert.ok(!texts.includes(text), text);
 });

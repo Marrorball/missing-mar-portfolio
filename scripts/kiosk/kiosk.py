@@ -99,11 +99,15 @@ def _graffiti():
 
 
 def _stickers():
-    """Anchors for vinyl stickers (assets/js/kiosk/stickers.js), all on the
-    left side wall with the graffiti; the front stays clean."""
+    """Anchors for stickers (assets/js/kiosk/stickers.js), all on the left side
+    wall around the graffiti, at eye height where they are seen; the front
+    stays clean."""
     side = -HW - 0.039          # on the faces of the corrugation
-    for kind, y, z, w, h, tilt in (('dasha', -0.6, 0.56, 0.17, 0.095, -0.06), ('star', -0.22, 0.44, 0.085, 0.085, 0.2),
-                                   ('bunny', 0.3, 0.52, 0.1, 0.1, -0.1), ('heart', 0.66, 0.6, 0.075, 0.075, 0.12)):
+    for kind, y, z, w, h, tilt in (('dasha', -0.5, 1.8, 0.23, 0.128, -0.06),
+                                   ('tuning', 0.25, 1.86, 0.27, 0.12, 0.03),
+                                   ('turbo', 0.72, 1.62, 0.16, 0.115, -0.09),
+                                   ('bakugan', -0.57, 1.36, 0.16, 0.16, 0.1),
+                                   ('ball', 0.76, 1.3, 0.115, 0.115, 0.0)):
         anchor = screen(f'sticker_{kind}', (side, y, z), w, h, rot_z=-math.pi / 2)
         anchor.rotation_euler[1] = tilt
 
