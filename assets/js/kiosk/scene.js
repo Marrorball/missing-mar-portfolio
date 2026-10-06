@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { CSS3DObject, CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RACK_FACES } from './discs.js';
 import {
@@ -54,12 +53,13 @@ export async function createKioskScene({
   container.appendChild(renderer.domElement);
   const canvas = renderer.domElement;
 
-  // Pages sit in a CSS3D layer above the canvas; only the pages themselves
-  // take the mouse, everything else falls through to the scene.
-  const cssRenderer = new CSS3DRenderer();
-  cssRenderer.setSize(container.clientWidth, container.clientHeight);
-  cssRenderer.domElement.className = 'kiosk-css3d';
-  container.appendChild(cssRenderer.domElement);
+  // A close-up always looks at its screen head-on, so the screen shows up as
+  // a centred rectangle and the page can be a plain 2D layer laid exactly on
+  // it. (Pages inside a CSS3D context render in Chrome but ignore clicks.)
+  // Only the pages take the mouse; everything else falls through.
+  const screenLayer = document.createElement('div');
+  screenLayer.className = 'kiosk-screens';
+  container.appendChild(screenLayer);
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(SKY);
@@ -102,12 +102,15 @@ export async function createKioskScene({
     const scroller = document.createElement('div');
     scroller.className = 'screen-scroll';
     element.appendChild(scroller);
-    const object = new CSS3DObject(element);
-    anchor.getWorldPosition(object.position);
-    anchor.getWorldQuaternion(object.quaternion);
-    object.visible = false;
-    scene.add(object);
-    screens[preset] = { anchor, object, element, scroller, width: anchor.userData.width, height: anchor.userData.height };
+    screenLayer.appendChild(element);
+    screens[preset] = {
+      center: anchor.getWorldPosition(new THREE.Vector3()),
+      normal: new THREE.Vector3(0, 0, 1).applyQuaternion(anchor.getWorldQuaternion(new THREE.Quaternion())),
+      element,
+      scroller,
+      width: anchor.userData.width,
+      height: anchor.userData.height
+    };
   }
 
   const highlight = new Map();
@@ -177,29 +180,28 @@ export async function createKioskScene({
   function screenView(name) {
     const screen = screens[name];
     if (!screen) return null;
-    const target = screen.anchor.getWorldPosition(new THREE.Vector3());
-    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(screen.anchor.getWorldQuaternion(new THREE.Quaternion()));
     const distance = fitDistance(screen.width, screen.height, SCREEN_FOV, camera.aspect, SCREEN_FILL);
-    return { position: target.clone().addScaledVector(normal, distance), target };
+    return { position: screen.center.clone().addScaledVector(screen.normal, distance), target: screen.center.clone() };
   }
 
-  // One CSS pixel of the page = one pixel on the monitor, so text stays sharp.
+  // The page covers exactly the screen's rectangle on the monitor.
   function sizeScreen(name) {
     const screen = screens[name];
-    const distance = camera.position.distanceTo(screen.object.position);
+    const distance = camera.position.distanceTo(screen.center);
     const visible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(SCREEN_FOV / 2));
-    const heightPx = (screen.height / visible) * container.clientHeight;
-    const widthPx = heightPx * (screen.width / screen.height);
-    screen.element.style.width = `${Math.round(widthPx)}px`;
-    screen.element.style.height = `${Math.round(heightPx)}px`;
-    screen.object.scale.setScalar(screen.height / Math.round(heightPx));
+    const height = Math.round((screen.height / visible) * container.clientHeight);
+    const width = Math.round(height * (screen.width / screen.height));
+    Object.assign(screen.element.style, {
+      width: `${width}px`,
+      height: `${height}px`,
+      left: `${Math.round((container.clientWidth - width) / 2)}px`,
+      top: `${Math.round((container.clientHeight - height) / 2)}px`
+    });
   }
 
   function showScreen(name) {
     for (const [key, screen] of Object.entries(screens)) {
-      const on = key === name;
-      screen.object.visible = on;
-      screen.element.classList.toggle('is-on', on);
+      screen.element.classList.toggle('is-on', key === name);
     }
   }
 
@@ -233,7 +235,14 @@ export async function createKioskScene({
   function focus(name, { instant = false } = {}) {
     const view = screenView(name) || presets[name];
     if (!view) return;
+    const alreadyThere = !flight && name === current
+      && camera.position.distanceTo(view.position) < 1e-3
+      && controls.target.distanceTo(view.target) < 1e-3;
     current = name;
+    if (alreadyThere) {
+      arrive(name); // e.g. switching channels: the TV stays on
+      return;
+    }
     showScreen(null);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const fov = screens[name] ? SCREEN_FOV : fitFov(presetLimits(name).fov, camera.aspect);
@@ -338,7 +347,6 @@ export async function createKioskScene({
     const width = container.clientWidth;
     const height = container.clientHeight;
     renderer.setSize(width, height, false);
-    cssRenderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     if (flight) return;
@@ -371,7 +379,6 @@ export async function createKioskScene({
     }
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * 0.15;
     renderer.render(scene, camera);
-    cssRenderer.render(scene, camera);
   });
 
   return {
@@ -388,7 +395,7 @@ export async function createKioskScene({
       controls.dispose();
       renderer.dispose();
       canvas.remove();
-      cssRenderer.domElement.remove();
+      screenLayer.remove();
     }
   };
 }

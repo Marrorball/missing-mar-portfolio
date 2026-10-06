@@ -1,21 +1,28 @@
 /* Pages that live on objects in the scene: TV, billboard, terminal, flyer.
    On phones and without 3D the same pages fill the viewport (.screen-flat). */
 
-.kiosk-css3d {
+.kiosk-screens {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
-.screen-page {
-  position: relative;
+.kiosk-screens .screen-page {
+  position: absolute;
+  display: none;
   overflow: hidden;
-  opacity: 0;
-  transition: opacity .35s ease;
+  pointer-events: auto;
 }
 
-.screen-page.is-on {
-  opacity: 1;
+.kiosk-screens .screen-page.is-on {
+  display: block;
+  animation: screen-on .35s ease-out both;
+}
+
+@keyframes screen-on {
+  from { opacity: 0; filter: brightness(2.2); }
+  to { opacity: 1; filter: none; }
 }
 
 .screen-scroll {
@@ -72,8 +79,10 @@
 .tv-osd {
   position: sticky;
   z-index: 1;
-  top: 0;
-  margin: -8px 0 16px;
+  top: -30px;
+  margin: -30px -40px 16px;
+  padding: 22px 40px 8px;
+  background: linear-gradient(#0b0f0d 75%, rgba(11, 15, 13, 0));
   color: #7dff8f;
   font-size: 15px;
   letter-spacing: .12em;
@@ -243,6 +252,13 @@
   grid-template-columns: 220px 1fr;
   gap: 28px;
   align-items: start;
+}
+
+/* Owner-authored text on the billboard is printed ink, not the light text of
+   the dark site theme. */
+.board-page .rich-content,
+.board-page .rich-content * {
+  color: inherit;
 }
 
 .board-about img {
@@ -476,9 +492,15 @@
   padding-top: 70px;
 }
 
-#kiosk-closeup-slot .kiosk-back,
-#kiosk-closeup-slot .rack-controls {
-  z-index: 12;
+.kiosk-chrome {
+  position: fixed;
+  z-index: 11;
+  inset: 0;
+  pointer-events: none;
+}
+
+.kiosk-chrome > div > * {
+  pointer-events: auto;
 }
 
 @media (max-width: 760px) {
@@ -513,6 +535,13 @@
   .tv-page,
   .board-page,
   .terminal-page {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .tv-osd {
+    margin-right: -18px;
+    margin-left: -18px;
     padding-right: 18px;
     padding-left: 18px;
   }
