@@ -1,45 +1,54 @@
 import { loadContent } from './content.js';
-import {
-  renderAboutView,
-  renderContactView,
-  renderGenericPageView,
-  renderLoadError,
-  renderProjectView
-} from './render.js';
+import { renderLoadError } from './render.js';
 import { parseRoute } from './router.js';
+import { neighbourId } from './kiosk/channels.js';
 import { contactLinks } from './kiosk/contacts.js';
 import { assignDiscs } from './kiosk/discs.js';
 import { HOTSPOTS, LOCKED_PRESETS, ROUTE_PRESETS, hotspotForNode } from './kiosk/hotspots.js';
+import {
+  renderAboutBoard,
+  renderFlyer,
+  renderPageBoard,
+  renderPriceBoard,
+  renderTerminalScreen,
+  renderTvChannel,
+  renderTvGuide
+} from './kiosk/pages.js';
 import { assignHits } from './kiosk/slots.js';
 import {
   renderBackButton,
-  renderCatalogView,
   renderContactCard,
   renderHelpBar,
   renderHint,
   renderHotspotButtons,
   renderLoading,
   renderNote,
-  renderPriceView,
-  renderRackControls
+  renderRackControls,
+  renderRemote
 } from './kiosk/ui.js';
 
 const KIOSK_URL = new URL('../kiosk/kiosk.glb', import.meta.url).href;
+const NARROW = window.matchMedia('(max-width: 760px)');
 
-const state = { bundle: null, kiosk: null, hits: [], discs: [], faces: [], preset: 'home', rackFace: 0 };
+const state = {
+  bundle: null,
+  kiosk: null,
+  hits: [],
+  discs: [],
+  faces: [],
+  preset: 'home',
+  rackFace: 0,
+  channel: null
+};
 
 const header = document.querySelector('#site-header');
 const homeView = document.querySelector('#home-view');
-const overlayView = document.querySelector('#overlay-view');
+const flatView = document.querySelector('#overlay-view');
 const liveRegion = document.querySelector('#live-region');
 
 function announce(message) {
   liveRegion.textContent = '';
   window.requestAnimationFrame(() => { liveRegion.textContent = message; });
-}
-
-function getProject(projectId) {
-  return state.bundle?.projects.find(project => project.id === projectId);
 }
 
 function getPage(pageId) {
@@ -48,6 +57,11 @@ function getPage(pageId) {
 
 function getCategory(categoryId) {
   return state.bundle?.site.categories?.find(category => category.id === categoryId) || {};
+}
+
+// Phones and devices without 3D get the same pages full screen.
+function isFlat() {
+  return !state.kiosk || NARROW.matches;
 }
 
 function drawShell() {
@@ -95,25 +109,53 @@ function rackTitle(face) {
   return state.faces.find(entry => entry.index === face)?.title || 'Пусто';
 }
 
-// Moves the camera and swaps the close-up chrome: a way back for every
-// close-up, spin controls for the rack.
+function chromeFor(name) {
+  if (!LOCKED_PRESETS.includes(name)) return '';
+  if (name === 'rack') return renderBackButton() + renderRackControls(rackTitle(state.rackFace));
+  if (name === 'tv') return renderBackButton() + renderRemote();
+  return renderBackButton();
+}
+
+// Moves the camera and swaps the close-up chrome.
 function focusPreset(name, options) {
   state.preset = name;
   state.kiosk?.focus(name, options);
-  const slot = document.querySelector('#kiosk-closeup-slot');
-  if (!LOCKED_PRESETS.includes(name)) {
-    slot.innerHTML = '';
-    return;
+  document.querySelector('#kiosk-closeup-slot').innerHTML = chromeFor(name);
+}
+
+function closeFlat() {
+  flatView.hidden = true;
+  flatView.innerHTML = '';
+}
+
+// Shows a page on its object in the scene, or full screen when flat.
+function openScreen(preset, html, options = {}) {
+  if (isFlat()) {
+    flatView.innerHTML = `<div class="screen-flat screen-${preset}"><div class="screen-scroll">${html}</div></div>`;
+    flatView.hidden = false;
+  } else {
+    closeFlat();
+    state.kiosk.setPage(preset, html, options);
   }
-  slot.innerHTML = renderBackButton() + (name === 'rack' ? renderRackControls(rackTitle(state.rackFace)) : '');
+  focusPreset(preset);
+}
+
+function screenScroller() {
+  if (isFlat()) return flatView.querySelector('.screen-scroll');
+  return state.kiosk?.pageScroller(state.preset) || null;
 }
 
 function goHome() {
   if (window.location.hash && window.location.hash !== '#') {
     window.location.hash = '';
-  } else {
-    focusPreset('home');
+    return;
   }
+  closeFlat();
+  focusPreset('home');
+}
+
+function terminalPage() {
+  return renderTerminalScreen(contactLinks(state.bundle.site.contacts));
 }
 
 function runAction(node) {
@@ -121,8 +163,11 @@ function runAction(node) {
   if (!spot) return;
   const { action } = spot;
   if (action.type === 'route') window.location.hash = action.hash;
-  if (action.type === 'focus') focusPreset(action.preset);
   if (action.type === 'note') showNote(action.text);
+  if (action.type === 'focus') {
+    if (action.preset === 'terminal') openScreen('terminal', terminalPage());
+    else focusPreset(action.preset);
+  }
 }
 
 function showLabel(node, x, y) {
@@ -156,78 +201,80 @@ async function copyContact(value) {
   }
 }
 
-function closeOverlay() {
-  overlayView.hidden = true;
-  overlayView.innerHTML = '';
-  document.body.dataset.route = 'home';
+function changeChannel(step) {
+  const { projects } = state.bundle;
+  if (!projects.length) return;
+  const id = state.channel
+    ? neighbourId(projects, state.channel, step)
+    : projects[step > 0 ? 0 : projects.length - 1].id;
+  window.location.hash = `#project/${encodeURIComponent(id)}`;
 }
 
-function showOverlay(html, viewName) {
-  overlayView.innerHTML = `<div class="overlay-scrim" data-action="close-overlay"></div><div class="overlay-panel">${html}</div>`;
-  overlayView.hidden = false;
-  document.body.dataset.route = viewName;
-  overlayView.querySelector('.back-link')?.focus({ preventScroll: true });
+function scrollScreen(step) {
+  const scroller = screenScroller();
+  scroller?.scrollBy({ top: step * scroller.clientHeight * 0.8, behavior: 'smooth' });
 }
 
 function renderRoute() {
   if (!state.bundle) return;
   const route = parseRoute(window.location.hash);
-  focusPreset(ROUTE_PRESETS[route.view] || 'home');
-
-  if (route.view === 'home') {
-    closeOverlay();
-    return;
-  }
+  const { site, resume, projects } = state.bundle;
+  const previous = state.channel;
+  state.channel = null;
 
   if (route.view === 'project') {
-    const project = getProject(route.id);
-    if (!project) {
+    const index = projects.findIndex(project => project.id === route.id);
+    if (index === -1) {
       window.location.hash = '';
       return;
     }
-    const ordered = state.bundle.projects;
-    const position = ordered.findIndex(item => item.id === project.id);
-    const neighbour = ordered[(position + 1) % ordered.length] || null;
-    showOverlay(
-      renderProjectView(project, getCategory(project.category), neighbour === project ? null : neighbour),
-      'project'
-    );
-    announce(`Открыт проект ${project.title}`);
+    const project = projects[index];
+    state.channel = project.id;
+    openScreen('tv', renderTvChannel(project, { index, category: getCategory(project.category).title }), {
+      switching: previous !== null && previous !== project.id
+    });
+    announce(`Канал ${index + 1}: ${project.title}`);
     return;
   }
 
   if (route.view === 'catalog') {
-    showOverlay(renderCatalogView(state.bundle.projects), 'catalog');
-    announce('Открыт список проектов');
-    return;
-  }
-
-  if (route.view === 'price') {
-    showOverlay(renderPriceView(), 'price');
-    announce('Открыт прайс');
+    openScreen('tv', renderTvGuide(projects, site.categories), { switching: previous !== null });
+    announce('Телепрограмма');
     return;
   }
 
   if (route.view === 'about') {
     const page = getPage('about') || { id: 'about', title: 'Обо мне', content: '' };
-    showOverlay(renderAboutView(state.bundle.site, state.bundle.resume, page), 'about');
-    announce('Открыта страница Обо мне');
+    openScreen('billboard', renderAboutBoard(site, resume, page));
+    announce('Обо мне');
+    return;
+  }
+
+  if (route.view === 'price') {
+    openScreen('billboard', renderPriceBoard());
+    announce('Прайс');
     return;
   }
 
   if (route.view === 'contact') {
-    showOverlay(renderContactView(state.bundle.site), 'contact');
-    announce('Открыта страница Контакт');
+    openScreen('flyer', renderFlyer(contactLinks(site.contacts), site.owner));
+    announce('Контакты');
     return;
   }
 
-  const page = getPage(route.id);
-  if (!page) {
-    window.location.hash = '';
+  if (route.view === 'page') {
+    const page = getPage(route.id);
+    if (!page) {
+      window.location.hash = '';
+      return;
+    }
+    openScreen('billboard', renderPageBoard(page));
+    announce(page.title);
     return;
   }
-  showOverlay(renderGenericPageView(page), 'page');
-  announce(`Открыта страница ${page.title}`);
+
+  closeFlat();
+  focusPreset('home');
 }
 
 async function mountKiosk() {
@@ -248,14 +295,22 @@ async function mountKiosk() {
     });
     state.kiosk.setHits(state.hits);
     state.kiosk.setDiscs(state.discs);
+    document.fonts.ready.then(() => {
+      state.kiosk.setWallText(['ПИШИТЕ:', ...contactLinks(state.bundle.site.contacts)
+        .filter(link => link.kind !== 'behance')
+        .map(link => (link.kind === 'telegram' ? `TG ${link.value}` : link.value))]);
+    });
     focusPreset(ROUTE_PRESETS[parseRoute(window.location.hash).view] || 'home', { instant: true });
+    renderRoute();
     loading.innerHTML = '';
     firstVisitHint();
   } catch (error) {
     console.error(error);
+    state.kiosk = null;
     loading.innerHTML = '';
-    showNote('Ларёк не открылся на этом устройстве. Вот весь товар списком.');
+    showNote('Ларёк не открылся на этом устройстве. Вот всё списком.');
     if (parseRoute(window.location.hash).view === 'home') window.location.hash = '#catalog';
+    else renderRoute();
   }
 }
 
@@ -266,33 +321,38 @@ document.addEventListener('click', event => {
   const element = event.target.closest('[data-action]');
   if (!element) return;
   const action = element.dataset.action;
+  const step = Number(element.dataset.step);
   if (action === 'kiosk-pick') runAction(element.dataset.node);
   if (action === 'kiosk-focus') focusPreset(element.dataset.preset);
-  if (action === 'kiosk-home') goHome();
+  if (action === 'kiosk-home' || action === 'tv-off') goHome();
   if (action === 'kiosk-help') showHint();
-  if (action === 'rack-spin') state.kiosk?.spinRack(Number(element.dataset.step));
+  if (action === 'rack-spin') state.kiosk?.spinRack(step);
+  if (action === 'tv-channel') changeChannel(step);
+  if (action === 'tv-scroll') scrollScreen(step);
+  if (action === 'tv-menu') window.location.hash = '#catalog';
   if (action === 'contacts-card') toggleContactCard();
   if (action === 'copy-contact') copyContact(element.dataset.value);
-  if (action === 'close-overlay') window.location.hash = '';
-  if (action === 'scroll-to-section') {
-    // Section anchors must not touch the hash: it is the view router.
-    event.preventDefault();
-    document.getElementById(element.dataset.sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 });
 
 document.addEventListener('keydown', event => {
+  if (event.target.closest?.('input, textarea')) return;
   if (event.key === 'Escape') {
     if (document.querySelector('#contact-card')) toggleContactCard(false);
-    else if (!overlayView.hidden) window.location.hash = '';
-    else if (LOCKED_PRESETS.includes(state.preset)) goHome();
+    else if (LOCKED_PRESETS.includes(state.preset) || !flatView.hidden) goHome();
+    return;
   }
-  if (state.preset === 'rack' && overlayView.hidden && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
-    state.kiosk?.spinRack(event.key === 'ArrowLeft' ? -1 : 1);
+  const horizontal = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0;
+  const vertical = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
+  if (state.preset === 'rack' && horizontal) state.kiosk?.spinRack(horizontal);
+  if (state.preset === 'tv' && horizontal) changeChannel(horizontal);
+  if (['tv', 'billboard', 'terminal', 'flyer'].includes(state.preset) && vertical) {
+    event.preventDefault();
+    scrollScreen(vertical);
   }
 });
 
 window.addEventListener('hashchange', renderRoute);
+NARROW.addEventListener('change', renderRoute);
 
 export async function bootstrapPortfolio() {
   header.hidden = true;
@@ -304,7 +364,6 @@ export async function bootstrapPortfolio() {
     state.discs = discs;
     state.faces = faces;
     homeView.insertAdjacentHTML('beforeend', renderHotspotButtons(hotspotEntries()));
-    renderRoute();
   } catch (error) {
     homeView.innerHTML = renderLoadError(error.message);
     return;

@@ -141,68 +141,6 @@ body.is-pointing .kiosk-stage canvas {
   clip-path: none;
 }
 
-#overlay-view {
-  position: fixed;
-  z-index: 10;
-  inset: 0;
-}
-
-#overlay-view[hidden] {
-  display: none;
-}
-
-.overlay-scrim {
-  position: absolute;
-  inset: 0;
-  background: rgba(6, 9, 16, .55);
-}
-
-.overlay-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(820px, 100%);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  background: #10141f;
-  box-shadow: -20px 0 60px rgba(0, 0, 0, .45);
-}
-
-/* The portfolio views were drawn for a full page; inside the side panel they
-   get one column and calmer headings. Stage 4 restyles them properly. */
-.overlay-panel .about-layout {
-  grid-template-columns: 1fr;
-}
-
-.overlay-panel .about-layout > img {
-  max-width: 320px;
-}
-
-.overlay-panel .view-header h1 {
-  font-size: clamp(32px, 4vw, 52px);
-}
-
-.catalog-list {
-  margin: 0;
-  padding: 0 var(--page-pad) 64px;
-  list-style: none;
-}
-
-.catalog-list a {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, .14);
-  font-size: 18px;
-}
-
-.catalog-list a:hover small,
-.catalog-list a:hover span {
-  color: #f4e3b8;
-}
-
 @media (max-width: 640px) {
   .kiosk-help {
     right: 12px;
