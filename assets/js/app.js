@@ -3,25 +3,35 @@ import {
   renderAboutView,
   renderContactView,
   renderGenericPageView,
-  renderHeader,
-  renderHome,
   renderLoadError,
   renderProjectView
 } from './render.js';
 import { parseRoute } from './router.js';
-import { selectFeaturedProjects } from './selectors.js';
+import { HOTSPOTS, ROUTE_PRESETS, hotspotForNode } from './kiosk/hotspots.js';
+import { assignSlots } from './kiosk/slots.js';
+import {
+  renderCatalogView,
+  renderHelpBar,
+  renderHint,
+  renderHotspotButtons,
+  renderLoading,
+  renderNote,
+  renderPriceView
+} from './kiosk/ui.js';
 
-const state = {
-  bundle: null,
-  activeProjectId: '',
-  activeCategory: 'all',
-  trackDepth: null
-};
+const KIOSK_URL = new URL('../kiosk/kiosk.glb', import.meta.url).href;
+
+const state = { bundle: null, kiosk: null, placed: [] };
 
 const header = document.querySelector('#site-header');
 const homeView = document.querySelector('#home-view');
 const overlayView = document.querySelector('#overlay-view');
 const liveRegion = document.querySelector('#live-region');
+
+function announce(message) {
+  liveRegion.textContent = '';
+  window.requestAnimationFrame(() => { liveRegion.textContent = message; });
+}
 
 function getProject(projectId) {
   return state.bundle?.projects.find(project => project.id === projectId);
@@ -35,86 +45,87 @@ function getCategory(categoryId) {
   return state.bundle?.site.categories?.find(category => category.id === categoryId) || {};
 }
 
-function drawHome() {
-  const { site, pages, projects } = state.bundle;
-  homeView.innerHTML = renderHome({
-    site,
-    pages,
-    projects,
-    categories: site.categories || [],
-    activeProjectId: state.activeProjectId,
-    activeCategory: state.activeCategory
-  });
-  enhanceDig();
+function drawShell() {
+  homeView.innerHTML = `<div class="kiosk-stage" id="kiosk-stage"></div>
+    <div class="kiosk-label" id="kiosk-label" hidden></div>
+    <div id="kiosk-note-slot"></div>
+    <div id="kiosk-loading-slot">${renderLoading(0)}</div>
+    ${renderHelpBar()}`;
 }
 
-let unearthObserver = null;
-
-function enhanceDig() {
-  const finds = document.querySelector('#finds');
-  const head = document.querySelector('#depth-head');
-  if (!finds) return;
-
-  unearthObserver?.disconnect();
-  unearthObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-unearthed');
-        unearthObserver.unobserve(entry.target);
-      }
-    });
-  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
-  finds.querySelectorAll('.find').forEach(find => unearthObserver.observe(find));
-
-  if (!head) return;
-  const deepest = 1.4 * finds.children.length;
-  let queued = false;
-
-  const track = () => {
-    queued = false;
-    const box = finds.getBoundingClientRect();
-    const travelled = window.innerHeight * 0.5 - box.top;
-    const progress = Math.min(Math.max(travelled / Math.max(box.height, 1), 0), 1);
-    head.style.top = `${(progress * 100).toFixed(2)}%`;
-    head.innerHTML = `<strong>−${(progress * deepest).toFixed(1).replace('.', ',')} м</strong>`;
-  };
-
-  window.removeEventListener('scroll', state.trackDepth);
-  state.trackDepth = () => {
-    if (queued) return;
-    queued = true;
-    window.requestAnimationFrame(track);
-  };
-  window.addEventListener('scroll', state.trackDepth, { passive: true });
-  track();
+function hotspotEntries() {
+  const slots = state.placed.map(item => ({ node: item.slot, label: item.title }));
+  const fixed = Object.entries(HOTSPOTS).map(([node, spot]) => ({ node, label: spot.label }));
+  return [...slots, ...fixed];
 }
 
-function announce(message) {
-  liveRegion.textContent = '';
-  window.requestAnimationFrame(() => { liveRegion.textContent = message; });
+let noteTimer = 0;
+function showNote(text) {
+  const slot = document.querySelector('#kiosk-note-slot');
+  slot.innerHTML = renderNote(text);
+  window.clearTimeout(noteTimer);
+  noteTimer = window.setTimeout(() => { slot.innerHTML = ''; }, 4200);
 }
 
-function showHome() {
-  homeView.hidden = false;
+function showHint() {
+  document.querySelector('.kiosk-hint')?.remove();
+  homeView.insertAdjacentHTML('beforeend', renderHint());
+  window.setTimeout(() => document.querySelector('.kiosk-hint')?.remove(), 4000);
+}
+
+function firstVisitHint() {
+  let seen = false;
+  try {
+    seen = window.localStorage.getItem('kiosk-hint-seen') === '1';
+    window.localStorage.setItem('kiosk-hint-seen', '1');
+  } catch {
+    seen = false;
+  }
+  if (!seen) showHint();
+}
+
+function runAction(node) {
+  const spot = hotspotForNode(node, state.placed);
+  if (!spot) return;
+  const { action } = spot;
+  if (action.type === 'route') window.location.hash = action.hash;
+  if (action.type === 'focus') state.kiosk?.focus(action.preset);
+  if (action.type === 'note') showNote(action.text);
+}
+
+function showLabel(node, x, y) {
+  const label = document.querySelector('#kiosk-label');
+  const spot = node ? hotspotForNode(node, state.placed) : null;
+  document.body.classList.toggle('is-pointing', Boolean(spot));
+  if (!spot) {
+    label.hidden = true;
+    return;
+  }
+  label.textContent = spot.label;
+  label.style.transform = `translate(${x + 16}px, ${y + 14}px)`;
+  label.hidden = false;
+}
+
+function closeOverlay() {
   overlayView.hidden = true;
   overlayView.innerHTML = '';
   document.body.dataset.route = 'home';
 }
 
 function showOverlay(html, viewName) {
-  homeView.hidden = true;
-  overlayView.innerHTML = html;
+  overlayView.innerHTML = `<div class="overlay-scrim" data-action="close-overlay"></div><div class="overlay-panel">${html}</div>`;
   overlayView.hidden = false;
   document.body.dataset.route = viewName;
-  overlayView.querySelector('h1, [tabindex]')?.focus({ preventScroll: true });
+  overlayView.querySelector('.back-link')?.focus({ preventScroll: true });
 }
 
 function renderRoute() {
   if (!state.bundle) return;
   const route = parseRoute(window.location.hash);
+  state.kiosk?.focus(ROUTE_PRESETS[route.view] || 'home');
 
   if (route.view === 'home') {
-    showHome();
+    closeOverlay();
     return;
   }
 
@@ -132,6 +143,18 @@ function renderRoute() {
       'project'
     );
     announce(`Открыт проект ${project.title}`);
+    return;
+  }
+
+  if (route.view === 'catalog') {
+    showOverlay(renderCatalogView(state.bundle.projects), 'catalog');
+    announce('Открыт список проектов');
+    return;
+  }
+
+  if (route.view === 'price') {
+    showOverlay(renderPriceView(), 'price');
+    announce('Открыт прайс');
     return;
   }
 
@@ -157,57 +180,62 @@ function renderRoute() {
   announce(`Открыта страница ${page.title}`);
 }
 
-function scrollToArchive() {
-  showHome();
-  document.querySelector('#project-archive')?.scrollIntoView({ behavior: 'smooth' });
-}
-
-function handleAction(element, event) {
-  const action = element.dataset.action;
-  if (action === 'select-featured') {
-    state.activeProjectId = element.dataset.projectId;
-    drawHome();
-    announce(`Выбран проект ${getProject(state.activeProjectId)?.title || ''}`);
-    return;
-  }
-  if (action === 'filter-projects') {
-    state.activeCategory = element.dataset.categoryId || 'all';
-    drawHome();
-    document.querySelector('#project-archive')?.scrollIntoView({ block: 'start' });
-    announce(`Фильтр проектов: ${element.textContent.trim()}`);
-    return;
-  }
-  if (action === 'scroll-to-section') {
-    // Section anchors must not touch the hash: it is the view router.
-    event.preventDefault();
-    const target = document.getElementById(element.dataset.sectionId);
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return;
-  }
-  if (action === 'show-projects') {
-    event.preventDefault();
-    scrollToArchive();
+async function mountKiosk() {
+  const loading = document.querySelector('#kiosk-loading-slot');
+  try {
+    const { createKioskScene } = await import('./kiosk/scene.js');
+    state.kiosk = await createKioskScene({
+      container: document.querySelector('#kiosk-stage'),
+      url: KIOSK_URL,
+      onProgress: percent => { loading.innerHTML = renderLoading(percent); },
+      onHover: showLabel,
+      onPick: runAction
+    });
+    state.kiosk.setSlots(state.placed);
+    state.kiosk.focus(ROUTE_PRESETS[parseRoute(window.location.hash).view] || 'home', { instant: true });
+    loading.innerHTML = '';
+    firstVisitHint();
+  } catch (error) {
+    console.error(error);
+    loading.innerHTML = '';
+    showNote('Ларёк не открылся на этом устройстве. Вот весь товар списком.');
+    if (parseRoute(window.location.hash).view === 'home') window.location.hash = '#catalog';
   }
 }
 
 document.addEventListener('click', event => {
-  const actionElement = event.target.closest('[data-action]');
-  if (actionElement) handleAction(actionElement, event);
+  const element = event.target.closest('[data-action]');
+  if (!element) return;
+  const action = element.dataset.action;
+  if (action === 'kiosk-pick') runAction(element.dataset.node);
+  if (action === 'kiosk-help') showHint();
+  if (action === 'close-overlay') window.location.hash = '';
+  if (action === 'scroll-to-section') {
+    // Section anchors must not touch the hash: it is the view router.
+    event.preventDefault();
+    document.getElementById(element.dataset.sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !overlayView.hidden) window.location.hash = '';
 });
 
 window.addEventListener('hashchange', renderRoute);
 
 export async function bootstrapPortfolio() {
+  header.hidden = true;
+  drawShell();
   try {
     state.bundle = await loadContent();
-    state.activeProjectId = selectFeaturedProjects(state.bundle.projects, 3)[0]?.id || '';
-    header.innerHTML = renderHeader(state.bundle.site, state.bundle.pages);
-    drawHome();
+    state.placed = assignSlots(state.bundle.projects).placed;
+    homeView.insertAdjacentHTML('beforeend', renderHotspotButtons(hotspotEntries()));
     renderRoute();
   } catch (error) {
-    header.hidden = true;
     homeView.innerHTML = renderLoadError(error.message);
+    return;
   }
+  await mountKiosk();
 }
 
 bootstrapPortfolio();

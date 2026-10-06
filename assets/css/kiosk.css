@@ -1,0 +1,206 @@
+/* The kiosk owns the whole viewport; portfolio views open as a panel on top. */
+
+body {
+  overflow: hidden;
+  background: #1b2a4a;
+}
+
+#home-view {
+  position: fixed;
+  inset: 0;
+}
+
+.kiosk-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.kiosk-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+body.is-pointing .kiosk-stage canvas {
+  cursor: pointer;
+}
+
+.kiosk-label {
+  position: fixed;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  padding: 4px 9px;
+  color: #1c1408;
+  background: #f4e3b8;
+  font: 13px/1.3 var(--mono);
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+}
+
+.kiosk-label[hidden] {
+  display: none;
+}
+
+.kiosk-help {
+  position: fixed;
+  z-index: 6;
+  left: 50%;
+  bottom: 18px;
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  background: rgba(14, 18, 28, .8);
+  border: 1px solid rgba(255, 255, 255, .14);
+  transform: translateX(-50%);
+  backdrop-filter: blur(8px);
+}
+
+.kiosk-help a,
+.kiosk-help button {
+  padding: 9px 14px;
+  color: #f3ecdf;
+  background: transparent;
+  font: 13px/1.2 var(--mono);
+  white-space: nowrap;
+}
+
+.kiosk-help a:hover,
+.kiosk-help button:hover,
+.kiosk-help a:focus-visible,
+.kiosk-help button:focus-visible {
+  color: #1c1408;
+  background: #f4e3b8;
+  outline: none;
+}
+
+.kiosk-hint {
+  position: fixed;
+  z-index: 6;
+  top: 22px;
+  left: 50%;
+  padding: 10px 16px;
+  color: #f3ecdf;
+  background: rgba(14, 18, 28, .8);
+  font: 14px/1.4 var(--mono);
+  transform: translateX(-50%);
+  animation: kiosk-fade 4s both;
+  pointer-events: none;
+}
+
+@keyframes kiosk-fade {
+  0% { opacity: 0; }
+  10%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.kiosk-note {
+  position: fixed;
+  z-index: 7;
+  left: 50%;
+  bottom: 78px;
+  max-width: min(440px, calc(100vw - 32px));
+  padding: 12px 16px;
+  color: #1c1408;
+  background: #f4e3b8;
+  font: 14px/1.45 var(--mono);
+  transform: translateX(-50%);
+}
+
+.kiosk-loading {
+  position: fixed;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #f3ecdf;
+  background: #1b2a4a;
+  font: 15px var(--mono);
+}
+
+.kiosk-a11y button {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.kiosk-a11y button:focus-visible {
+  position: fixed;
+  z-index: 9;
+  top: 16px;
+  left: 16px;
+  width: auto;
+  height: auto;
+  padding: 8px 12px;
+  color: #1c1408;
+  background: #f4e3b8;
+  clip-path: none;
+}
+
+#overlay-view {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+}
+
+#overlay-view[hidden] {
+  display: none;
+}
+
+.overlay-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 16, .55);
+}
+
+.overlay-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(820px, 100%);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #10141f;
+  box-shadow: -20px 0 60px rgba(0, 0, 0, .45);
+}
+
+.catalog-list {
+  margin: 0;
+  padding: 0 var(--page-pad) 64px;
+  list-style: none;
+}
+
+.catalog-list a {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .14);
+  font-size: 18px;
+}
+
+.catalog-list a:hover small,
+.catalog-list a:hover span {
+  color: #f4e3b8;
+}
+
+@media (max-width: 640px) {
+  .kiosk-help {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    justify-content: space-between;
+    transform: none;
+  }
+
+  .kiosk-help a,
+  .kiosk-help button {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+}

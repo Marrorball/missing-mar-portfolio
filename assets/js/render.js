@@ -250,7 +250,7 @@ export function renderProjectView(project = {}, category = {}, neighbour = null)
 
   return `<article class="portfolio-view project-view" data-view="project" data-project-id="${escapeHtml(project.id || '')}">
     <header class="case-header">
-      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>Обратно под траву</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>К ларьку</a>
       <p class="case-kicker">${escapeHtml(category.title || '')}${project.year ? ` · ${escapeHtml(project.year)}` : ''}</p>
       <h1>${escapeHtml(project.title || '')}</h1>
       ${project.summary ? `<p class="case-summary">${escapeHtml(project.summary)}</p>` : ''}
@@ -300,7 +300,7 @@ export function renderAboutView(site = {}, resume = {}, page = {}) {
   const owner = site.owner || {};
   return `<article class="portfolio-view about-view" data-view="about">
     <header class="view-header">
-      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>На главную</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>К ларьку</a>
       <p>PROFILE / ${escapeHtml(owner.location || '')}</p>
       <h1>${escapeHtml(page.title || 'Обо мне')}</h1>
       ${page.content ? '' : `<p class="view-summary">${escapeHtml(owner.bio || '')}</p>`}
@@ -322,7 +322,7 @@ export function renderContactView(site = {}) {
   const behanceUrl = safeHttpsUrl(contacts.behance || '');
   return `<article class="portfolio-view contact-view" data-view="contact">
     <header class="view-header">
-      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>На главную</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>К ларьку</a>
       <p>CONTACT / AVAILABLE FOR PROJECTS</p>
       <h1>Давайте делать странные, понятные вещи.</h1>
       <p class="view-summary">${escapeHtml(owner.name || '')} — ${escapeHtml(owner.role || '')}</p>
@@ -338,7 +338,7 @@ export function renderContactView(site = {}) {
 export function renderGenericPageView(page = {}) {
   return `<article class="portfolio-view generic-page-view" data-view="page" data-page-id="${escapeHtml(page.id || '')}">
     <header class="view-header">
-      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>На главную</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>К ларьку</a>
       <p>PAGE / ${escapeHtml(page.id || '')}</p>
       <h1>${escapeHtml(page.title || '')}</h1>
     </header>

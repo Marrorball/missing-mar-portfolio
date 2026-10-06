@@ -30,7 +30,7 @@ export function renderHotspotButtons(entries = []) {
 export function renderCatalogView(projects = []) {
   return `<article class="portfolio-view catalog-view" data-view="catalog">
     <header class="view-header">
-      <a class="back-link" href="#">← К ларьку</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>К ларьку</a>
       <h1>Весь товар</h1>
     </header>
     <ol class="catalog-list">
@@ -42,7 +42,7 @@ export function renderCatalogView(projects = []) {
 export function renderPriceView() {
   return `<article class="portfolio-view price-view" data-view="price">
     <header class="view-header">
-      <a class="back-link" href="#">← К ларьку</a>
+      <a class="back-link" href="#"><i class="ph ph-arrow-left" aria-hidden="true"></i>К ларьку</a>
       <h1>Прайс</h1>
       <p class="view-summary">Скоро здесь будет прайс на услуги.</p>
     </header>
