@@ -88,15 +88,18 @@ import { dirname, join } from 'node:path';
 
 const ROOT = 'assets/vendor/three';
 const FILES = [
-  'three.module.min.js',
-  'three.core.min.js',
+  'three.module.js',
+  'three.core.js',
   'addons/controls/OrbitControls.js',
   'addons/loaders/GLTFLoader.js',
-  'addons/utils/BufferGeometryUtils.js'
+  'addons/utils/BufferGeometryUtils.js',
+  'addons/utils/SkeletonUtils.js'
 ];
 
 function specifiers(source) {
-  return [...source.matchAll(/(?:import|export)[^'"]*?from\s*['"]([^'"]+)['"]/g)].map(match => match[1]);
+  // Doc comments contain usage examples like `from 'three/addons/...'`.
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  return [...code.matchAll(/(?:import|export)[^'"]*?from\s*['"]([^'"]+)['"]/g)].map(match => match[1]);
 }
 
 test('vendored three.js files exist', () => {
@@ -116,7 +119,7 @@ test('vendored files only import "three" or files that are vendored too', () => 
 
 test('index.html maps "three" to the vendored build', () => {
   const html = readFileSync('index.html', 'utf8');
-  assert.match(html, /"three":\s*"\.\/assets\/vendor\/three\/three\.module\.min\.js"/);
+  assert.match(html, /"three":\s*"\.\/assets\/vendor\/three\/three\.module\.js"/);
   assert.match(html, /"three\/addons\/":\s*"\.\/assets\/vendor\/three\/addons\/"/);
 });
 ```
@@ -138,11 +141,12 @@ import { cpSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const FILES = [
-  ['build/three.module.min.js', 'three.module.min.js'],
-  ['build/three.core.min.js', 'three.core.min.js'],
+  ['build/three.module.js', 'three.module.js'],
+  ['build/three.core.js', 'three.core.js'],
   ['examples/jsm/controls/OrbitControls.js', 'addons/controls/OrbitControls.js'],
   ['examples/jsm/loaders/GLTFLoader.js', 'addons/loaders/GLTFLoader.js'],
   ['examples/jsm/utils/BufferGeometryUtils.js', 'addons/utils/BufferGeometryUtils.js'],
+  ['examples/jsm/utils/SkeletonUtils.js', 'addons/utils/SkeletonUtils.js'],
   ['LICENSE', 'LICENSE']
 ];
 
@@ -162,7 +166,7 @@ Add to `package.json` `scripts`:
 ```
 
 Run: `npm run vendor:three`
-Expected: `three.js vendored: 6 files`.
+Expected: `three.js vendored: 7 files`.
 
 - [ ] **Step 5: Add the import map**
 
@@ -178,7 +182,7 @@ with
   <script type="importmap">
     {
       "imports": {
-        "three": "./assets/vendor/three/three.module.min.js",
+        "three": "./assets/vendor/three/three.module.js",
         "three/addons/": "./assets/vendor/three/addons/"
       }
     }
