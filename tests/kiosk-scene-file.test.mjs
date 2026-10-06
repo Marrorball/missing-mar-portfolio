@@ -56,3 +56,11 @@ test('the kiosk scene stays inside the desktop budget', () => {
   assert.ok(primitives < 400, `${primitives} draw calls`);
   assert.ok(statSync(GLB).size < 8 * 1024 * 1024);
 });
+
+test('light anchors come from the model', () => {
+  const all = names();
+  for (const node of ['light_window', 'light_window_target', 'light_street', 'light_street_target',
+    'light_billboard_0', 'light_billboard_1', 'light_billboard_2', 'light_billboard_target', 'bulb_outside']) {
+    assert.ok(all.has(node), node);
+  }
+});

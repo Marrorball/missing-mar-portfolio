@@ -7,7 +7,7 @@ import random
 
 from dims import BILLBOARD, BILLBOARD_FACE, HD, HW, LAMP_POST, TERMINAL, TOP
 from geometry import catenary, tree_segments
-from lib import Merge, box, screen, text
+from lib import Merge, box, empty, screen, text
 
 TREES = ((-6.0, 6.0, 8.0), (5.5, 7.0, 7.0), (-9.0, 2.0, 9.0), (8.0, 1.0, 6.5),
          (-3.0, 11.0, 8.5), (10.0, 9.0, 7.5), (-12.0, 8.0, 8.0))
@@ -69,6 +69,8 @@ def _lamp_and_wires(M):
             wires.polyline(catenary((ax + dx, ay, 8.65), (bx + dx, by, 8.65), 0.9, 20), 0.02, M['ink'])
     poles.finish()
     wires.finish()
+    empty('light_street', (px + 0.95, py, 4.3))
+    empty('light_street_target', (px + 0.95, py - 0.3, 0.0))
 
 
 def _bench_and_bin(M):
@@ -115,6 +117,9 @@ def _billboard(M):
     frame.finish((bx, by, 0.0))
     box('hs_billboard', (width, 0.12, height), (bx, by + 0.08, centre), M['device'])
     screen('screen_billboard', (bx, by - 0.1, centre), width, height)
+    for index, x in enumerate((-1.6, 0.0, 1.6)):
+        empty(f'light_billboard_{index}', (bx + x, by - 0.62, top + 0.28))
+    empty('light_billboard_target', (bx, by, centre))
 
 
 def _blocks(M, rng):

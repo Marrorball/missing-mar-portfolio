@@ -169,6 +169,11 @@ def _roof_and_lamp(M):
     lamp.finish()
     cylinder('bulb_outside', 0.035, 0.07, (0.0, -HD - 0.27, TOP - 0.15), M['bulb'])
 
+    # the warm spill through the showcase: just behind the glass, aimed at
+    # the snow in front, so the grille throws its diamonds on the snow
+    empty('light_window', (0.0, -HD + 0.07, GLASS_HIGH - 0.05))
+    empty('light_window_target', (0.0, -3.2, 0.0))
+
 
 def _back_door(M):
     hinge = empty('door_hinge', (DOOR_R, HD, 0.0), rot_z=math.radians(DOOR_OPEN_DEG))
