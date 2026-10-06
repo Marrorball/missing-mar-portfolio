@@ -72,3 +72,9 @@ test('a portrait screen widens the lens so the kiosk still fits across', () => {
   const portrait = fitFov(40, 390 / 844);
   assert.ok(portrait > 60 && portrait <= 90, String(portrait));
 });
+
+test('the window grille never blocks what is behind it', () => {
+  assert.equal(pickHotspot(['kiosk_grille', 'hs_showcase', 'slot_2']), 'slot_2');
+  assert.equal(pickHotspot(['kiosk_grille', 'hs_flyer']), 'hs_flyer');
+  assert.equal(pickHotspot(['kiosk_grille']), null);
+});

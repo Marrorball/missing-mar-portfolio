@@ -51,12 +51,16 @@ export function isPickable(name = '') {
   return SLOT_NAME.test(name) || HOTSPOT_NAME.test(name);
 }
 
+// Thin enough to click through: hits on these are ignored.
+const SEE_THROUGH = new Set(['kiosk_grille']);
+
 // `names` are the pickable-or-mesh names of ray hits, nearest first. The
 // showcase glass is see-through: a slot behind it wins, while anything opaque
 // in front of a hotspot blocks it.
 export function pickHotspot(names = []) {
   let glass = null;
   for (const name of names) {
+    if (SEE_THROUGH.has(name)) continue;
     if (name === 'hs_showcase') {
       glass ??= name;
       continue;
