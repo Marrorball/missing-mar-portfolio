@@ -114,7 +114,7 @@ test('a 0.33 l can stands on the bin rim and its twin on the counter', () => {
   assert.ok(Math.abs(counter.translation[0]) < 1.4 && Math.abs(counter.translation[2]) < 0.9, 'inside the kiosk');
 });
 
-test('no real brand names in the scene', () => {
+test('appliances and cola keep their generic names', () => {
   const json = gltf();
   const labels = [...json.nodes, ...json.meshes, ...json.materials].map(item => item.name.toLowerCase());
   for (const brand of ['coca', 'pepsi', 'fanta', 'sprite', 'qiwi', 'sony', 'samsung']) {
@@ -155,5 +155,30 @@ test('the walk round the kiosk has its waypoints', () => {
   const all = names();
   for (const name of ['front_left', 'side_left', 'front_right', 'side_right', 'door_out', 'doorway', 'door_in']) {
     assert.ok(all.has(`path_${name}`), name);
+  }
+});
+
+// These export checks catch missing baked textures or a build that used the old room.
+test('interior props and shared printed materials survive the GLB export', () => {
+  const json = gltf();
+  const all = new Set(json.nodes.map(node => node.name));
+  for (const name of ['chair_plaid_blanket', 'chair_wood', 'counter_kettle',
+    'counter_mug', 'counter_calculator', 'counter_notebook', 'counter_loose_change',
+    'stock_shaped_goods', 'stock_open_carton', 'clock_face_details', 'calendar_print']) {
+    assert.ok(all.has(name), name);
+  }
+  for (const name of ['retail_print', 'blanket_woven_plaid']) {
+    const mat = json.materials.find(item => item.name === name);
+    const texture = json.textures[mat?.pbrMetallicRoughness?.baseColorTexture?.index];
+    assert.ok(texture && json.images[texture.source]?.bufferView !== undefined, `${name} embedded texture`);
+  }
+});
+
+test('loose change sits above the counter instead of inside its top', () => {
+  const json = gltf();
+  const node = json.nodes.find(item => item.name === 'counter_loose_change');
+  for (const primitive of json.meshes[node.mesh].primitives) {
+    const bounds = json.accessors[primitive.attributes.POSITION];
+    assert.ok(bounds.min[1] >= 1.03 - 1e-6, 'coin bottom clears the 1.03 m counter surface');
   }
 });

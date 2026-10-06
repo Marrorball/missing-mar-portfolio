@@ -3,6 +3,7 @@ bottles, cans, boxes, crisps and chocolate, price tags, crisps hanging from a
 rail, and the eight project slots on the eye-level shelf."""
 
 import random
+import props
 
 from dims import GLASS_HIGH, GLASS_LOW, HW, SHELF_LEVELS, SHELF_Y, SLOT_LEVEL, SLOT_XS, W
 from lib import Merge, box
@@ -23,11 +24,7 @@ def _item(merge, rng, left, y, base, max_h, M):
         width = 0.075
         x = left + width / 2
         h = min(rng.uniform(0.16, 0.24), max_h)
-        glass = rng.choice((M['bottle_green'], M['bottle_brown'], palette[4]))
-        merge.cylinder(0.034, h * 0.7, (x, y, base + h * 0.35), glass, segments=10)
-        merge.cylinder(0.034, h * 0.12, (x, y, base + h * 0.76), glass, top=0.014, segments=10)
-        merge.cylinder(0.013, h * 0.18, (x, y, base + h * 0.91), glass, segments=8)
-        merge.cylinder(0.0355, h * 0.25, (x, y, base + h * 0.4), color, segments=10)
+        props.bottle(merge, (x, y, base), h, M, cell=3)
         return width
     if kind == 'can' and max_h >= 0.12:
         width = 0.07
@@ -38,18 +35,25 @@ def _item(merge, rng, left, y, base, max_h, M):
         return width
     if kind == 'crisps' and max_h >= 0.2:
         width = 0.14
-        merge.box((0.13, 0.045, 0.2), (left + width / 2, y, base + 0.1), color,
-                  rot=(0.08, 0.0, rng.uniform(-0.1, 0.1)))
+        props.pack(merge, (left + width / 2, y, base), cell=rng.randrange(2))
         return width
     if kind == 'bars':
         width = 0.13
-        for k in range(rng.randint(3, 6)):
-            merge.box((0.12, 0.035, 0.014), (left + width / 2, y + rng.uniform(-0.005, 0.005), base + 0.007 + k * 0.0145),
-                      color if k % 2 else rng.choice(palette), rot=(0.0, 0.0, rng.uniform(-0.08, 0.08)))
+        for k in range(rng.randint(3, 5)):
+            x = left + width / 2
+            z = base + 0.008 + k * 0.018
+            merge.blob((0.12, 0.044, 0.018), (x, y, z), palette[5], segments=12, rings=6, smooth=True)
+            props.label(merge, 2, [(x-.055,y-.019,z+.0095),(x+.055,y-.019,z+.0095),(x+.055,y+.019,z+.0095),(x-.055,y+.019,z+.0095)], [(0,.25),(1,.25),(1,.75),(0,.75)])
+            for dx in (-.057,.057): merge.box((.008,.04,.012),(x+dx,y,z),palette[5])
         return width
+    if max_h >= .16 and rng.random() < .45:
+        props.jar(merge,(left+.047,y,base),M,height=min(max_h,.17))
+        return .10
     w = rng.uniform(0.06, 0.12)
     h = min(rng.uniform(0.09, 0.2), max_h)
     merge.box((w, rng.uniform(0.05, 0.08), h), (left + w / 2, y, base + h / 2), color)
+    for side in (-1,1):
+        props.label(merge, 5 if h>.12 else 3, [(left+.002,y+side*.041,base+.003),(left+w-.002,y+side*.041,base+.003),(left+w-.002,y+side*.041,base+h-.003),(left+.002,y+side*.041,base+h-.003)], [(0,0),(1,0),(1,1),(0,1)] if side==-1 else [(1,0),(0,0),(0,1),(1,1)])
     return w + 0.008
 
 
@@ -93,8 +97,7 @@ def build(M):
     shelves.bar((X_MIN, rail_y, rail_z), (X_MAX, rail_y, rail_z), 0.012, M['frame'])
     x = X_MIN + 0.1
     while x < X_MAX - 0.1:
-        goods.box((0.12, 0.03, 0.14), (x, rail_y, rail_z - 0.08), rng.choice(M['goods_palette']),
-                  rot=(0.0, rng.uniform(-0.08, 0.08), 0.0))
+        props.pack(goods, (x, rail_y, rail_z - .15), width=.12, height=.14, depth=.038, cell=rng.randrange(2))
         x += rng.uniform(0.15, 0.22)
 
     shelves.finish()
