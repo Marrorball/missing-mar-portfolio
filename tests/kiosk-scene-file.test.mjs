@@ -34,7 +34,7 @@ test('the rack holds a disc in every pocket and the player sits under the TV', (
 
 test('screens carry their size for the in-scene pages', () => {
   const nodes = gltf().nodes;
-  for (const name of ['screen_tv', 'screen_terminal', 'screen_billboard']) {
+  for (const name of ['screen_tv', 'screen_terminal', 'screen_billboard', 'screen_flyer', 'wall_contacts']) {
     const node = nodes.find(entry => entry.name === name);
     assert.ok(node, name);
     assert.ok(node.extras?.width > 0 && node.extras?.height > 0, `${name} size`);

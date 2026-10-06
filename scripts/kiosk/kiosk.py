@@ -8,7 +8,7 @@ import random
 from dims import (D, DOOR_L, DOOR_OPEN_DEG, DOOR_R, DOOR_TOP, GLASS_HIGH, GLASS_LOW, HD, HW,
                   PLINTH, TOP, W, WALL, WINDOW_L, WINDOW_R, WINDOW_TOP)
 from geometry import grille_segments
-from lib import Merge, box, cylinder, empty, text
+from lib import Merge, box, cylinder, empty, screen, text
 
 ADS = ('СДАМ\nКВАРТИРУ', 'РЕМОНТ\nКОМПЬЮТЕРОВ', 'КУПЛЮ ВОЛОСЫ\nДОРОГО')
 
@@ -127,6 +127,8 @@ def _shutters(M):
             x, z = out * rng.uniform(0.15, 0.85), rng.uniform(1.0, 2.2)
             if side == 'left' and abs(x - 0.45) < 0.26 and abs(z - 1.55) < 0.34:
                 continue  # the flyer lives here
+            if side == 'left' and abs(x - 0.45) < 0.3 and z < 1.25:
+                continue  # marker contacts live here
             if side == 'right' and abs(x + 0.5) < 0.3 and z > 1.25:
                 continue  # the three ads live here
             depth = 0.024 + index * 0.0006
@@ -148,6 +150,8 @@ def _shutters(M):
                 details.box((0.032, 0.004, 0.08), (-0.14 + k * 0.04, 0.0, -0.27), M['paper'])
             details.finish(parent=flyer)
             text('flyer_title', 'ПРОПАЛ', (0.0, 0.006, 0.17), 0.06, M['ink'], parent=flyer, rot_z=math.pi)
+            screen('screen_flyer', (0.0, 0.0035, 0.0), 0.32, 0.45, rot_z=math.pi, parent=flyer)
+            screen('wall_contacts', (0.45, 0.024, 1.02), 0.52, 0.24, rot_z=math.pi, parent=hinge)
 
 
 def _roof_and_lamp(M):
