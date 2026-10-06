@@ -97,7 +97,7 @@ export function addLights(scene, root, quality) {
   spot(scene, root, 'light_window', 'light_window_target', { color: WARM, intensity: 32, distance: 9, angle: 0.9, shadow: quality.shadows });
   spot(scene, root, 'light_street', 'light_street_target', { color: SODIUM, intensity: 22, distance: 11, angle: 0.9 });
   for (let index = 0; index < 3; index += 1) {
-    spot(scene, root, `light_billboard_${index}`, 'light_billboard_target', { color: 0xdfe6ff, intensity: 3.5, distance: 6, angle: 0.7 });
+    spot(scene, root, `light_billboard_${index}`, 'light_billboard_target', { color: 0xffe0b3, intensity: 3.5, distance: 6, angle: 0.7 });
   }
 
   // The flickering tube gets its own material so the other stays steady.

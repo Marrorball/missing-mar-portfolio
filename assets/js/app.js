@@ -450,6 +450,9 @@ async function mountKiosk() {
       const owner = state.bundle.site.owner || {};
       state.kiosk.setBillboardAd({ brand: owner.brandName, name: owner.name, role: owner.role });
     });
+    // A direct close-up URL still needs a real street view to return to.
+    // Initialise it before focusPreset records the first history snapshot.
+    state.kiosk.focus('home', { instant: true });
     focusPreset(ROUTE_PRESETS[parseRoute(window.location.hash).view] || 'home', { instant: true });
     renderRoute();
     loading.innerHTML = '';

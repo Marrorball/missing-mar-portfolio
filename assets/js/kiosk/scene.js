@@ -21,6 +21,7 @@ import {
 } from './hotspots.js';
 import { addLights, addSky, addSnow, createComposer, flicker, setupShadows, weatherMaterials } from './atmosphere.js';
 import { QUALITY, qualityTier, tvWarmUp } from './weather.js';
+import { drawPosterWear } from './poster.js';
 
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
@@ -687,6 +688,12 @@ export async function createKioskScene({
     const anchor = root.getObjectByName('screen_billboard');
     if (!anchor) return;
     const { width: boardWidth, height: boardHeight } = anchor.userData;
+    const wear = document.createElement('canvas');
+    wear.width = 1024;
+    wear.height = 512;
+    drawPosterWear(wear.getContext('2d'), wear.width, wear.height);
+    // The readable page has the same paper grain and wear as the 3D print.
+    screens.billboard.element.style.setProperty('--billboard-wear', `url("${wear.toDataURL()}")`);
     const faces = [
       { headline: brand, bar: name.toUpperCase(), line: `${role} · Обо мне →`, big: true },
       { headline: name.toUpperCase(), bar: role.toUpperCase(), line: 'Ищу работу. Подробности — на щите.' },
@@ -696,7 +703,11 @@ export async function createKioskScene({
       const sheet = document.createElement('canvas');
       sheet.width = 1024;
       sheet.height = 512;
-      drawPoster(sheet.getContext('2d'), sheet.width, sheet.height, face);
+      const context = sheet.getContext('2d');
+      drawPoster(context, sheet.width, sheet.height, face);
+      context.globalCompositeOperation = 'multiply';
+      context.drawImage(wear, 0, 0);
+      context.globalCompositeOperation = 'source-over';
       const map = new THREE.CanvasTexture(sheet);
       map.colorSpace = THREE.SRGBColorSpace;
       billboardResources.push(map);
