@@ -19,7 +19,7 @@ export const HOTSPOTS = {
   hs_showcase: { label: 'Витрина', action: { type: 'focus', preset: 'showcase' } },
   hs_flyer: { label: 'Контакты', action: { type: 'route', hash: '#contact' } },
   hs_billboard: { label: 'Обо мне', action: { type: 'route', hash: '#about' } },
-  hs_terminal: { label: 'Терминал', action: { type: 'focus', preset: 'terminal' } },
+  hs_terminal: { label: 'Терминал', action: { type: 'route', hash: '#resume' } },
   hs_backdoor: { label: 'Зайти внутрь', action: { type: 'focus', preset: 'inside' } },
   hs_doorway: { label: 'Зайти внутрь', action: { type: 'focus', preset: 'inside' } },
   hs_rack: { label: 'Все проекты', action: { type: 'focus', preset: 'rack' } },
@@ -35,7 +35,7 @@ export const HOTSPOTS = {
   },
   hs_sign_away: {
     label: 'Отошёл',
-    action: { type: 'note', text: 'Марат отошёл: ищет команду. Контакты — на терминале справа.' }
+    action: { type: 'note', text: 'Марат отошёл. Контакты — на листовке слева, выписка — в терминале справа.' }
   }
 };
 
@@ -45,6 +45,7 @@ export const ROUTE_PRESETS = {
   project: 'tv',
   catalog: 'tv',
   about: 'billboard',
+  resume: 'terminal',
   contact: 'flyer'
 };
 

@@ -25,3 +25,8 @@ test('parses and serializes the kiosk catalog route; old price links lead home',
   assert.deepEqual(parseRoute('#price'), { view: 'home', id: '' });
   assert.deepEqual(parseRoute('#pricelist'), { view: 'home', id: '' });
 });
+
+test('the terminal has its own address', () => {
+  assert.deepEqual(parseRoute('#resume'), { view: 'resume', id: '' });
+  assert.equal(routeToHash({ view: 'resume' }), '#resume');
+});

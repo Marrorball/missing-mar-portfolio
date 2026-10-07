@@ -1046,7 +1046,7 @@ export async function createKioskScene({
     screens.billboard.element.style.setProperty('--billboard-wear', `url("${wear.toDataURL()}")`);
     const faces = [
       { headline: brand, bar: name.toUpperCase(), line: `${role} · Обо мне →`, big: true },
-      { headline: name.toUpperCase(), bar: role.toUpperCase(), line: 'Ищу работу. Подробности — на щите.' },
+      { headline: name.toUpperCase(), bar: role.toUpperCase(), line: 'Открыт к предложениям. Подробности — на щите.' },
     ];
     // the third side of the slats is free for now: it carries the ad again
     faces.push(faces[0]);

@@ -70,7 +70,7 @@ test('hits and discs open their project, empty pockets nothing', () => {
 });
 
 test('every route view and every focus action points at a known camera preset', () => {
-  for (const view of ['home', 'project', 'about', 'contact', 'page', 'catalog']) {
+  for (const view of ['home', 'project', 'about', 'contact', 'page', 'catalog', 'resume']) {
     assert.ok(PRESETS.includes(ROUTE_PRESETS[view]), view);
   }
   for (const spot of Object.values(HOTSPOTS)) {
@@ -145,10 +145,10 @@ test('in front of the showcase only the projects answer; a click beside steps ba
   assert.equal(allowedIn('showcase', 'hs_flyer'), false);
 });
 
-test('contacts live on the flyer, the terminal is a place to walk to', () => {
+test('contacts live on the flyer, the terminal has its own page', () => {
   assert.equal(ROUTE_PRESETS.contact, 'flyer');
   assert.equal(hotspotForNode('hs_flyer').action.hash, '#contact');
-  assert.deepEqual(hotspotForNode('hs_terminal').action, { type: 'focus', preset: 'terminal' });
+  assert.deepEqual(hotspotForNode('hs_terminal').action, { type: 'route', hash: '#resume' });
   assert.equal(allowedIn('flyer', 'hs_flyer'), true);
   assert.equal(allowedIn('flyer', 'hs_showcase'), false);
 });
@@ -157,4 +157,12 @@ test('the camera backs off just enough for a screen to fit', () => {
   assert.ok(Math.abs(fitDistance(0.32, 0.24, 40, 1.6) - 0.3297) < 0.001);   // height-bound
   assert.ok(Math.abs(fitDistance(0.32, 0.24, 40, 0.5) - 0.8792) < 0.001);   // width-bound
   assert.ok(Math.abs(fitDistance(0.32, 0.24, 40, 1.6, 0.5) - 0.6594) < 0.001);
+});
+
+test('the terminal prints the résumé; the away sign points at the flyer for contacts', () => {
+  assert.equal(ROUTE_PRESETS.resume, 'terminal');
+  assert.equal(hotspotForNode('hs_terminal').action.hash, '#resume');
+  const note = hotspotForNode('hs_sign_away').action.text;
+  assert.match(note, /листовке/);
+  assert.doesNotMatch(note, /ищет команду|Контакты — на терминале/);
 });

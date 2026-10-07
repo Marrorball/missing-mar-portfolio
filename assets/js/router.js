@@ -1,4 +1,4 @@
-const SIMPLE_VIEWS = ['about', 'contact', 'catalog'];
+const SIMPLE_VIEWS = ['about', 'contact', 'catalog', 'resume'];
 
 export function parseRoute(hash = '') {
   const value = String(hash).replace(/^#/, '');
