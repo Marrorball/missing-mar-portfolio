@@ -380,7 +380,10 @@ export async function createKioskScene({
     if (!screen) return null;
     const height = container.clientHeight;
     const rect = container.getBoundingClientRect();
-    const footerTop = document.querySelector('.kiosk-help')?.getBoundingClientRect().top ?? rect.bottom;
+    // while a screen is open on a phone the menu is hidden (no box at all):
+    // plan for where it will be once the screen closes
+    const footer = document.querySelector('.kiosk-help')?.getBoundingClientRect();
+    const footerTop = footer?.height ? footer.top : rect.bottom - 76;
     // The centred physical screen must leave room for Back and the footer,
     // including a short landscape phone viewport.
     const usableHeight = Math.max(80, 2 * Math.min(height / 2 - 76, footerTop - rect.top - 12 - height / 2));

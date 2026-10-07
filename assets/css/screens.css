@@ -1528,3 +1528,16 @@ body.is-dived:not([data-dived="tv"]) .kiosk-back {
   min-height: 52px;
   transform: none;
 }
+
+/* an open screen on a phone standing up: one column, long words may wrap */
+@container dived-screen (max-width: 480px) {
+  .ttx h1 { font-size: clamp(22px, 9cqw, 36px); overflow-wrap: anywhere; }
+  .ttx-head { flex-wrap: wrap; gap: 4px 8px; }
+  .ttx-list a { grid-template-columns: 2ch minmax(0, 1fr); gap: 2px 8px; }
+  .ttx-meta { grid-column: 2; }
+  .ttx-list a span { overflow-wrap: anywhere; }
+  .tv-chapters ol { grid-template-columns: minmax(0, 1fr); }
+  .tv-page .cs-row-2 { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .tv-page .cs-card { gap: 8px; min-width: 0; }
+  .tv-page .cs-card-text { min-width: 0; overflow-wrap: anywhere; }
+}
