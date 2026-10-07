@@ -9,6 +9,7 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
+  renderReceipt,
   renderTerminalScreen,
   renderTvChannel,
   renderTvGuide
@@ -226,10 +227,6 @@ function goBack() {
 }
 
 function arriveBack(entry) {
-  if (entry.preset === 'terminal') {
-    openScreen('terminal', terminalPage());
-    return;
-  }
   if (LOCKED_PRESETS.includes(entry.preset)) {
     focusPreset(entry.preset);
     return;
@@ -242,8 +239,13 @@ function arriveBack(entry) {
   document.querySelector('#kiosk-closeup-slot').innerHTML = chromeFor(entry.preset);
 }
 
-function terminalPage() {
-  return renderTerminalScreen(contactLinks(state.bundle.site.contacts));
+// The terminal prints the résumé: a new receipt number every time, and a
+// strip of paper feeds out of the slot under the bill acceptor.
+function printReceipt() {
+  const { site, resume } = state.bundle;
+  const number = 100000 + Math.floor(Math.random() * 900000);
+  openScreen('terminal', renderReceipt(site, resume, { number, date: new Date() }));
+  state.kiosk?.printReceipt();
 }
 
 function runAction(node) {
@@ -263,10 +265,7 @@ function runAction(node) {
   }
   if (action.type === 'route') window.location.hash = action.hash;
   if (action.type === 'note') showNote(action.text);
-  if (action.type === 'focus') {
-    if (action.preset === 'terminal') openScreen('terminal', terminalPage());
-    else focusPreset(action.preset);
-  }
+  if (action.type === 'focus') focusPreset(action.preset);
 }
 
 function showLabel(node, x, y) {
@@ -326,7 +325,7 @@ function renderRoute() {
 function showRoute() {
   if (!state.bundle) return;
   const route = parseRoute(window.location.hash);
-  const { site, resume, projects } = state.bundle;
+  const { site, projects } = state.bundle;
   const previous = state.channel;
   const pendingDisc = state.pendingDisc;
   state.pendingDisc = null;
@@ -358,8 +357,14 @@ function showRoute() {
 
   if (route.view === 'about') {
     const page = getPage('about') || { id: 'about', title: 'Обо мне', content: '' };
-    openScreen('billboard', renderAboutBoard(site, resume, page), { boardFace: 1 });
+    openScreen('billboard', renderAboutBoard(site, page), { boardFace: 1 });
     announce('Обо мне');
+    return;
+  }
+
+  if (route.view === 'resume') {
+    openScreen('terminal', renderTerminalScreen());
+    announce('Выписка');
     return;
   }
 
@@ -499,6 +504,7 @@ document.addEventListener('click', event => {
   if (action === 'tv-menu') window.location.hash = '#catalog';
   if (action === 'tv-chapter') showChapter(element.dataset.chapter);
   if (action === 'contacts-card') toggleContactCard();
+  if (action === 'terminal-print') printReceipt();
 });
 
 document.addEventListener('keydown', event => {

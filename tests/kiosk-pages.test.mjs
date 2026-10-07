@@ -4,6 +4,7 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
+  renderReceipt,
   renderTerminalScreen,
   renderTvChannel,
   renderTvGuide
@@ -70,14 +71,9 @@ test('the TV guide numbers every channel and links to it', () => {
   assert.doesNotMatch(html, /Прайс|#price/);
 });
 
-test('the billboard shows who Marat is', () => {
+test('the billboard shows who Marat is; experience and skills are on the receipt', () => {
   const html = renderAboutBoard(
-    { owner: { name: 'Марат <Д>', role: 'Product Designer', location: 'Москва', bio: 'Био', status: 'Ищу работу', profileImage: '/p.jpg' } },
-    {
-      experience: [{ period: '2025', company: 'KORTEX', role: 'UX/UI', description: 'Сервис' }],
-      skills: [{ name: 'Figma', level: 'уверенно' }],
-      tools: ['Figma']
-    },
+    { owner: { name: 'Марат <Д>', role: 'Product Designer', location: 'Москва', bio: 'Био', status: 'Всё сложно', profileImage: '/p.jpg' } },
     { id: 'about', title: 'Обо мне', content: '' }
   );
   assert.match(html, /href="#about" aria-current="page">Обо мне/);
@@ -85,23 +81,45 @@ test('the billboard shows who Marat is', () => {
   assert.match(html, /Марат &lt;Д&gt;/);
   assert.match(html, /Product Designer · Москва/);
   assert.match(html, /Био/);
-  assert.match(html, /Ищу работу/);
-  assert.match(html, /KORTEX/);
+  assert.match(html, /Всё сложно/);
+  assert.doesNotMatch(html, /board-resume|Ищу/);
   assert.match(html, /src="\/p\.jpg"/);
-  assert.match(html, /class="board-stamp" aria-hidden="true">Ищу<br>работу/);
+  assert.match(html, /class="board-stamp" aria-hidden="true">Открыт к<br>предложениям/);
+  assert.match(html, /href="#resume">Опыт и навыки — выписка в терминале/);
 });
 
 test('generic pages fit the billboard', () => {
   assert.match(renderPageBoard({ title: 'Пресса', content: '<p>x</p>' }), /Пресса.*<p>x<\/p>/s);
 });
 
-test('terminal and flyer both carry clickable contacts', () => {
-  const terminal = renderTerminalScreen(links);
-  assert.match(terminal, /href="https:\/\/t\.me\/marrorball" target="_blank" rel="noreferrer"/);
-  assert.match(terminal, /href="mailto:a@b\.cd">/);
-  assert.match(terminal, /class="terminal-bar"><span>Пополнение баланса/);
-  assert.match(terminal, /data-action="kiosk-back"/);
+test('the terminal opens on one key that prints the résumé, no contacts', () => {
+  const html = renderTerminalScreen();
+  assert.match(html, /data-action="terminal-print"/);
+  assert.match(html, /Распечатать выписку/);
+  assert.doesNotMatch(html, /mailto:|t\.me/);
+  assert.match(html, /data-action="kiosk-back"/);
+});
 
+test('the résumé prints as a till receipt from the content', () => {
+  const html = renderReceipt(
+    { owner: { name: 'Марат <Д>', role: 'Product Designer', location: 'Москва, Россия' } },
+    { experience: [{ period: '2024 — н.в.', company: 'Фриланс', role: 'UX/UI', description: 'Лендинги' }],
+      skills: [{ name: 'Интерфейсы', level: 'UI · дизайн-системы' }], tools: ['Figma', 'Tilda'],
+      education: [{ institution: 'МТУСИ', program: 'ИТ', period: '2022 — 2026' }],
+      publications: [{ title: 'Видеоаналитика', year: '2023' }], about: 'Не боюсь критики' },
+    { number: 472, date: new Date(2026, 9, 7, 21, 4) });
+  assert.match(html, /Выписка № 000472/);
+  assert.match(html, /07\.10\.2026 21:04/);
+  assert.match(html, /Марат &lt;Д&gt;/);
+  assert.match(html, /Product Designer · Москва</);
+  for (const text of ['Фриланс', 'Лендинги', 'Интерфейсы', 'Figma · Tilda', 'МТУСИ', 'Видеоаналитика', 'Не боюсь критики', 'Открыт к предложениям']) {
+    assert.ok(html.includes(text), text);
+  }
+  assert.match(html, /data-action="terminal-print">Распечатать ещё/);
+  assert.match(html, /href="#contact"/);
+});
+
+test('the flyer carries clickable contacts', () => {
   const flyer = renderFlyer(links, { name: 'Марат', role: 'Designer', location: 'Москва', profileImage: '/p.jpg' });
   assert.match(flyer, /ПРОПАЛ ДИЗАЙНЕР/);
   assert.match(flyer, /class="flyer-tape flyer-tape-left"/);

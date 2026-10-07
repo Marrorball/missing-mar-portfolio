@@ -101,30 +101,8 @@ function boardTabs(active) {
   </nav>`;
 }
 
-function resumeBlocks(resume = {}) {
-  const experience = (resume.experience || []).map(item => `<article>
-    <p><small>${escapeHtml(item.period || '')}</small></p>
-    <h3>${escapeHtml(item.company || '')}</h3>
-    <p><strong>${escapeHtml(item.role || '')}</strong> ${escapeHtml(item.description || '')}</p>
-  </article>`).join('');
-  const education = (resume.education || []).map(item => `<article>
-    <p><small>${escapeHtml(item.period || '')}</small></p>
-    <h3>${escapeHtml(item.institution || '')}</h3>
-    <p><strong>${escapeHtml(item.program || '')}</strong> ${escapeHtml(item.description || '')}</p>
-  </article>`).join('');
-  const skills = (resume.skills || []).map(item => `<li><strong>${escapeHtml(item.name || '')}</strong> ${escapeHtml(item.level || '')}</li>`).join('');
-  const tools = (resume.tools || []).map(tool => `<li>${escapeHtml(tool)}</li>`).join('');
-  const blocks = [
-    experience && `<section><h2>Опыт</h2>${experience}</section>`,
-    education && `<section><h2>Образование</h2>${education}</section>`,
-    skills && `<section><h2>Навыки</h2><ul>${skills}</ul></section>`,
-    tools && `<section><h2>Инструменты</h2><ul>${tools}</ul></section>`
-  ].filter(Boolean).join('');
-  return blocks ? `<div class="board-resume">${blocks}</div>` : '';
-}
-
 // A printed street poster: halftone photo, condensed headline, red stamp.
-export function renderAboutBoard(site = {}, resume = {}, page = {}) {
+export function renderAboutBoard(site = {}, page = {}) {
   const owner = site.owner || {};
   return `<article class="board-page">
     ${boardTabs('about')}
@@ -135,10 +113,10 @@ export function renderAboutBoard(site = {}, resume = {}, page = {}) {
         <p class="board-role">${meta(owner.role, owner.location)}</p>
         ${page.content ? `<div class="rich-content">${page.content}</div>` : `<p>${escapeHtml(owner.bio || '')}</p>`}
         ${owner.status ? `<p class="board-status">${escapeHtml(owner.status)}</p>` : ''}
+        <p class="board-more"><a href="#resume">Опыт и навыки — выписка в терминале →</a></p>
       </div>
-      <p class="board-stamp" aria-hidden="true">Ищу<br>работу</p>
+      <p class="board-stamp" aria-hidden="true">Открыт к<br>предложениям</p>
     </div>
-    ${resumeBlocks(resume)}
   </article>`;
 }
 
@@ -150,20 +128,63 @@ export function renderPageBoard(page = {}) {
   </article>`;
 }
 
-export function renderTerminalScreen(links = []) {
-  return `<article class="terminal-page">
-    <header class="terminal-bar"><span>Пополнение баланса</span><span>Шаг 1 из 1</span></header>
-    <h1>Связаться с Маратом</h1>
-    <p class="terminal-lead">Выберите способ связи</p>
-    <div class="terminal-buttons">
-      ${links.map(link => `<a class="terminal-button" href="${escapeHtml(link.href)}"${externalAttrs(link)}>
-        <span>${escapeHtml(link.label)}</span><small>${escapeHtml(link.value)}</small>
-      </a>`).join('')}
-    </div>
-    <footer class="terminal-foot">
-      <button type="button" class="terminal-key" data-action="kiosk-back">◀\uFE0E Назад</button>
+const RECEIPT_TOTAL = 'Открыт к предложениям';
+
+function receiptDate(date) {
+  const pad = value => String(value).padStart(2, '0');
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function terminalFoot() {
+  return `<footer class="terminal-foot">
+      <button type="button" class="terminal-key" data-action="kiosk-back">◀︎ Назад</button>
       <p class="terminal-note">Комиссия 0%. Сдачу не выдаём.</p>
-    </footer>
+    </footer>`;
+}
+
+// The terminal's first screen: one big key prints the résumé.
+export function renderTerminalScreen() {
+  return `<article class="terminal-page">
+    <header class="terminal-bar"><span>Дизайн у Марата</span><span>Касса</span></header>
+    <h1>Выписка о дизайнере</h1>
+    <p class="terminal-lead">Опыт, навыки и инструменты одним чеком</p>
+    <div class="terminal-buttons">
+      <button type="button" class="terminal-button" data-action="terminal-print"><span>Распечатать выписку</span><small>Чек бесплатный</small></button>
+    </div>
+    ${terminalFoot()}
+  </article>`;
+}
+
+// The résumé as a till receipt: everything on it comes from the content.
+export function renderReceipt(site = {}, resume = {}, { number = 1, date = new Date() } = {}) {
+  const owner = site.owner || {};
+  const city = String(owner.location || '').split(',')[0].trim();
+  const block = (title, rows) => (rows.length ? `<section class="receipt-block"><h2>${title}</h2>${rows.join('')}</section>` : '');
+  const line = (bold, text, small = '') => `<p><b>${escapeHtml(bold)}</b> ${escapeHtml(text)}${small ? `<br><small>${escapeHtml(small)}</small>` : ''}</p>`;
+  return `<article class="terminal-page terminal-printed">
+    <header class="terminal-bar"><span>Дизайн у Марата</span><span>Касса</span></header>
+    <div class="receipt-slot">
+      <div class="receipt">
+        <p class="receipt-head">Терминал «Дизайн у Марата»</p>
+        <p class="receipt-line"><span>Выписка № ${String(number).padStart(6, '0')}</span><span>${receiptDate(date)}</span></p>
+        <h1>${escapeHtml(owner.name || '')}</h1>
+        <p class="receipt-role">${escapeHtml([owner.role, city].filter(Boolean).join(' · '))}</p>
+        ${block('Опыт', (resume.experience || []).map(item => line(item.period || '', `${item.company || ''} · ${item.role || ''}`, item.description)))}
+        ${block('Умею', (resume.skills || []).map(item => line(item.name || '', '', item.level)))}
+        ${block('Инструменты', resume.tools?.length ? [`<p>${resume.tools.map(escapeHtml).join(' · ')}</p>`] : [])}
+        ${block('Образование', (resume.education || []).map(item => line(item.period || '', item.institution || '', item.program)))}
+        ${block('Публикации', (resume.publications || []).map(item => line(item.year || '', '', item.title)))}
+        ${block('О себе', resume.about ? [`<p><small>${escapeHtml(resume.about)}</small></p>`] : [])}
+        <p class="receipt-total"><span>Итого:</span><b>${RECEIPT_TOTAL}</b></p>
+        <p class="receipt-thanks">Спасибо! Сохраняйте чек</p>
+        <p class="receipt-barcode" aria-hidden="true"></p>
+      </div>
+    </div>
+    <div class="terminal-actions">
+      <button type="button" class="terminal-button" data-action="terminal-print">Распечатать ещё</button>
+      <a class="terminal-button" href="#contact">Связаться →</a>
+    </div>
+    ${terminalFoot()}
   </article>`;
 }
 
