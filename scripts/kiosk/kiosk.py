@@ -1,5 +1,5 @@
 """The kiosk itself: shell, ribs, frame, diamond grille, sign, serving window,
-price list and away sign, shutters with posters and the flyer, roof snow,
+away sign, shutters with posters and the flyer, roof snow,
 the lamp over the window and the back door."""
 
 import math
@@ -10,7 +10,7 @@ from dims import (D, DOOR_L, DOOR_OPEN_DEG, DOOR_R, DOOR_TOP, GLASS_HIGH, GLASS_
 from geometry import grille_segments
 from lib import Merge, box, cylinder, empty, link, material, screen, snow_cap, text
 
-SHEET = (0.4, 0.5625)    # flyer and price list: big enough to read from the street, 32:45
+SHEET = (0.4, 0.5625)    # the flyer: big enough to read from the street, 32:45
 
 
 def _shell(M):
@@ -162,13 +162,13 @@ def _notices(side, out, hinge, rng):
     """Small street notices pasted over each other on the shutter, painted by
     the site (assets/js/kiosk/notices.js): one anchor each with its size, a
     slight tilt and which notice it is. Clear of the flyer, the marker
-    contacts, the price sheet and the row of three ads."""
+    contacts and the row of three ads."""
     def blocked(x, z, w, h):
         def hits(cx, cz, half_w, half_h):
             return abs(x - cx) < half_w + w / 2 and abs(z - cz) < half_h + h / 2
         if side == 'left':
             return hits(0.45, 1.55, SHEET[0] / 2 + 0.02, SHEET[1] / 2 + 0.02) or hits(0.45, 1.02, 0.28, 0.14)
-        return hits(-0.5, 1.55, SHEET[0] / 2 + 0.02, SHEET[1] / 2 + 0.02) or z + h / 2 > 1.95
+        return z + h / 2 > 1.95
 
     placed = []
     if side == 'right':
@@ -214,10 +214,6 @@ def _shutters(M):
             flyer = box('hs_flyer', (SHEET[0], 0.006, SHEET[1]), (0.45, 0.026, 1.55), M['paper'], parent=hinge)
             screen('screen_flyer', (0.0, 0.0035, 0.0), *SHEET, rot_z=math.pi, parent=flyer)
             screen('wall_contacts', (0.45, 0.024, 1.02), 0.52, 0.24, rot_z=math.pi, parent=hinge)
-        else:
-            # the price list, mirroring the flyer on the other shutter
-            prices = box('hs_pricelist', (SHEET[0], 0.006, SHEET[1]), (-0.5, 0.026, 1.55), M['paper'], parent=hinge)
-            screen('screen_price', (0.0, 0.0035, 0.0), *SHEET, rot_z=math.pi, parent=prices)
 
 
 def _roof_snow(M):

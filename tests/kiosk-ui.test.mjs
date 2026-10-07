@@ -40,7 +40,7 @@ test('close-ups get a way back and the rack gets its spin controls', () => {
   assert.match(rack, /UX\/UI &lt;3/);
 });
 
-test('hotspot buttons, loading, note and price render readable text', () => {
+test('hotspot buttons, loading and note render readable text', () => {
   assert.match(renderHotspotButtons([{ node: 'disc_0', label: 'A&B' }]), /data-node="disc_0">A&amp;B<\/button>/);
   assert.match(renderLoading(41.6), /42%/);
   assert.match(renderNote('a < b'), /a &lt; b/);

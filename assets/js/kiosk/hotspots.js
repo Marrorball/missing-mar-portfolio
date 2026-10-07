@@ -1,15 +1,14 @@
-export const PRESETS = ['home', 'showcase', 'inside', 'cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer', 'price'];
+export const PRESETS = ['home', 'showcase', 'inside', 'cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
 
 // Close-ups hold the camera still: you read or spin something, you don't orbit.
-export const LOCKED_PRESETS = ['cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer', 'price'];
+export const LOCKED_PRESETS = ['cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
 
 // Close-ups that show a page, and the Blender anchor the page sits on.
 export const SCREENS = {
   tv: 'screen_tv',
   billboard: 'screen_billboard',
   terminal: 'screen_terminal',
-  flyer: 'screen_flyer',
-  price: 'screen_price'
+  flyer: 'screen_flyer'
 };
 
 // How much of the viewport a screen may take: room is left for the way back
@@ -20,7 +19,6 @@ export const HOTSPOTS = {
   hs_showcase: { label: 'Витрина', action: { type: 'focus', preset: 'showcase' } },
   hs_flyer: { label: 'Контакты', action: { type: 'route', hash: '#contact' } },
   hs_billboard: { label: 'Обо мне', action: { type: 'route', hash: '#about' } },
-  hs_pricelist: { label: 'Прайс', action: { type: 'route', hash: '#price' } },
   hs_terminal: { label: 'Терминал', action: { type: 'focus', preset: 'terminal' } },
   hs_backdoor: { label: 'Зайти внутрь', action: { type: 'focus', preset: 'inside' } },
   hs_doorway: { label: 'Зайти внутрь', action: { type: 'focus', preset: 'inside' } },
@@ -47,8 +45,6 @@ export const ROUTE_PRESETS = {
   project: 'tv',
   catalog: 'tv',
   about: 'billboard',
-  price: 'price',
-  pricelist: 'billboard',
   contact: 'flyer'
 };
 
@@ -126,7 +122,6 @@ const CLOSE_UP_TARGETS = {
   billboard: /^hs_billboard$/,
   terminal: /^hs_terminal$/,
   flyer: /^hs_flyer$/,
-  price: /^hs_pricelist$/,
   // the showcase is looked at, not walked round: only its projects answer
   showcase: /^slot_\d+$/
 };

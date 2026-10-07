@@ -31,7 +31,7 @@ async page => {
       if(overflow)throw Error('Horizontal overflow');
       await p.screenshot({path:`${output}/${size.name}.png`});
       const taps=[];
-      for(const [node,preset,hash] of [['hs_flyer','flyer','#contact'],['hs_pricelist','price','#price'],['hs_terminal','terminal',null],['hs_billboard','billboard','#about'],['hs_rack','rack',null],['hs_showcase','showcase',null]]) {
+      for(const [node,preset,hash] of [['hs_flyer','flyer','#contact'],['hs_terminal','terminal',null],['hs_billboard','billboard','#about'],['hs_rack','rack',null],['hs_showcase','showcase',null]]) {
         await home();const hit=await point(node);if(!hit)throw Error(`Not reachable: ${node} on ${size.name}`);
         await p.touchscreen.tap(hit.x,hit.y);await ready(preset);
         if(hash&&await p.evaluate(()=>location.hash)!==hash)throw Error('Wrong route');

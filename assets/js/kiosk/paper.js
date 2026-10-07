@@ -1,12 +1,11 @@
-// Printed sheets taped to the shutters: the «ПРОПАЛ ДИЗАЙНЕР» flyer and the
-// price list. They are painted onto the model so they read from across the
-// street, and the close-up page lays the same layout over them (the numbers
-// here and the cqw values in screens.css are one layout: keep them in step).
+// The «ПРОПАЛ ДИЗАЙНЕР» flyer taped to the left shutter. It is painted onto
+// the model so it reads from across the street, and the close-up page lays
+// the same layout over it (the numbers here and the cqw values in
+// screens.css are one layout: keep them in step).
 // Every position is in hundredths of the sheet width.
 
 const INK = '#141414';
 const PAPER = '#f2f0ea';
-const RED = '#d0281e';
 const NARROW = '"PT Sans Narrow", "Arial Narrow", Arial, sans-serif';
 const SANS = '"PT Sans", Arial, sans-serif';
 const MONO = '"PT Mono", "Courier New", monospace';
@@ -146,50 +145,3 @@ export function drawFlyer(context, width, height, { name = '', role = '', locati
     });
   });
 }
-
-export const PRICE_ROWS = 6;
-
-export function drawPriceSheet(context, width, height) {
-  const u = width / 100;
-  paper(context, width, height);
-  tape(context, u);
-  context.fillStyle = INK;
-
-  font(context, 700, 24 * u, NARROW);
-  centred(context, 'ПРАЙС', width / 2, 17 * u, 92 * u);
-
-  const label = 'ДИЗАЙН У МАРА · УСЛУГИ';
-  font(context, 700, 4.6 * u, NARROW);
-  const barWidth = Math.min(context.measureText(label).width + 6 * u, 92 * u);
-  context.fillStyle = RED;
-  context.fillRect((width - barWidth) / 2, 27 * u, barWidth, 7 * u);
-  context.fillStyle = '#fff';
-  centred(context, label, width / 2, 30.5 * u, 88 * u);
-
-  context.fillStyle = INK;
-  context.strokeStyle = INK;
-  for (let row = 0; row < PRICE_ROWS; row += 1) {
-    const y = (46 + row * 9) * u;
-    context.fillRect(8 * u, y, 40 * u, 0.5 * u);
-    context.setLineDash?.([0.6 * u, 1.4 * u]);
-    context.lineWidth = 0.6 * u;
-    context.beginPath();
-    context.moveTo(50 * u, y);
-    context.lineTo(77 * u, y);
-    context.stroke();
-    context.setLineDash?.([]);
-    font(context, 700, 5 * u, NARROW);
-    context.textAlign = 'right';
-    context.textBaseline = 'alphabetic';
-    context.fillText('— ₽', 92 * u, y);
-  }
-
-  context.fillStyle = RED;
-  font(context, 400, 4.4 * u, SANS, 'italic');
-  centred(context, 'Скоро здесь будет', width / 2, 105 * u, 92 * u);
-  centred(context, 'прайс на услуги.', width / 2, 110.5 * u, 92 * u);
-  context.fillStyle = INK;
-  font(context, 700, 4.2 * u, NARROW);
-  centred(context, 'ПОЛНЫЙ ПРАЙС — НА ЩИТЕ →', width / 2, 130 * u, 92 * u);
-}
-

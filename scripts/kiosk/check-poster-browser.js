@@ -6,7 +6,7 @@ async page => {
   for (const width of [1009, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 977 });
     await page.emulateMedia({ reducedMotion: width === 390 ? 'reduce' : 'no-preference' });
-    for (const hash of ['about', 'pricelist']) {
+    for (const hash of ['about']) {
       await page.goto(`http://localhost:5173/missing-mar-portfolio/#${hash}`);
       await page.waitForFunction(() => window.__kiosk?.current === 'billboard' && !window.__kiosk.inFlight);
       const board = page.locator('.kiosk-screens .screen-billboard');
@@ -22,11 +22,6 @@ async page => {
         || surface.pointerEvents.some(value => value !== 'none')) throw new Error('decorative layers');
       await board.locator('.screen-scroll').evaluate(element => { element.scrollTop = 130; });
       if (!await board.locator('.screen-scroll').evaluate(element => element.scrollTop > 0)) throw new Error('scrolling');
-      // Keyboard activation also verifies that the decorative layers do not
-      // interfere with the existing accessible tabs.
-      const next = hash === 'about' ? 'Прайс' : 'Обо мне';
-      await board.getByRole('link', { name: next, exact: true }).press('Enter');
-      await page.waitForURL(hash === 'about' ? '**/#pricelist' : '**/#about');
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => {
         window.__kiosk.frame();

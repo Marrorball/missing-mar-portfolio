@@ -41,8 +41,6 @@ async page => {
       await p.locator('.screen-billboard.is-on .screen-scroll').evaluate(e=>e.scrollTop=e.scrollHeight);
       if(await p.locator('.screen-billboard.is-on .screen-scroll').evaluate(e=>e.scrollTop)<=0)throw Error('Banner cannot scroll to remaining content');
       await p.locator('.screen-billboard.is-on .screen-scroll').evaluate(e=>e.scrollTop=0);
-      await p.locator('.board-tabs a[href="#pricelist"]').tap();
-      await p.locator('.board-price').waitFor({state:'visible'});await ready('billboard');await audit('billboard');
       await load();const hit=await find('hs_terminal');if(!hit)throw Error('Terminal not tappable');
       await p.touchscreen.tap(hit.x,hit.y);await p.waitForFunction(()=>window.__kiosk.inFlight);await ready('terminal');const terminal=await audit('terminal');
       const links=await p.locator('.screen-terminal.is-on .terminal-button').evaluateAll(es=>es.map(e=>({href:e.href,r:e.getBoundingClientRect().toJSON()})));
@@ -50,7 +48,7 @@ async page => {
       await p.screenshot({path:`${output}/${size.name}-terminal.png`});
       if(terminal.width<=480)for(const link of links)if(link.r.height<43.9||link.r.bottom>terminal.y+terminal.height+1)throw Error(`Terminal contact hidden/clipped: ${JSON.stringify(link)}`);
       await p.screenshot({path:`${output}/${size.name}-terminal.png`});
-      for(const [hash,preset] of [['#contact','flyer'],['#price','price'],['#catalog','tv']]){await load(hash,preset);await audit(preset);await p.screenshot({path:`${output}/${size.name}-${preset}.png`});}
+      for(const [hash,preset] of [['#contact','flyer'],['#catalog','tv']]){await load(hash,preset);await audit(preset);await p.screenshot({path:`${output}/${size.name}-${preset}.png`});}
       await noOverlap('.tv-remote','.kiosk-help');
       const projects=await p.locator('.ttx-list a').evaluateAll(es=>es.map(e=>({hash:e.getAttribute('href'),title:e.querySelector('.ttx-name').textContent})));
       for(const project of size.name==='phone'?projects:projects.slice(0,1)) {

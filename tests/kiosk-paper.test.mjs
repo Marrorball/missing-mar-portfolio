@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawFlyer, drawPriceSheet, tearOffLines } from '../assets/js/kiosk/paper.js';
+import { drawFlyer, tearOffLines } from '../assets/js/kiosk/paper.js';
 
 test('a tear-off slip keeps a short contact on one line', () => {
   assert.deepEqual(tearOffLines('@marrorball'), ['@marrorball']);
@@ -56,13 +56,6 @@ test('the flyer on the shutter is printed with the face, the name and every cont
   assert.ok(texts.includes('Telegram: @marrorball'));
   assert.ok(texts.includes('@gmail.com'), 'tear-off slips carry the split contact');
   assert.equal(images[0][0], photo, 'the photo is on the sheet');
-});
-
-test('the price sheet reads ПРАЙС from across the street', () => {
-  const { context, texts } = recorder();
-  drawPriceSheet(context, 1024, 1440);
-  assert.ok(texts.includes('ПРАЙС'));
-  assert.ok(texts.some(text => /прайс на услуги/.test(text)));
 });
 
 test('the TV inside comes on with the channel list', async () => {

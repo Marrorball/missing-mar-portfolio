@@ -80,11 +80,6 @@ async (page) => {
   await page.getByRole('link', { name: 'Обо мне', exact: true }).first().click();
   await page.locator('.screen-billboard.is-on').waitFor({ state: 'visible' });
   await shot('desktop-about');
-  await page.getByRole('link', { name: 'Прайс', exact: true }).click();
-  await page.locator('.screen-billboard h1').filter({ hasText: 'Прайс' }).waitFor();
-  await page.locator('.screen-billboard.is-on').waitFor({ state: 'visible' });
-  assert(await page.evaluate(() => window.__kiosk.scene.getObjectByName('screen_billboard').children.every(n => Math.abs(n.rotation.y - 4 * Math.PI / 3) < 0.01)), 'all billboard slats turn to the price face');
-  await shot('desktop-price');
   await page.keyboard.press('Escape');
   await arrived();
   await page.setViewportSize({ width: 900, height: 900 });
@@ -121,9 +116,6 @@ async (page) => {
   await page.goto(`${base}#about`);
   await ready();
   assert(await page.evaluate(() => window.__kiosk.scene.getObjectByName('screen_billboard').children.every(n => Number.isFinite(n.rotation.y))), 'direct about route creates finite slat transforms');
-  await page.getByRole('link', { name: 'Прайс', exact: true }).click();
-  await page.locator('.screen-billboard h1').filter({ hasText: 'Прайс' }).waitFor();
-  assert(await page.evaluate(() => window.__kiosk.scene.getObjectByName('screen_billboard').children.every(n => Math.abs(n.rotation.y - 4 * Math.PI / 3) < 0.01)), 'reduced motion changes the billboard instantly');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Проекты', exact: true }).click();
   const stillDisc = await hit('disc_0');

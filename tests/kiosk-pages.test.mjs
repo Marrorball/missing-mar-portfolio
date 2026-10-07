@@ -4,8 +4,6 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
-  renderPriceBoard,
-  renderPriceSheet,
   renderTerminalScreen,
   renderTvChannel,
   renderTvGuide
@@ -67,10 +65,12 @@ test('the TV guide numbers every channel and links to it', () => {
   assert.match(html, />1<.*Учи\.ру.*UX\/UI · 2026/s);
   assert.match(html, />2</);
   assert.match(html, /class="ttx-red" href="#about"/);
-  assert.match(html, /class="ttx-blue" href="#project\/%D1%83%D1%87%D0%B8%20%D1%80%D1%83">Канал 1/);
+  assert.match(html, /class="ttx-green" href="#contact"/);
+  assert.match(html, /class="ttx-yellow" href="#project\/%D1%83%D1%87%D0%B8%20%D1%80%D1%83">Канал 1/);
+  assert.doesNotMatch(html, /Прайс|#price/);
 });
 
-test('the billboard shows who Marat is, with tabs for about and price', () => {
+test('the billboard shows who Marat is', () => {
   const html = renderAboutBoard(
     { owner: { name: 'Марат <Д>', role: 'Product Designer', location: 'Москва', bio: 'Био', status: 'Ищу работу', profileImage: '/p.jpg' } },
     {
@@ -81,7 +81,7 @@ test('the billboard shows who Marat is, with tabs for about and price', () => {
     { id: 'about', title: 'Обо мне', content: '' }
   );
   assert.match(html, /href="#about" aria-current="page">Обо мне/);
-  assert.match(html, /href="#pricelist">Прайс/);
+  assert.doesNotMatch(html, /Прайс|#pricelist/);
   assert.match(html, /Марат &lt;Д&gt;/);
   assert.match(html, /Product Designer · Москва/);
   assert.match(html, /Био/);
@@ -91,14 +91,7 @@ test('the billboard shows who Marat is, with tabs for about and price', () => {
   assert.match(html, /class="board-stamp" aria-hidden="true">Ищу<br>работу/);
 });
 
-test('the price sheet is printed with blanks, and generic pages fit the billboard', () => {
-  assert.match(renderPriceSheet(), /<h1>Прайс<\/h1>/);
-  assert.match(renderPriceSheet(), /Скоро здесь будет.*прайс на услуги/s);
-  assert.match(renderPriceSheet(), /href="#pricelist">Полный прайс/);
-  const board = renderPriceBoard();
-  assert.match(board, /href="#pricelist" aria-current="page">Прайс/);
-  assert.match(board, /Скоро здесь будет полный прайс/);
-  assert.equal(board.match(/— ₽/g).length, 12, 'a full sheet of blank rows');
+test('generic pages fit the billboard', () => {
   assert.match(renderPageBoard({ title: 'Пресса', content: '<p>x</p>' }), /Пресса.*<p>x<\/p>/s);
 });
 

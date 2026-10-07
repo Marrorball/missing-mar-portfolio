@@ -689,8 +689,7 @@
 }
 
 /* the sheets on the shutters catch only a little light, like their paint */
-.kiosk-screens .screen-flyer::after,
-.kiosk-screens .screen-price::after {
+.kiosk-screens .screen-flyer::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -866,52 +865,6 @@
   margin-bottom: 6px;
 }
 
-/* the full price list: blank rows in two columns until there are prices */
-.board-price { position: relative; }
-
-.board-price .board-stamp {
-  top: 70px;
-  right: 40px;
-}
-
-.board-price-columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 44px;
-  margin-top: 10px;
-}
-
-.board-price-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.board-price-list li {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-  padding-top: 14px;
-  font: 700 22px var(--pt-narrow);
-}
-
-.board-price-list .price-item {
-  flex: 0 0 48%;
-  height: 1em;
-  border-bottom: 2px solid var(--print-ink);
-}
-
-.board-price-list .price-dots {
-  flex: 1;
-  border-bottom: 3px dotted rgba(27, 26, 23, .45);
-}
-
-.board-price-note {
-  margin: 22px 0 0;
-  color: var(--poster-red);
-  font: italic 400 18px var(--pt-sans);
-}
-
 /* ---------- terminal: an orange payment terminal ---------- */
 
 .screen-terminal {
@@ -1027,16 +980,14 @@
   font-size: 14px;
 }
 
-/* ---------- sheets on the shutters: flyer and price list ----------
-   Printed sheets 0.32 x 0.45 m. The layout is in hundredths of the sheet
+/* ---------- the flyer on the shutter ----------
+   A printed sheet 0.32 x 0.45 m. The layout is in hundredths of the sheet
    width (cqw) and matches the sheet painted on the model (paper.js), so the
    page lands on it without a jump. */
 
-.screen-flyer,
-.screen-price { background: #f2f0ea; }
+.screen-flyer { background: #f2f0ea; }
 
-.flyer-page,
-.price-sheet {
+.flyer-page {
   position: relative;
   container-type: inline-size;
   width: 100%;
@@ -1050,8 +1001,7 @@
   text-align: center;
 }
 
-.flyer-page > *,
-.price-sheet > * {
+.flyer-page > * {
   position: absolute;
   margin: 0;
   letter-spacing: 0;
@@ -1061,10 +1011,7 @@
 .flyer-page h1,
 .flyer-name,
 .flyer-role,
-.flyer-ask,
-.price-sheet h1,
-.price-sheet-bar,
-.price-sheet-about {
+.flyer-ask {
   left: 4cqw;
   right: 4cqw;
   line-height: 1;
@@ -1170,81 +1117,6 @@
   outline: none;
 }
 
-.price-sheet h1 {
-  top: 17cqw;
-  font: 700 24cqw/1 var(--pt-narrow);
-  text-transform: uppercase;
-}
-
-.price-sheet-bar {
-  top: 30.5cqw;
-  left: 50%;
-  right: auto;
-  padding: 0 3cqw;
-  color: #fff;
-  background: var(--poster-red);
-  font: 700 4.6cqw/7cqw var(--pt-narrow);
-  text-transform: uppercase;
-  transform: translate(-50%, -50%);
-}
-
-.price-sheet-rows {
-  top: 46cqw;
-  left: 8cqw;
-  right: 8cqw;
-  padding: 0;
-  list-style: none;
-}
-
-/* each row's rule sits on the line, like the painted rows every 9cqw */
-.price-sheet-rows li {
-  position: relative;
-  height: 9cqw;
-}
-
-.price-sheet-rows .price-item,
-.price-sheet-rows .price-dots,
-.price-sheet-rows b {
-  position: absolute;
-  top: 0;
-}
-
-.price-sheet-rows .price-item {
-  left: 0;
-  width: 40cqw;
-  border-top: .5cqw solid #141414;
-}
-
-.price-sheet-rows .price-dots {
-  left: 42cqw;
-  width: 27cqw;
-  border-top: .6cqw dotted rgba(20, 20, 20, .8);
-}
-
-.price-sheet-rows b {
-  right: 0;
-  font: 700 5cqw/1 var(--pt-narrow);
-  transform: translateY(-82%);
-}
-
-.price-sheet-note {
-  top: 102.2cqw;
-  left: 4cqw;
-  right: 4cqw;
-  color: var(--poster-red);
-  font: italic 400 4.4cqw/5.5cqw var(--pt-sans);
-}
-
-.price-sheet-note span { display: block; }
-
-.price-sheet-about {
-  top: 130cqw;
-  color: #141414;
-  font: 700 4.2cqw/1 var(--pt-narrow);
-  text-decoration: underline;
-  text-transform: uppercase;
-}
-
 /* ---------- flat mode ---------- */
 
 #overlay-view {
@@ -1276,11 +1148,9 @@
 
 .screen-flat .tv-osd { top: 0; }
 
-.screen-flat.screen-flyer,
-.screen-flat.screen-price { background: #39404c; }
+.screen-flat.screen-flyer { background: #39404c; }
 
-.screen-flat .flyer-page,
-.screen-flat .price-sheet {
+.screen-flat .flyer-page {
   width: min(100% - 32px, 440px);
   margin: 72px auto 150px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
@@ -1326,7 +1196,6 @@
     max-width: 240px;
   }
 
-  .board-price-columns { grid-template-columns: 1fr; }
 
   .board-page h1 { font-size: 52px; }
   .tv-page h1 { font-size: 42px; }
@@ -1395,10 +1264,6 @@
   .board-resume h2 { font-size: 15px; }
   .board-resume h3 { font-size: 12px; }
   .board-resume small { font-size: 10px; }
-  .board-price-columns { gap: 0 12px; }
-  .board-price-list li { padding-top: 8px; font-size: 14px; }
-  .board-price-note { font-size: 12px; margin-top: 12px; }
-  .board-price .board-stamp { position: absolute; top: 44px; right: 12px; }
   .terminal-page { padding-bottom: 6px; font-size: 12px; }
   .terminal-bar { padding: 4px 8px; font-size: 12px; letter-spacing: .02em; }
   .terminal-bar span:last-child { display: none; }
@@ -1506,14 +1371,11 @@ body[data-dived="tv"] .tv-remote [data-action="tv-channel"][data-step="1"] { ord
 .kiosk-screens .screen-billboard.is-dived .screen-scroll,
 .kiosk-screens .screen-terminal.is-dived .screen-scroll { padding-top: env(safe-area-inset-top); }
 
-.kiosk-screens .screen-flyer.is-dived,
-.kiosk-screens .screen-price.is-dived { background: #39404c; }
+.kiosk-screens .screen-flyer.is-dived { background: #39404c; }
 
-.kiosk-screens .screen-flyer.is-dived::after,
-.kiosk-screens .screen-price.is-dived::after { display: none; }
+.kiosk-screens .screen-flyer.is-dived::after { display: none; }
 
-.is-dived .flyer-page,
-.is-dived .price-sheet {
+.is-dived .flyer-page {
   width: min(100% - 24px, 460px);
   margin: calc(16px + env(safe-area-inset-top)) auto 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .4);

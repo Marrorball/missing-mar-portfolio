@@ -70,7 +70,7 @@ test('hits and discs open their project, empty pockets nothing', () => {
 });
 
 test('every route view and every focus action points at a known camera preset', () => {
-  for (const view of ['home', 'project', 'about', 'contact', 'page', 'catalog', 'price', 'pricelist']) {
+  for (const view of ['home', 'project', 'about', 'contact', 'page', 'catalog']) {
     assert.ok(PRESETS.includes(ROUTE_PRESETS[view]), view);
   }
   for (const spot of Object.values(HOTSPOTS)) {
@@ -126,14 +126,12 @@ test('every screen is a locked close-up with a camera preset', () => {
   assert.equal(SCREENS.flyer, 'screen_flyer');
 });
 
-test('the price list is its own sheet on the right shutter, read up close', () => {
-  assert.equal(ROUTE_PRESETS.price, 'price');
-  assert.equal(SCREENS.price, 'screen_price');
-  assert.ok(LOCKED_PRESETS.includes('price'));
-  assert.equal(hotspotForNode('hs_pricelist').action.hash, '#price');
-  assert.equal(allowedIn('price', 'hs_pricelist'), true);
-  assert.equal(allowedIn('price', 'hs_flyer'), false);
-  assert.equal(hotspotForNode('hs_fullprice'), null, 'the full price is a line on the sheet, no separate note');
+test('no price anywhere: it put people off writing', () => {
+  assert.equal(ROUTE_PRESETS.price, undefined);
+  assert.equal(ROUTE_PRESETS.pricelist, undefined);
+  assert.equal(SCREENS.price, undefined);
+  assert.ok(!PRESETS.includes('price') && !LOCKED_PRESETS.includes('price'));
+  assert.equal(hotspotForNode('hs_pricelist'), null);
 });
 
 test('the whole back doorway is a way in, not just the door leaf', () => {

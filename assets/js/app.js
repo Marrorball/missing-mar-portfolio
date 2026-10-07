@@ -9,8 +9,6 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
-  renderPriceBoard,
-  renderPriceSheet,
   renderTerminalScreen,
   renderTvChannel,
   renderTvGuide
@@ -18,7 +16,7 @@ import {
 import { drawGraffiti } from './kiosk/graffiti.js';
 import { STICKERS, drawSticker } from './kiosk/stickers.js';
 import { swipeStep } from './kiosk/dive.js';
-import { drawFlyer, drawPriceSheet } from './kiosk/paper.js';
+import { drawFlyer } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
 import { isInside } from './kiosk/routes.js';
 import { assignHits } from './kiosk/slots.js';
@@ -364,18 +362,6 @@ function showRoute() {
     return;
   }
 
-  if (route.view === 'pricelist') {
-    openScreen('billboard', renderPriceBoard(), { boardFace: 2 });
-    announce('Полный прайс');
-    return;
-  }
-
-  if (route.view === 'price') {
-    openScreen('price', renderPriceSheet());
-    announce('Прайс');
-    return;
-  }
-
   if (route.view === 'contact') {
     openScreen('flyer', renderFlyer(contactLinks(site.contacts), site.owner));
     announce('Контакты');
@@ -408,7 +394,7 @@ function loadImage(src) {
   });
 }
 
-// The flyer and the price list printed on the shutters, and the channel list
+// The flyer printed on the shutter, the notices round it, and the channel list
 // the TV shows when someone comes in.
 async function paintSheets() {
   const { site, projects } = state.bundle;
@@ -418,7 +404,6 @@ async function paintSheets() {
   state.kiosk?.paintSheet('screen_flyer', (context, width, height) => drawFlyer(context, width, height, {
     name: owner.name, role: owner.role, location: owner.location, links, photo
   }), 'hs_flyer');
-  state.kiosk?.paintSheet('screen_price', drawPriceSheet, 'hs_pricelist');
   state.kiosk?.paintNotices();
   for (const side of ['right', 'left']) {
     state.kiosk?.paintDecal(`graffiti_${side}`, (context, width, height) => drawGraffiti(context, width, height, side));
@@ -530,7 +515,7 @@ document.addEventListener('keydown', event => {
   }
   if (state.preset === 'rack' && horizontal) state.kiosk?.spinRack(horizontal);
   if (state.preset === 'tv' && horizontal) changeChannel(horizontal);
-  if (['tv', 'billboard', 'terminal', 'flyer', 'price'].includes(state.preset) && vertical) {
+  if (['tv', 'billboard', 'terminal', 'flyer'].includes(state.preset) && vertical) {
     event.preventDefault();
     scrollScreen(vertical);
   }

@@ -619,8 +619,8 @@ export async function createKioskScene({
     // the menu too).
     const standing = camera.aspect < 0.8;
     const names = standing
-      ? ['hs_showcase', 'hs_flyer', 'hs_pricelist', 'hs_rack', 'kiosk_signbox', 'kiosk_front_lower']
-      : ['hs_showcase', 'hs_flyer', 'hs_pricelist', 'hs_rack', 'hs_terminal', 'hs_billboard'];
+      ? ['hs_showcase', 'hs_flyer', 'shutter_right', 'hs_rack', 'kiosk_signbox', 'kiosk_front_lower']
+      : ['hs_showcase', 'hs_flyer', 'shutter_right', 'hs_rack', 'hs_terminal', 'hs_billboard'];
     const points = [];
     for (const name of names) {
       const object = root.getObjectByName(name);
@@ -860,7 +860,7 @@ export async function createKioskScene({
     return plane;
   }
 
-  // A printed sheet on a shutter (flyer, price list), lit like paper. The
+  // A printed sheet on a shutter (the flyer), lit like paper. The
   // page laid over it in a close-up has the same layout.
   function paintSheet(name, draw, pickAs) {
     // only a touch of glow, as if a little of the street light caught it
@@ -1005,8 +1005,8 @@ export async function createKioskScene({
     billboardMotion = { start: performance.now(), from: billboardSlats.map(slat => slat.rotation.y), to: target };
   }
 
-  // The three printed faces of the billboard: the ad, the about poster and
-  // the price sheet, in the same newsprint and type as the pages on it.
+  // The printed faces of the billboard: the ad and the about poster, in the
+  // same newsprint and type as the pages on it.
   function drawPoster(context, width, height, { headline, bar, line, big = false }) {
     context.fillStyle = '#ece4d0';
     context.fillRect(0, 0, width, height);
@@ -1044,8 +1044,9 @@ export async function createKioskScene({
     const faces = [
       { headline: brand, bar: name.toUpperCase(), line: `${role} · Обо мне →`, big: true },
       { headline: name.toUpperCase(), bar: role.toUpperCase(), line: 'Ищу работу. Подробности — на щите.' },
-      { headline: 'ПРАЙС', bar: 'ДИЗАЙН У МАРА · УСЛУГИ', line: 'Скоро здесь будет прайс на услуги.' }
     ];
+    // the third side of the slats is free for now: it carries the ad again
+    faces.push(faces[0]);
     const faceTextures = faces.map(face => {
       const sheet = document.createElement('canvas');
       sheet.width = 1024;

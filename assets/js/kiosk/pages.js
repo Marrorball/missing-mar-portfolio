@@ -3,7 +3,7 @@
 // other value is escaped.
 import { escapeHtml } from '../render.js';
 import { channelNumber } from './channels.js';
-import { PRICE_ROWS, tearOffLines } from './paper.js';
+import { tearOffLines } from './paper.js';
 
 function httpsUrl(value = '') {
   try {
@@ -89,9 +89,8 @@ export function renderTvGuide(projects = [], categories = []) {
     </ol>
     <nav class="ttx-keys" aria-label="Быстрые кнопки">
       <a class="ttx-red" href="#about">Обо мне</a>
-      <a class="ttx-green" href="#price">Прайс</a>
-      <a class="ttx-yellow" href="#contact">Контакты</a>
-      ${first ? `<a class="ttx-blue" href="#project/${encodeURIComponent(first.id)}">Канал ${channelNumber(0)}</a>` : ''}
+      <a class="ttx-green" href="#contact">Контакты</a>
+      ${first ? `<a class="ttx-yellow" href="#project/${encodeURIComponent(first.id)}">Канал ${channelNumber(0)}</a>` : ''}
     </nav>
   </article>`;
 }
@@ -99,7 +98,6 @@ export function renderTvGuide(projects = [], categories = []) {
 function boardTabs(active) {
   return `<nav class="board-tabs" aria-label="Билборд">
     <a href="#about"${active === 'about' ? ' aria-current="page"' : ''}>Обо мне</a>
-    <a href="#pricelist"${active === 'pricelist' ? ' aria-current="page"' : ''}>Прайс</a>
   </nav>`;
 }
 
@@ -141,23 +139,6 @@ export function renderAboutBoard(site = {}, resume = {}, page = {}) {
       <p class="board-stamp" aria-hidden="true">Ищу<br>работу</p>
     </div>
     ${resumeBlocks(resume)}
-  </article>`;
-}
-
-// The full price list on the billboard: a printed sheet of blank rows until
-// there are services and prices to put in.
-export function renderPriceBoard() {
-  const blank = '<li><span class="price-item"></span><span class="price-dots"></span><b>— ₽</b></li>';
-  return `<article class="board-page board-price">
-    ${boardTabs('pricelist')}
-    <h1>Прайс</h1>
-    <p class="board-role">Дизайн у Мара · полный список услуг</p>
-    <p class="board-stamp" aria-hidden="true">Скоро</p>
-    <div class="board-price-columns" aria-hidden="true">
-      <ul class="board-price-list">${blank.repeat(PRICE_ROWS)}</ul>
-      <ul class="board-price-list">${blank.repeat(PRICE_ROWS)}</ul>
-    </div>
-    <p class="board-price-note">Скоро здесь будет полный прайс на услуги.</p>
   </article>`;
 }
 
@@ -203,20 +184,5 @@ export function renderFlyer(links = [], owner = {}) {
     <div class="flyer-tabs" aria-label="Открыть контакт">
       ${links.map(link => `<a href="${escapeHtml(link.href)}"${externalAttrs(link)} aria-label="Открыть ${escapeHtml(link.label)}: ${escapeHtml(link.value)}">${tearOffLines(link.value).map(line => `<span>${escapeHtml(line)}</span>`).join('')}</a>`).join('')}
     </div>
-  </article>`;
-}
-
-// The price list taped to the right shutter, printed with blanks until there
-// are prices to put in (same layout as drawPriceSheet in paper.js).
-export function renderPriceSheet() {
-  const blank = '<li><span class="price-item"></span><span class="price-dots"></span><b>— ₽</b></li>';
-  return `<article class="price-sheet">
-    <span class="flyer-tape flyer-tape-left" aria-hidden="true"></span>
-    <span class="flyer-tape flyer-tape-right" aria-hidden="true"></span>
-    <h1>Прайс</h1>
-    <p class="price-sheet-bar">Дизайн у Мара · услуги</p>
-    <ul class="price-sheet-rows" aria-hidden="true">${blank.repeat(PRICE_ROWS)}</ul>
-    <p class="price-sheet-note"><span>Скоро здесь будет</span> <span>прайс на услуги.</span></p>
-    <a class="price-sheet-about" href="#pricelist">Полный прайс — на щите →</a>
   </article>`;
 }
