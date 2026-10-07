@@ -1,9 +1,15 @@
 {
   "experience": [
     {
+      "company": "ЦНИИП Минстроя России, консорциум «Градоресурс»",
+      "role": "Дизайнер",
+      "period": "2026 — н.в.",
+      "description": ""
+    },
+    {
       "company": "Фриланс",
       "role": "UX/UI Designer · Graphic Designer",
-      "period": "2024 — н.в.",
+      "period": "2024 — 2026",
       "description": "Разные фриланс-проекты: лендинги, постеры; «Древо» — логотип, брендинг и интернет-магазин; Ocean Kids — сайт детского сада; графика для Surf Coffee; UX/UI для KORTEX; TailTrail."
     }
   ],
