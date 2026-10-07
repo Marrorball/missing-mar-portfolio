@@ -1541,3 +1541,7 @@ body.is-dived:not([data-dived="tv"]) .kiosk-back {
   .tv-page .cs-card { gap: 8px; min-width: 0; }
   .tv-page .cs-card-text { min-width: 0; overflow-wrap: anywhere; }
 }
+
+/* the terminal has its own grey «◀ Назад» key: no paper tag under it */
+body[data-dived="terminal"] .kiosk-back { display: none; }
+.kiosk-screens .screen-terminal.is-dived .screen-scroll { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
