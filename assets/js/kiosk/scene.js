@@ -637,7 +637,36 @@ export async function createKioskScene({
     return { target, position };
   }
 
+  // Phones: the rack's face is tall and narrow like the phone, so it fills it
+  // between Back above and the rack's arrows and the menu below.
+  function rackPhoneView(fov) {
+    if (!rack || !presets.rack) return null;
+    const centre = rack.getWorldPosition(new THREE.Vector3());
+    const facing = presets.rack.position.clone().sub(presets.rack.target).setY(0).normalize();
+    let lowest = 1.43;
+    root.traverse(object => {
+      if (!/^disc_\d+$/.test(object.name) || !isShown(object)) return;
+      const at = object.getWorldPosition(new THREE.Vector3());
+      if (at.clone().sub(centre).dot(facing) > 0.15) lowest = Math.min(lowest, at.y);
+    });
+    const top = 1.96;
+    const bottom = lowest - 0.14;
+    const height = container.clientHeight;
+    const above = 72;
+    const below = 150;
+    const usable = Math.max(120, height - above - below) / height;
+    const distance = Math.max(fitDistance(0, top - bottom, fov, camera.aspect, usable),
+      fitDistance(0.62, 0, fov, camera.aspect, 0.94));
+    const visible = 2 * distance * Math.tan(THREE.MathUtils.degToRad(fov / 2));
+    const target = new THREE.Vector3(centre.x, (top + bottom) / 2 + ((above - below) / 2 / height) * visible, centre.z);
+    return { target, position: target.clone().addScaledVector(facing, distance) };
+  }
+
   function destinationView(name) {
+    if (name === 'rack' && isPhone(container.clientWidth, container.clientHeight)) {
+      const view = rackPhoneView(SCREEN_FOV);
+      if (view) return { view, fov: SCREEN_FOV };
+    }
     let view = screenView(name) || presets[name];
     if (!view) return;
     if (name === 'home') {
