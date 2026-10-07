@@ -17,6 +17,7 @@ import {
 } from './kiosk/pages.js';
 import { drawGraffiti } from './kiosk/graffiti.js';
 import { STICKERS, drawSticker } from './kiosk/stickers.js';
+import { swipeStep } from './kiosk/dive.js';
 import { drawFlyer, drawPriceSheet } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
 import { isInside } from './kiosk/routes.js';
@@ -443,6 +444,11 @@ async function mountKiosk() {
       onEmptyClick: goBack,
       onStreetClick: exitKiosk,
       onArrive: () => document.body.classList.remove('is-travelling'),
+      onDive: name => {
+        document.body.classList.toggle('is-dived', Boolean(name));
+        if (name) document.body.dataset.dived = name;
+        else delete document.body.dataset.dived;
+      },
       onRackFace: face => {
         state.rackFace = face;
         const title = document.querySelector('#rack-face');
@@ -528,6 +534,20 @@ document.addEventListener('keydown', event => {
     event.preventDefault();
     scrollScreen(vertical);
   }
+});
+
+// Phones: a flick across the open TV changes the channel, like CH+ / CH−.
+let swipe = null;
+document.addEventListener('pointerdown', event => {
+  swipe = document.body.dataset.dived === 'tv' && event.pointerType !== 'mouse' && event.target.closest('.screen-tv')
+    ? { x: event.clientX, y: event.clientY } : null;
+});
+document.addEventListener('pointercancel', () => { swipe = null; });
+document.addEventListener('pointerup', event => {
+  if (!swipe) return;
+  const step = swipeStep(event.clientX - swipe.x, event.clientY - swipe.y);
+  swipe = null;
+  if (step && state.preset === 'tv') changeChannel(step);
 });
 
 window.addEventListener('hashchange', renderRoute);

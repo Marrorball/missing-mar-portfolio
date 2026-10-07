@@ -5,6 +5,7 @@ import { RACK_FACES } from './discs.js';
 import { coverDescriptor, drawCover } from './covers.js';
 import { lookDirection, turnLook } from './look.js';
 import { quadTransform } from './quad.js';
+import { diveClip, isPhone } from './dive.js';
 import { walkingRoute } from './routes.js';
 import { flightDuration, flightOrientation, flightProgress, prepareFlightOrientation } from './motion.js';
 import {
@@ -67,7 +68,8 @@ export async function createKioskScene({
   onRackFace = () => {},
   onEmptyClick = () => {},
   onStreetClick = () => {},
-  onArrive = () => {}
+  onArrive = () => {},
+  onDive = () => {}
 }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(container.clientWidth, container.clientHeight, false);
@@ -336,7 +338,7 @@ export async function createKioskScene({
     const direct = pick(x, y);
     if (direct) return direct;
     // A little tolerance for a fingertip, using the same occlusion-aware rays.
-    for (const radius of [7, 14]) {
+    for (const radius of [8, 16, 24]) {
       for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
         const name = pick(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
         if (name) return name;
@@ -413,11 +415,61 @@ export async function createKioskScene({
   }
 
   function showScreen(name, { landed = false } = {}) {
+    if (dived && name !== dived) {
+      screens[dived].element.classList.remove('is-dived');
+      dived = null;
+      onDive(null);
+    }
     for (const [key, screen] of Object.entries(screens)) {
       screen.element.classList.toggle('is-on', key === name);
       screen.element.classList.toggle('is-landed', key === name && landed);
       if (key !== name) screen.element.classList.remove('is-near');
     }
+  }
+
+  // Phones: once you've walked up to a screen it opens to the whole phone,
+  // the way the reference's vending machine fills it. The page keeps its final
+  // layout and a clip opens from the screen's rectangle to the edges, so
+  // nothing stretches; going back closes it the same way.
+  let dived = null;
+  const OPEN = 'inset(0px 0px 0px 0px round 0px)';
+  function restingRect(name) {
+    const { width, height } = pagePixels(name, camera.position.distanceTo(screens[name].center));
+    return { left: (container.clientWidth - width) / 2, top: (container.clientHeight - height) / 2, width, height };
+  }
+  function dive(name, { animate = true } = {}) {
+    if (dived === name || !isPhone(container.clientWidth, container.clientHeight)) return;
+    const { element } = screens[name];
+    const viewport = { width: container.clientWidth, height: container.clientHeight };
+    const from = diveClip(restingRect(name), viewport, 18);
+    dived = name;
+    element.classList.add('is-dived');
+    onDive(name);
+    if (animate && element.animate) {
+      element.animate([{ clipPath: from }, { clipPath: OPEN }], { duration: 380, easing: 'cubic-bezier(.2, .7, .2, 1)' });
+    }
+  }
+  function undive({ animate = true } = {}) {
+    if (!dived) return Promise.resolve();
+    const name = dived;
+    const { element } = screens[name];
+    dived = null;
+    const finish = () => {
+      element.classList.remove('is-dived');
+      onDive(null);
+    };
+    if (!animate || !element.animate) {
+      finish();
+      return Promise.resolve();
+    }
+    const viewport = { width: container.clientWidth, height: container.clientHeight };
+    const motion = element.animate([{ clipPath: OPEN, opacity: 1 }, { clipPath: diveClip(restingRect(name), viewport, 18), opacity: 0 }],
+      { duration: 240, easing: 'cubic-bezier(.4, 0, .8, .4)', fill: 'forwards' });
+    return motion.finished.catch(() => {}).then(() => {
+      finish();
+      element.classList.remove('is-on', 'is-landed');
+      motion.cancel();
+    });
   }
 
   // While the camera walks up, the page already sits on the screen in
@@ -493,12 +545,15 @@ export async function createKioskScene({
     }
   }
 
-  function arrive(name, { landed = false } = {}) {
+  function arrive(name, { landed = false, instant = false } = {}) {
     applyLimits(name);
     onArrive(name);
     if (screens[name]) {
       sizeScreen(name);
-      if (name !== 'billboard' || !billboardMotion) showScreen(name, { landed });
+      if (name !== 'billboard' || !billboardMotion) {
+        showScreen(name, { landed });
+        dive(name, { animate: !instant });
+      }
     }
   }
 
@@ -599,7 +654,25 @@ export async function createKioskScene({
     if (destination) travel(name, destination.view, destination.fov, { instant });
   }
 
-  function travel(name, view, fov, { instant = false, look = null } = {}) {
+  // Leaving an open screen closes it first, then the camera steps back.
+  let pendingTravel = null;
+  function travel(name, view, fov, options = {}) {
+    const staying = dived === name && !flight && name === current
+      && camera.position.distanceTo(view.position) < 1e-3 && Math.abs(camera.fov - fov) < 1e-3;
+    if (dived && !staying) {
+      const first = !pendingTravel;
+      pendingTravel = [name, view, fov, options];
+      if (first) undive({ animate: !options.instant }).then(() => {
+        const [nextName, nextView, nextFov, nextOptions] = pendingTravel;
+        pendingTravel = null;
+        travelNow(nextName, nextView, nextFov, { ...nextOptions, quiet: true });
+      });
+      return;
+    }
+    travelNow(name, view, fov, options);
+  }
+
+  function travelNow(name, view, fov, { instant = false, look = null, quiet = false } = {}) {
     const alreadyThere = !flight && name === current
       && camera.position.distanceTo(view.position) < 1e-3
       && controls.target.distanceTo(view.target) < 1e-3
@@ -624,13 +697,15 @@ export async function createKioskScene({
       camera.position.copy(view.position);
       controls.target.copy(view.target);
       camera.lookAt(controls.target);
-      arrive(name);
+      arrive(name, { instant: true });
       if (look) insideLook = { ...look };
       return;
     }
     const leavingPage = screens[current] && current !== name ? current : null;
     if (!leavingPage) showScreen(null);
     fly(name, view, fov);
+    // a page that closed from the whole phone has already gone dark
+    if (quiet) flight.leavingPage = null;
     current = name;
     if (leavingPage) {
       screens[leavingPage].landing = pagePixels(leavingPage, camera.position.distanceTo(screens[leavingPage].center));
@@ -853,7 +928,8 @@ export async function createKioskScene({
       billboardMotion = null;
       return;
     }
-    showScreen(null);
+    // an open page stays up while the slats turn behind it
+    if (dived !== 'billboard') showScreen(null);
     billboardMotion = { start: performance.now(), from: billboardSlats.map(slat => slat.rotation.y), to: target };
   }
 
@@ -1134,7 +1210,10 @@ export async function createKioskScene({
       });
       if (complete) {
         billboardMotion = null;
-        if (!flight && current === 'billboard') showScreen('billboard');
+        if (!flight && current === 'billboard') {
+          showScreen('billboard');
+          dive('billboard');
+        }
       }
     }
     if (movingDisc) {

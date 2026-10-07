@@ -1297,7 +1297,7 @@
   pointer-events: auto;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 500px) {
   .tv-remote {
     top: auto;
     right: 50%;
@@ -1424,7 +1424,107 @@
   .tv-page .cs-card-text { min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 500px) {
   .tv-remote { bottom: calc(80px + env(safe-area-inset-bottom)); width: min(330px, calc(100vw - 24px)); grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; padding: 6px; }
   .tv-remote button { min-width: 0; padding: 6px 2px; font-size: 12px; }
+}
+
+/* ---------- phones: the screen you walked up to fills the phone ----------
+   Same page, same dress. The container gets another name so the compact
+   rules for the small physical screens stop applying and the phone ones do. */
+.kiosk-screens .screen-page.is-dived {
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+  container: dived-screen / inline-size;
+}
+
+.is-dived .screen-scroll {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}
+
+/* the TV: a black rim, the curved glass inside it, the remote as Fastext keys */
+.kiosk-screens .screen-tv.is-dived { background: #050505; }
+
+.kiosk-screens .screen-tv.is-dived .screen-scroll,
+.kiosk-screens .screen-tv.is-dived::after {
+  inset: max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom));
+  border-radius: 26px / 20px;
+}
+
+.kiosk-screens .screen-tv.is-dived .screen-scroll {
+  background: linear-gradient(#101a3c, var(--crt) 40%, #060914);
+  touch-action: pan-y;
+}
+
+.kiosk-screens .screen-tv.is-dived:has(.ttx) .screen-scroll { background: #000; }
+
+body.is-dived .kiosk-help { display: none; }
+
+body[data-dived="tv"] .kiosk-back,
+body[data-dived="tv"] .tv-remote [data-action="tv-scroll"] { display: none; }
+
+body[data-dived="tv"] .tv-remote {
+  top: auto;
+  right: 12px;
+  bottom: calc(max(6px, env(safe-area-inset-bottom)) + 8px);
+  left: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  width: auto;
+  padding: 6px;
+  background: rgba(0, 0, 0, .86);
+  border-radius: 0 0 20px 20px;
+  box-shadow: none;
+  transform: none;
+}
+
+body[data-dived="tv"] .tv-remote button {
+  min-height: 46px;
+  color: #000;
+  border-radius: 0;
+  box-shadow: none;
+  font: 700 15px var(--pt-mono);
+}
+
+body[data-dived="tv"] .tv-remote [data-action="tv-off"] { order: 1; color: #fff; background: #d0281e; font-size: 0; }
+body[data-dived="tv"] .tv-remote [data-action="tv-off"]::before { content: '← НАЗАД'; font-size: 15px; }
+body[data-dived="tv"] .tv-remote [data-action="tv-channel"][data-step="-1"] { order: 2; background: #2fbf4a; }
+body[data-dived="tv"] .tv-remote [data-action="tv-menu"] { order: 3; background: #ffe14d; }
+body[data-dived="tv"] .tv-remote [data-action="tv-channel"][data-step="1"] { order: 4; color: #fff; background: #3a7bff; }
+
+/* paper screens: plain readable paper, Back as a paper tag at the thumb */
+.kiosk-screens .screen-billboard.is-dived::after,
+.kiosk-screens .screen-billboard.is-dived::before { display: none; }
+
+.kiosk-screens .screen-billboard.is-dived .screen-scroll,
+.kiosk-screens .screen-terminal.is-dived .screen-scroll { padding-top: env(safe-area-inset-top); }
+
+.kiosk-screens .screen-flyer.is-dived,
+.kiosk-screens .screen-price.is-dived { background: #39404c; }
+
+.kiosk-screens .screen-flyer.is-dived::after,
+.kiosk-screens .screen-price.is-dived::after { display: none; }
+
+.is-dived .flyer-page,
+.is-dived .price-sheet {
+  width: min(100% - 24px, 460px);
+  margin: calc(16px + env(safe-area-inset-top)) auto 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+}
+
+body.is-dived:not([data-dived="tv"]) .kiosk-back {
+  top: auto;
+  right: 16px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: 16px;
+  justify-content: center;
+  min-height: 52px;
+  transform: none;
 }
