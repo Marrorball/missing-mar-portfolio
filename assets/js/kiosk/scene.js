@@ -991,6 +991,32 @@ export async function createKioskScene({
   }
 
   // What the billboard shows when nobody is reading it: a printed ad.
+  // The terminal's receipt: a strip of paper that feeds out of the slot under
+  // the bill acceptor in jerks and stays hanging there.
+  const receiptSlot = root.getObjectByName('terminal_receipt_slot');
+  let receiptStrip = null;
+  let receiptFeed = null;
+  function printReceipt() {
+    if (!receiptSlot) return;
+    if (!receiptStrip) {
+      const paper = document.createElement('canvas');
+      paper.width = 64;
+      paper.height = 256;
+      const context = paper.getContext('2d');
+      context.fillStyle = '#f4f2ec';
+      context.fillRect(0, 0, paper.width, paper.height);
+      context.fillStyle = 'rgba(40, 40, 40, .55)';
+      for (let y = 10; y < 246; y += 7) context.fillRect(6, y, 20 + ((y * 37) % 32), 2);
+      const map = new THREE.CanvasTexture(paper);
+      map.colorSpace = THREE.SRGBColorSpace;
+      receiptStrip = new THREE.Mesh(new THREE.PlaneGeometry(0.085, 0.26).translate(0, -0.13, 0),
+        new THREE.MeshStandardMaterial({ map, roughness: 0.9, side: THREE.DoubleSide }));
+      receiptStrip.name = 'terminal_receipt';
+      receiptSlot.add(receiptStrip);
+    }
+    receiptFeed = { start: performance.now() };
+  }
+
   const billboardSlats = [];
   const billboardResources = [];
   let billboardFace = 0;
@@ -1292,6 +1318,12 @@ export async function createKioskScene({
         }
       }
     }
+    if (receiptFeed) {
+      const t = Math.min((performance.now() - receiptFeed.start) / 1200, 1);
+      receiptStrip.scale.y = Math.max(0.001, Math.floor(t * 12) / 12);
+      receiptStrip.rotation.x = -0.25 * receiptStrip.scale.y;   // the free end curls out
+      if (t === 1) receiptFeed = null;
+    }
     if (movingDisc) {
       // The disc hops off the rack into your hand, rides along in front of
       // you round the kiosk and drops into the player as you reach the TV.
@@ -1377,12 +1409,18 @@ export async function createKioskScene({
     setProjectArt,
     playDisc,
     cancelDisc,
+    printReceipt,
     pageScroller: name => screens[name]?.scroller || null,
     setHits: hits => showOnly(/^slot_\d+$/, hits),
     setDiscs: discs => showOnly(/^disc_\d+$/, discs),
     dispose() {
       disposed = true;
       cancelDisc();
+      if (receiptStrip) {
+        receiptStrip.geometry.dispose();
+        receiptStrip.material.map.dispose();
+        receiptStrip.material.dispose();
+      }
       artworkTextures.forEach(texture => texture.dispose());
       artworkMaterials.forEach(material => material.dispose());
       artworkPlanes.forEach(plane => plane.geometry.dispose());

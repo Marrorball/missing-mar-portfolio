@@ -117,6 +117,8 @@ test('the résumé prints as a till receipt from the content', () => {
   }
   assert.match(html, /data-action="terminal-print">Распечатать ещё/);
   assert.match(html, /href="#contact"/);
+  assert.doesNotMatch(html, /is-kept/, 'a fresh receipt prints');
+  assert.match(renderReceipt({}, {}, { fresh: false }), /class="receipt is-kept"/, 'coming back, the receipt is just there');
 });
 
 test('the flyer carries clickable contacts', () => {

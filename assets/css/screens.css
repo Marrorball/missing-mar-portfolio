@@ -821,48 +821,18 @@
   pointer-events: none;
 }
 
-.board-resume {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 0 18px;
-  margin-top: 26px;
-  padding-top: 14px;
-  border-top: 3px solid var(--print-ink);
+/* the résumé moved to the terminal's receipt: one line points there */
+.board-more {
+  margin: 14px 0 0;
 }
 
-.board-resume h2 {
-  margin: 0 0 8px;
+.board-more a {
   color: var(--poster-red);
-  font: 700 22px var(--pt-narrow);
-  letter-spacing: .04em;
+  font: 700 19px var(--pt-narrow);
+  letter-spacing: .03em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   text-transform: uppercase;
-}
-
-.board-resume h3 {
-  margin: 0;
-  font: 700 17px/1.2 var(--pt-sans);
-}
-
-.board-resume p {
-  margin: 0 0 4px;
-}
-
-.board-resume small {
-  font: 400 13px var(--pt-mono);
-}
-
-.board-resume article {
-  margin-bottom: 14px;
-}
-
-.board-resume ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.board-resume li {
-  margin-bottom: 6px;
 }
 
 /* ---------- terminal: an orange payment terminal ---------- */
@@ -978,6 +948,142 @@
   margin: 0;
   color: #777;
   font-size: 14px;
+}
+
+/* ---------- the receipt the terminal prints ----------
+   Thermal paper in PT Mono printed a few lines at a time under the
+   printer's mouth, a torn zigzag edge, a barcode. */
+
+.receipt-slot {
+  position: relative;
+  margin: 0 22px;
+  padding-top: 10px;
+  overflow: hidden;
+}
+
+/* the printer's mouth the paper comes out of */
+.receipt-slot::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 10px;
+  background: #2b2b2b;
+  border-radius: 0 0 6px 6px;
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, .5);
+}
+
+.receipt {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 18px 18px 22px;
+  color: #1b1b1b;
+  background: #fbfaf6;
+  font: 400 14px/1.45 var(--pt-mono);
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
+  animation: receipt-print 1.4s steps(20, end) both;
+}
+
+.receipt.is-kept { animation: none; }
+
+/* printed a few lines at a time, top to bottom */
+@keyframes receipt-print {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+.receipt p { margin: 0; }
+
+.receipt-head,
+.receipt-role,
+.receipt-thanks {
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.receipt-head { font-weight: 700; letter-spacing: .04em; }
+
+.receipt-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px !important;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #777;
+  font-size: 12px;
+}
+
+.receipt h1 {
+  margin: 10px 0 0;
+  font: 700 20px/1.2 var(--pt-mono);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.receipt-role { font-size: 12px; }
+
+.receipt-block {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #777;
+}
+
+.receipt-block h2 {
+  margin: 0 0 4px;
+  font: 700 13px var(--pt-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.receipt-block p + p { margin-top: 6px; }
+
+.receipt small {
+  color: #4a4a4a;
+  font-size: 12px;
+}
+
+.receipt-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px !important;
+  padding-top: 8px;
+  border-top: 3px double #1b1b1b;
+  font-size: 15px;
+  text-transform: uppercase;
+}
+
+.receipt-total b { text-align: right; }
+
+.receipt-thanks {
+  margin-top: 10px !important;
+  font-size: 12px;
+  letter-spacing: .06em;
+}
+
+.receipt-barcode {
+  width: 72%;
+  height: 44px;
+  margin: 10px auto 0 !important;
+  background: repeating-linear-gradient(90deg, #1b1b1b 0 2px, transparent 2px 4px, #1b1b1b 4px 5px,
+    transparent 5px 8px, #1b1b1b 8px 11px, transparent 11px 12px, #1b1b1b 12px 13px, transparent 13px 17px);
+}
+
+.terminal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 22px 0;
+}
+
+.terminal-actions .terminal-button {
+  justify-content: center;
+  min-height: 56px;
+  font-size: 19px;
+  text-align: center;
 }
 
 /* ---------- the flyer on the shutter ----------
@@ -1260,10 +1366,7 @@
   .board-page .rich-content p { margin-bottom: 6px; font-size: 12px; line-height: 1.4; }
   .board-status { font-size: 11px; }
   .board-stamp { position: static; grid-column: 1; grid-row: 2; margin: 5px 0 0; padding: 4px; border-width: 2px; font-size: 10px; }
-  .board-resume { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 12px; padding-top: 8px; border-top-width: 2px; }
-  .board-resume h2 { font-size: 15px; }
-  .board-resume h3 { font-size: 12px; }
-  .board-resume small { font-size: 10px; }
+  .board-more a { font-size: 13px; }
   .terminal-page { padding-bottom: 6px; font-size: 12px; }
   .terminal-bar { padding: 4px 8px; font-size: 12px; letter-spacing: .02em; }
   .terminal-bar span:last-child { display: none; }

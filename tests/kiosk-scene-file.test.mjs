@@ -278,3 +278,10 @@ test('the site knows the model size, so the loading percent ignores gzip', async
   const { KIOSK_BYTES } = await import('../assets/js/kiosk/model-size.js');
   assert.equal(KIOSK_BYTES, statSync(GLB).size, 'run npm run build:kiosk: the build rewrites it');
 });
+
+test('the terminal has a slot its receipt feeds out of, on the front under the bill acceptor', () => {
+  const slot = gltf().nodes.find(node => node.name === 'terminal_receipt_slot');
+  assert.ok(slot, 'terminal_receipt_slot');
+  const [x, y, z] = slot.translation;
+  assert.ok(Math.abs(x - 3.0) < 0.01 && Math.abs(y - 0.552) < 0.01 && Math.abs(z - 0.597) < 0.01, slot.translation.join(','));
+});

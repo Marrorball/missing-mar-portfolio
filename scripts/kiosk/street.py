@@ -231,6 +231,8 @@ def _terminal(M):
     wear.finish(parent=terminal)
     text('terminal_label', 'ПОПОЛНЕНИЕ\nБАЛАНСА', (0.0, -0.255, 0.985), 0.068, M['ink'], parent=terminal)
     screen('screen_terminal', (tx, ty - 0.247, 1.225), 0.45, 0.32)
+    # the receipt feeds out of the small slot under the bill acceptor (scene.js)
+    empty('terminal_receipt_slot', (tx, ty - 0.247, 0.552))
     empty('light_terminal', (tx, ty - 0.60, 2.06))
     lamp = Merge('terminal_lamp')
     lamp.bar((tx, ty - 0.15, 1.98), (tx, ty - 0.57, 2.06), 0.012, M['frame'])

@@ -51,7 +51,9 @@ const state = {
   // where you stood before each close-up, most recent last
   trail: [],
   hash: '',
-  returning: null
+  returning: null,
+  // the last receipt the terminal printed: it is still there when you come back
+  receipt: null
 };
 
 const TRAIL_LENGTH = 12;
@@ -243,8 +245,8 @@ function arriveBack(entry) {
 // strip of paper feeds out of the slot under the bill acceptor.
 function printReceipt() {
   const { site, resume } = state.bundle;
-  const number = 100000 + Math.floor(Math.random() * 900000);
-  openScreen('terminal', renderReceipt(site, resume, { number, date: new Date() }));
+  state.receipt = { number: 100000 + Math.floor(Math.random() * 900000), date: new Date() };
+  openScreen('terminal', renderReceipt(site, resume, state.receipt));
   state.kiosk?.printReceipt();
 }
 
@@ -363,7 +365,9 @@ function showRoute() {
   }
 
   if (route.view === 'resume') {
-    openScreen('terminal', renderTerminalScreen());
+    openScreen('terminal', state.receipt
+      ? renderReceipt(site, state.bundle.resume, { ...state.receipt, fresh: false })
+      : renderTerminalScreen());
     announce('Выписка');
     return;
   }

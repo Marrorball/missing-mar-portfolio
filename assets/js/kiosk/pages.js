@@ -156,7 +156,7 @@ export function renderTerminalScreen() {
 }
 
 // The résumé as a till receipt: everything on it comes from the content.
-export function renderReceipt(site = {}, resume = {}, { number = 1, date = new Date() } = {}) {
+export function renderReceipt(site = {}, resume = {}, { number = 1, date = new Date(), fresh = true } = {}) {
   const owner = site.owner || {};
   const city = String(owner.location || '').split(',')[0].trim();
   const block = (title, rows) => (rows.length ? `<section class="receipt-block"><h2>${title}</h2>${rows.join('')}</section>` : '');
@@ -164,7 +164,7 @@ export function renderReceipt(site = {}, resume = {}, { number = 1, date = new D
   return `<article class="terminal-page terminal-printed">
     <header class="terminal-bar"><span>Дизайн у Марата</span><span>Касса</span></header>
     <div class="receipt-slot">
-      <div class="receipt">
+      <div class="receipt${fresh ? '' : ' is-kept'}">
         <p class="receipt-head">Терминал «Дизайн у Марата»</p>
         <p class="receipt-line"><span>Выписка № ${String(number).padStart(6, '0')}</span><span>${receiptDate(date)}</span></p>
         <h1>${escapeHtml(owner.name || '')}</h1>
