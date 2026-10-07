@@ -610,8 +610,16 @@ export async function createKioskScene({
   // buildings/trees must not force the kiosk into a tiny distant speck.
   function fitSmallOverview(view, fov) {
     if (camera.aspect >= 1 && container.clientHeight >= 500) return view;
+    // A phone standing up frames the kiosk with its sign and the rack, big,
+    // the way the reference fills the phone with its stall; the terminal and
+    // the billboard may run off the edges (contacts are on the flyer and in
+    // the menu too).
+    const standing = camera.aspect < 0.8;
+    const names = standing
+      ? ['hs_showcase', 'hs_flyer', 'hs_pricelist', 'hs_rack', 'kiosk_signbox', 'kiosk_front_lower']
+      : ['hs_showcase', 'hs_flyer', 'hs_pricelist', 'hs_rack', 'hs_terminal', 'hs_billboard'];
     const points = [];
-    for (const name of ['hs_showcase', 'hs_flyer', 'hs_pricelist', 'hs_rack', 'hs_terminal', 'hs_billboard']) {
+    for (const name of names) {
       const object = root.getObjectByName(name);
       if (!object) continue;
       const bounds = new THREE.Box3().setFromObject(object);
@@ -625,6 +633,38 @@ export async function createKioskScene({
       fit.position.copy(position); fit.lookAt(target); fit.updateMatrixWorld();
       return points.map(point => point.clone().project(fit));
     };
+    if (standing) {
+      // Face the kiosk nearly head-on so the billboard stands right above the
+      // sign: one tall stack (billboard, sign, kiosk, the path in the snow)
+      // that suits a tall screen. The billboard counts for height only.
+      const offset = position.clone().sub(target);
+      offset.x *= 0.35;
+      position.copy(target).add(offset);
+      const billboard = root.getObjectByName('hs_billboard');
+      const above = [];
+      if (billboard) {
+        const bounds = new THREE.Box3().setFromObject(billboard);
+        for (const x of [bounds.min.x, bounds.max.x]) above.push(new THREE.Vector3(x, bounds.max.y, bounds.max.z));
+      }
+      // between a little sky at the top and the menu at the bottom
+      const top = 1 - 2 * 24 / container.clientHeight;
+      const bottom = -1 + 2 * 100 / container.clientHeight;
+      for (let step = 0; step < 8; step++) {
+        const projected = project();
+        const xs = projected.map(p => p.x);
+        const ys = projected.concat(above.map(point => point.clone().project(fit))).map(p => p.y);
+        const half = position.distanceTo(target) * Math.tan(fov * Math.PI / 360);
+        const across = new THREE.Vector3(1, 0, 0).applyQuaternion(fit.quaternion)
+          .multiplyScalar((Math.min(...xs) + Math.max(...xs)) / 2 * half * camera.aspect);
+        const upward = new THREE.Vector3(0, 1, 0).applyQuaternion(fit.quaternion)
+          .multiplyScalar(((Math.min(...ys) + Math.max(...ys)) / 2 - (top + bottom) / 2) * half);
+        position.add(across).add(upward);
+        target.add(across).add(upward);
+        const scale = Math.max((Math.max(...xs) - Math.min(...xs)) / 2 / 0.96, (Math.max(...ys) - Math.min(...ys)) / (top - bottom));
+        position.sub(target).multiplyScalar(scale).add(target);
+      }
+      return { target, position };
+    }
     const initial = project();
     const middle = (Math.min(...initial.map(p => p.x)) + Math.max(...initial.map(p => p.x))) / 2;
     const shift = new THREE.Vector3(1, 0, 0).applyQuaternion(fit.quaternion)
