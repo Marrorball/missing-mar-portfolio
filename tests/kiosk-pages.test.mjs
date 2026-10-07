@@ -44,8 +44,8 @@ test('on the TV the case plays as tape: frames with a timecode, no emoji', () =>
       { label: 'Решение', content: '<p><img src="/b.png"></p>' }
     ]
   });
-  assert.match(html, /<span class="tv-frame"><img src="\/a\.png" style="max-width:260px"><span class="tv-frame-osd" aria-hidden="true">▶ 00:01:17 SP<\/span><\/span>/);
-  assert.match(html, /▶ 00:02:17 SP/, 'each scene counts its own frames');
+  assert.match(html, /<span class="tv-frame"><img src="\/a\.png" style="max-width:260px"><span class="tv-frame-osd" aria-hidden="true">▶\uFE0E 00:01:17 SP<\/span><\/span>/);
+  assert.match(html, /▶\uFE0E 00:02:17 SP/, 'each scene counts its own frames');
   assert.doesNotMatch(html, /🎨/);
   assert.match(html, /class="behance-btn"> Смотреть/);
   assert.match(html, /<p class="tv-end-title">Конец<\/p>/);

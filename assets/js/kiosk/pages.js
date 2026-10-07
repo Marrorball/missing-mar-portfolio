@@ -35,7 +35,7 @@ function onTape(html = '', scene = 1) {
   return html.replace(EMOJI, '').replace(/<img\b[^>]*>/g, image => {
     shot += 1;
     const seconds = String((shot * 17) % 60).padStart(2, '0');
-    return `<span class="tv-frame">${image}<span class="tv-frame-osd" aria-hidden="true">▶ 00:${String(scene).padStart(2, '0')}:${seconds} SP</span></span>`;
+    return `<span class="tv-frame">${image}<span class="tv-frame-osd" aria-hidden="true">▶\uFE0E 00:${String(scene).padStart(2, '0')}:${seconds} SP</span></span>`;
   });
 }
 
@@ -50,7 +50,7 @@ export function renderTvChannel(project = {}, { index = 0, category = '' } = {})
         <span>${number + 1}</span>${escapeHtml(plainLabel(section.label || ''))}
       </button></li>`).join('');
   return `<article class="tv-page" data-channel="${escapeHtml(project.id || '')}">
-    <header class="tv-osd"><span>КАНАЛ ${channelNumber(index)}</span><span class="tv-osd-play">▶ ВОСПР.</span></header>
+    <header class="tv-osd"><span>КАНАЛ ${channelNumber(index)}</span><span class="tv-osd-play">▶\uFE0E ВОСПР.</span></header>
     <div class="tv-title">
       <p class="tv-kicker">${meta(category, project.year)}</p>
       <h1>${escapeHtml(project.title || '')}</h1>
@@ -58,7 +58,7 @@ export function renderTvChannel(project = {}, { index = 0, category = '' } = {})
     </div>
     ${chapters ? `<nav class="tv-chapters" aria-label="Сцены"><p>Выбор сцены</p><ol>${chapters}</ol></nav>` : ''}
     ${tags ? `<ul class="tv-tags">${tags}</ul>` : ''}
-    ${behance ? `<a class="tv-link" href="${escapeHtml(behance)}" target="_blank" rel="noreferrer">▶ Смотреть на Behance ↗</a>` : ''}
+    ${behance ? `<a class="tv-link" href="${escapeHtml(behance)}" target="_blank" rel="noreferrer">▶\uFE0E Смотреть на Behance ↗\uFE0E</a>` : ''}
     ${cover ? `<img class="tv-cover" src="${escapeHtml(cover)}" alt="">` : ''}
     ${sections.map((section, number) => `<section class="tv-section" data-chapter-section="${number + 1}">
       <p class="tv-scene">Сцена ${number + 1}</p>
@@ -161,7 +161,7 @@ export function renderTerminalScreen(links = []) {
       </a>`).join('')}
     </div>
     <footer class="terminal-foot">
-      <button type="button" class="terminal-key" data-action="kiosk-back">◀ Назад</button>
+      <button type="button" class="terminal-key" data-action="kiosk-back">◀\uFE0E Назад</button>
       <p class="terminal-note">Комиссия 0%. Сдачу не выдаём.</p>
     </footer>
   </article>`;

@@ -16,6 +16,7 @@ import {
 import { drawGraffiti } from './kiosk/graffiti.js';
 import { STICKERS, drawSticker } from './kiosk/stickers.js';
 import { swipeStep } from './kiosk/dive.js';
+import { KIOSK_BYTES } from './kiosk/model-size.js';
 import { drawFlyer } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
 import { isInside } from './kiosk/routes.js';
@@ -423,6 +424,7 @@ async function mountKiosk() {
     state.kiosk = await createKioskScene({
       container: document.querySelector('#kiosk-stage'),
       url: KIOSK_URL,
+      bytes: KIOSK_BYTES,
       onProgress: percent => { loading.innerHTML = renderLoading(percent); },
       onHover: showLabel,
       onPick: runAction,

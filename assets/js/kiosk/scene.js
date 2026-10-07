@@ -62,6 +62,7 @@ function smoothstep(from, to, value) {
 export async function createKioskScene({
   container,
   url,
+  bytes = 0,
   onProgress = () => {},
   onHover = () => {},
   onPick = () => {},
@@ -102,7 +103,9 @@ export async function createKioskScene({
   controls.enablePan = false;
 
   const gltf = await new GLTFLoader().loadAsync(url, event => {
-    if (event.total) onProgress((event.loaded / event.total) * 100);
+    // `bytes` is the real size: a gzipped download reports the compressed one
+    const total = bytes || event.total;
+    if (total) onProgress(Math.min(100, (event.loaded / total) * 100));
   });
   const root = gltf.scene;
   scene.add(root);

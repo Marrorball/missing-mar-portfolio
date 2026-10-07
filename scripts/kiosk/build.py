@@ -8,6 +8,7 @@ cam_*/tgt_* camera presets (see assets/js/kiosk/hotspots.js).
 """
 
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -79,6 +80,14 @@ def export():
         export_extras=True,
     )
     print(f'kiosk exported: {OUT}')
+    # the site counts the loading percent against the real size (gzip on
+    # GitHub Pages makes Content-Length the compressed one)
+    size_module = os.path.join(ROOT, 'assets', 'js', 'kiosk', 'model-size.js')
+    with open(size_module, encoding='utf-8') as file:
+        source = file.read()
+    source = re.sub(r'KIOSK_BYTES = \d+;', f'KIOSK_BYTES = {os.path.getsize(OUT)};', source)
+    with open(size_module, 'w', encoding='utf-8') as file:
+        file.write(source)
 
 
 build()

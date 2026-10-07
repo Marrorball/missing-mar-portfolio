@@ -55,3 +55,22 @@ test('the TV remote switches, scrolls, opens the guide and turns off', () => {
   assert.match(html, /data-action="tv-menu"/);
   assert.match(html, /data-action="tv-off"/);
 });
+
+test('loading never shows more than 100 percent', () => {
+  assert.match(renderLoading(330), /100%/);
+  assert.match(renderLoading(-5), /0%/);
+});
+
+test('arrows stay text on iPhones, not emoji stickers', async () => {
+  const pages = await import('../assets/js/kiosk/pages.js');
+  const html = [
+    renderRackControls('UX/UI'),
+    renderRemote(),
+    pages.renderTerminalScreen([]),
+    pages.renderTvChannel({ id: 'a', title: 'A', behance: 'https://www.behance.net/x', sections: [] }, { index: 0 })
+  ].join('');
+  for (const arrow of ['◀', '▶', '↗']) {
+    const bare = html.split(arrow).slice(1).filter(after => !after.startsWith('︎'));
+    assert.equal(bare.length, 0, `${arrow} without U+FE0E`);
+  }
+});

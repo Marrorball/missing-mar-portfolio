@@ -273,3 +273,8 @@ test('the wall calendar is one printed sheet hanging flush on a nail, no board b
     !json.nodes.some(node => /^interior/.test(node.name) && json.meshes[node.mesh]?.primitives.some(
       primitive => json.materials[primitive.material]?.name === 'away')), 'no coral board inside');
 });
+
+test('the site knows the model size, so the loading percent ignores gzip', async () => {
+  const { KIOSK_BYTES } = await import('../assets/js/kiosk/model-size.js');
+  assert.equal(KIOSK_BYTES, statSync(GLB).size, 'run npm run build:kiosk: the build rewrites it');
+});

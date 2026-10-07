@@ -28,9 +28,9 @@ export function renderBackButton() {
 
 export function renderRackControls(title = '') {
   return `<div class="rack-controls" role="group" aria-label="Вертушка с дисками">
-    <button type="button" data-action="rack-spin" data-step="-1" aria-label="Предыдущая сторона">◀</button>
+    <button type="button" data-action="rack-spin" data-step="-1" aria-label="Предыдущая сторона">◀\uFE0E</button>
     <span id="rack-face" aria-live="polite">${escapeHtml(title)}</span>
-    <button type="button" data-action="rack-spin" data-step="1" aria-label="Следующая сторона">▶</button>
+    <button type="button" data-action="rack-spin" data-step="1" aria-label="Следующая сторона">▶\uFE0E</button>
   </div>`;
 }
 
@@ -43,7 +43,8 @@ export function renderNote(text = '') {
 }
 
 export function renderLoading(percent = 0) {
-  return `<div class="kiosk-loading" role="status">Открываем ларёк… ${Math.round(percent)}%</div>`;
+  const shown = Math.round(Math.min(100, Math.max(0, percent)));
+  return `<div class="kiosk-loading" role="status">Открываем ларёк… ${shown}%</div>`;
 }
 
 // Every clickable object in the scene has a twin button here, so the kiosk
