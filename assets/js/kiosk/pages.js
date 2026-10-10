@@ -155,17 +155,14 @@ function resumeRows(resume = {}) {
   ].filter(([, rows]) => rows.length);
 }
 
-// The terminal opens on the résumé to read; printing it is the key below.
-export function renderResumeScreen(site = {}, resume = {}) {
-  const owner = site.owner || {};
-  const city = String(owner.location || '').split(',')[0].trim();
-  return `<article class="terminal-page terminal-resume">
+// The terminal screen only explains: the résumé comes out on the receipt.
+export function renderTerminalScreen() {
+  return `<article class="terminal-page">
     <header class="terminal-bar"><span>Дизайн у Марата</span><span>Опыт и навыки</span></header>
-    <h1>${escapeHtml(owner.name || '')}</h1>
-    <p class="terminal-lead">${escapeHtml([owner.role, city].filter(Boolean).join(' · '))}</p>
-    ${resumeRows(resume).map(([title, rows]) => `<section class="resume-block"><h2>${title}</h2>${rows.join('')}</section>`).join('')}
-    <div class="terminal-actions">
-      <button type="button" class="terminal-button" data-action="terminal-print">Распечатать чек</button>
+    <h1>Выписка о дизайнере</h1>
+    <p class="terminal-lead">Чтобы посмотреть опыт, навыки, инструменты и образование, распечатайте выписку — чек выйдет внизу терминала.</p>
+    <div class="terminal-buttons">
+      <button type="button" class="terminal-button" data-action="terminal-print"><span>Распечатать выписку</span><small>Чек бесплатный</small></button>
     </div>
     ${terminalFoot()}
   </article>`;

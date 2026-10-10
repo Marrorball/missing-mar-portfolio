@@ -67,7 +67,7 @@ test('arrows stay text on iPhones, not emoji stickers', async () => {
   const html = [
     renderRackControls('UX/UI'),
     renderRemote(),
-    pages.renderResumeScreen({}, {}),
+    pages.renderTerminalScreen(),
     pages.renderTvChannel({ id: 'a', title: 'A', behance: 'https://www.behance.net/x', sections: [] }, { index: 0 })
   ].join('');
   for (const arrow of ['◀', '▶', '↗']) {

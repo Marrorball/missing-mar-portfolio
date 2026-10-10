@@ -6,7 +6,7 @@ import {
   renderPageBoard,
   renderPrinting,
   renderReceipt,
-  renderResumeScreen,
+  renderTerminalScreen,
   renderTvChannel,
   renderTvGuide
 } from '../assets/js/kiosk/pages.js';
@@ -126,16 +126,13 @@ test('the flyer carries clickable contacts', () => {
   assert.match(long, /<span>marrorball<\/span><span>@gmail\.com<\/span>/, 'long contacts wrap on the slip');
 });
 
-test('the terminal shows the résumé to read first, then offers to print it', () => {
-  const html = renderResumeScreen(
-    { owner: { name: 'Марат <Д>', role: 'Product Designer', location: 'Москва, Россия' } },
-    { experience: [{ period: '2026 — н.в.', company: 'ЦНИИП', role: 'Главный дизайнер', description: 'Сайты' }],
-      skills: [{ name: 'Интерфейсы', level: 'UI' }], tools: ['Figma'], education: [], publications: [], about: '' });
+test('the terminal screen only explains and offers to print: the résumé is on the receipt', () => {
+  const html = renderTerminalScreen();
   assert.match(html, /class="terminal-bar"><span>Дизайн у Марата<\/span><span>Опыт и навыки<\/span>/);
-  assert.match(html, /Марат &lt;Д&gt;/);
-  for (const text of ['ЦНИИП', 'Главный дизайнер', 'Сайты', 'Интерфейсы', 'Figma']) assert.ok(html.includes(text), text);
-  assert.match(html, /data-action="terminal-print"[^>]*>Распечатать чек/);
+  assert.match(html, /распечатайте выписку/i);
+  assert.match(html, /data-action="terminal-print"[^>]*><span>Распечатать выписку/);
   assert.match(html, /data-action="kiosk-back"/);
+  assert.doesNotMatch(html, /resume-block|Опыт<\/h2>/);
 });
 
 test('while it prints, the screen says to take the receipt', () => {

@@ -10,7 +10,7 @@ import {
   renderFlyer,
   renderPageBoard,
   renderReceipt,
-  renderResumeScreen,
+  renderTerminalScreen,
   renderPrinting,
   renderTvChannel,
   renderTvGuide
@@ -483,7 +483,7 @@ function showRoute() {
   }
 
   if (route.view === 'resume') {
-    openScreen('terminal', renderResumeScreen(site, state.bundle.resume));
+    openScreen('terminal', renderTerminalScreen());
     announce('Выписка');
     return;
   }
