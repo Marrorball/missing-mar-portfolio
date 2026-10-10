@@ -85,3 +85,29 @@ test('while the radio plays, a panel shows the station with arrows to change it 
   assert.match(html, /is-from-right/, 'the name comes in from the side of the arrow');
   assert.match(renderRadioPanel('A', -1), /is-from-left/);
 });
+
+test('what you hold up: the receipt with a way to put it down and to get in touch, the phone with its keys', async () => {
+  const { renderHand, renderPhone } = await import('../assets/js/kiosk/ui.js');
+  const receipt = renderHand('receipt', '<div class="receipt">чек</div>');
+  assert.match(receipt, /class="hand hand-receipt"/);
+  assert.match(receipt, /data-action="kiosk-back"[^>]*>← Положить чек/);
+  assert.match(receipt, /href="#contact"/);
+  const phone = renderHand('phone', renderPhone());
+  assert.match(phone, /Положить телефон/);
+  assert.match(phone, /<canvas/);
+  for (const key of ['2', '4', '5', '6', '8']) assert.match(phone, new RegExp(`data-phone-key="${key}"`));
+  assert.doesNotMatch(phone.replace(/◀︎|▶︎/g, ''), /[◀▶]/, 'arrows stay text on iPhones');
+});
+
+test('the «how to get around» card speaks mouse or finger, says what is where, and closes', async () => {
+  const { renderGuide } = await import('../assets/js/kiosk/ui.js');
+  const mouse = renderGuide({ touch: false });
+  assert.match(mouse, /Как тут ходить/);
+  assert.match(mouse, /Наведи/);
+  assert.match(mouse, /мышью/);
+  assert.match(mouse, /вертушка.*проекты/s);
+  assert.match(mouse, /data-action="guide-close"/);
+  const finger = renderGuide({ touch: true });
+  assert.match(finger, /пальцем/);
+  assert.doesNotMatch(finger, /мышью|Наведи/);
+});

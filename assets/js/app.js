@@ -22,6 +22,9 @@ import { KIOSK_BYTES } from './kiosk/model-size.js';
 import { drawFlyer } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
 import { STATIONS, createRadio } from './kiosk/radio.js';
+import { startPhone } from './kiosk/phone.js';
+import { printerSound } from './kiosk/printer-sound.js';
+import { drawReceiptPaper } from './kiosk/receipt-paper.js';
 import { isInside } from './kiosk/routes.js';
 import { assignHits } from './kiosk/slots.js';
 import { drawTeletext } from './kiosk/teletext.js';
@@ -29,10 +32,12 @@ import {
   renderBackButton,
   renderContactCard,
   renderHelpBar,
-  renderHint,
+  renderGuide,
+  renderHand,
   renderHotspotButtons,
   renderLoading,
   renderNote,
+  renderPhone,
   renderRackControls,
   renderRadioPanel,
   renderRemote
@@ -60,7 +65,9 @@ const state = {
   radio: null,
   // which station the panel shows, and the arrow last pressed (for its slide)
   radioShown: { on: false, index: -1 },
-  radioStep: 0
+  radioStep: 0,
+  // something to do once the camera gets to a preset (start printing, pick up the phone)
+  arrival: null
 };
 
 const TRAIL_LENGTH = 12;
@@ -107,6 +114,8 @@ function drawShell() {
     <div id="kiosk-closeup-slot"></div>
     <div id="contact-card-slot"></div>
     <div id="radio-slot"></div>
+    <div id="hand-slot"></div>
+    <div id="guide-slot"></div>
   </div>`);
 }
 
@@ -124,22 +133,59 @@ function showNote(text) {
   noteTimer = window.setTimeout(() => { slot.innerHTML = ''; }, 4200);
 }
 
-function showHint() {
-  document.querySelector('.kiosk-hint')?.remove();
-  homeView.insertAdjacentHTML('beforeend', renderHint());
-  window.setTimeout(() => document.querySelector('.kiosk-hint')?.remove(), 4000);
+// «Как тут ходить»: how to look round, point and walk up, in mouse or
+// finger words. Shown on a first visit and from the menu.
+function showGuide() {
+  document.querySelector('#guide-slot').innerHTML = renderGuide({ touch: TOUCH.matches });
+  document.querySelector('[data-action="guide-close"]')?.focus();
 }
 
-function firstVisitHint() {
-  if (TOUCH.matches) return;
+function closeGuide() {
+  const slot = document.querySelector('#guide-slot');
+  const open = Boolean(slot?.innerHTML);
+  if (slot) slot.innerHTML = '';
+  return open;
+}
+
+function firstVisitGuide() {
   let seen = false;
   try {
-    seen = window.localStorage.getItem('kiosk-hint-seen') === '1';
-    window.localStorage.setItem('kiosk-hint-seen', '1');
+    seen = window.localStorage.getItem('kiosk-guide-seen') === '1';
+    window.localStorage.setItem('kiosk-guide-seen', '1');
   } catch {
     seen = false;
   }
-  if (!seen) showHint();
+  // a direct link to a project or a page goes straight there
+  if (!seen && !currentHash()) showGuide();
+}
+
+// What you hold up to your eyes: the receipt off the printer, the phone.
+let stopPhone = null;
+function showHand(kind) {
+  const { site, resume } = state.bundle;
+  const slot = document.querySelector('#hand-slot');
+  slot.innerHTML = kind === 'receipt'
+    ? renderHand('receipt', renderReceipt(site, resume, { ...state.receipt, fresh: false }))
+    : renderHand('phone', renderPhone());
+  document.body.classList.add('has-hand');
+  if (kind === 'phone') stopPhone = startPhone(slot.querySelector('.phone'));
+  slot.querySelector('.hand-back')?.focus({ preventScroll: true });
+}
+
+function hideHand() {
+  stopPhone?.();
+  stopPhone = null;
+  const slot = document.querySelector('#hand-slot');
+  if (slot) slot.innerHTML = '';
+  document.body.classList.remove('has-hand');
+}
+
+function onArrival(name) {
+  document.body.classList.remove('is-travelling');
+  const arrival = state.arrival;
+  if (arrival?.preset !== name) return;
+  state.arrival = null;
+  arrival.run();
 }
 
 function rackTitle(face) {
@@ -156,6 +202,8 @@ function chromeFor(name) {
 
 // Moves the camera and swaps the close-up chrome.
 function focusPreset(name, options) {
+  hideHand();
+  if (state.arrival?.preset !== name) state.arrival = null;
   if (!state.kiosk && name === 'rack') {
     window.location.hash = '#catalog';
     return;
@@ -274,6 +322,7 @@ function stepAway() {
 }
 
 function arriveBack(entry) {
+  hideHand();
   if (LOCKED_PRESETS.includes(entry.preset)) {
     focusPreset(entry.preset);
     return;
@@ -291,8 +340,21 @@ function arriveBack(entry) {
 function printReceipt() {
   const { site, resume } = state.bundle;
   state.receipt = { number: 100000 + Math.floor(Math.random() * 900000), date: new Date() };
-  openScreen('terminal', renderReceipt(site, resume, state.receipt));
-  state.kiosk?.printReceipt();
+  if (!state.kiosk) {
+    showHand('receipt');
+    return;
+  }
+  // the screen says so, the camera goes down to the slot, the paper comes out
+  state.kiosk.setPage('terminal', renderPrinting());
+  state.arrival = {
+    preset: 'printer',
+    run: () => {
+      printerSound();
+      state.kiosk.printReceipt((context, width, height) => drawReceiptPaper(context, width, height, { owner: site.owner, resume, ...state.receipt }))
+        .then(() => window.setTimeout(() => { if (state.preset === 'printer') showHand('receipt'); }, 300));
+    }
+  };
+  focusPreset('printer');
 }
 
 function runAction(node) {
@@ -309,6 +371,10 @@ function runAction(node) {
     purr();
     state.kiosk?.purr();
     showNote('Мррр…');
+  }
+  if (action.type === 'phone') {
+    state.arrival = { preset: 'phone', run: () => showHand('phone') };
+    focusPreset('phone');
   }
   if (action.type === 'radio') {
     // pressed again, it moves on to the next station, like the arrow does
@@ -489,7 +555,7 @@ async function mountKiosk() {
       onPick: runAction,
       onEmptyClick: stepAway,
       onStreetClick: exitKiosk,
-      onArrive: () => document.body.classList.remove('is-travelling'),
+      onArrive: onArrival,
       onDive: name => {
         document.body.classList.toggle('is-dived', Boolean(name));
         if (name) document.body.dataset.dived = name;
@@ -525,7 +591,7 @@ async function mountKiosk() {
     focusPreset(ROUTE_PRESETS[parseRoute(window.location.hash).view] || 'home', { instant: true });
     renderRoute();
     loading.innerHTML = '';
-    firstVisitHint();
+    firstVisitGuide();
   } catch (error) {
     console.error(error);
     state.kiosk = null;
@@ -553,7 +619,8 @@ document.addEventListener('click', event => {
   }
   if (action === 'kiosk-home') goHome();
   if (action === 'kiosk-back' || action === 'tv-off') goBack();
-  if (action === 'kiosk-help') showHint();
+  if (action === 'kiosk-help') showGuide();
+  if (action === 'guide-close') closeGuide();
   if (action === 'rack-spin') state.kiosk?.spinRack(step);
   if (action === 'tv-channel') changeChannel(step);
   if (action === 'tv-scroll') scrollScreen(step);
@@ -571,6 +638,7 @@ document.addEventListener('click', event => {
 document.addEventListener('keydown', event => {
   if (event.target.closest?.('input, textarea')) return;
   if (event.key === 'Escape') {
+    if (closeGuide()) return;
     if (document.querySelector('#contact-card')) toggleContactCard(false);
     else if (state.preset !== 'home' || !flatView.hidden) goBack();
     return;

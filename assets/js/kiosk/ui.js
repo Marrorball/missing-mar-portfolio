@@ -34,8 +34,52 @@ export function renderRackControls(title = '') {
   </div>`;
 }
 
-export function renderHint() {
-  return '<div class="kiosk-hint" role="status">Крути мышкой и нажимай на то, что светится</div>';
+// The card that explains the kiosk to someone who just walked up: how to
+// look round, point and walk up to things and back, in mouse or finger words,
+// and what is where.
+export function renderGuide({ touch = false } = {}) {
+  const rows = touch ? [
+    ['Веди пальцем', 'осмотреться вокруг ларька'],
+    ['Нажми на предмет', 'подойдёшь к нему: так открываются проекты, «обо мне» и контакты'],
+    ['Нажми мимо или «Назад»', 'отойдёшь обратно'],
+    ['Внутри ларька', 'веди пальцем, чтобы оглядеться, двумя пальцами — ближе']
+  ] : [
+    ['Зажми и тяни мышью', 'осмотреться вокруг ларька'],
+    ['Наведи на предмет', 'он подсветится и подпишется'],
+    ['Нажми на него', 'подойдёшь ближе: так открываются проекты, «обо мне» и контакты'],
+    ['Нажми мимо или «Назад»', 'отойдёшь обратно'],
+    ['Внутри ларька', 'тяни, чтобы оглядеться, колесо — ближе']
+  ];
+  return `<div class="kiosk-guide" role="dialog" aria-label="Как тут ходить">
+    <h2>Как тут ходить</h2>
+    <ul>${rows.map(([what, does]) => `<li><b>${what}</b> — ${does}</li>`).join('')}</ul>
+    <p class="kiosk-guide-where"><b>Что где:</b> вертушка с дисками — проекты, билборд — обо мне, листовка на ставне — контакты, терминал — опыт и навыки. Внутри — телевизор, радио и кот. А ещё кто-то потерял телефон.</p>
+    <p class="kiosk-guide-menu">Не хочется искать — всё есть в меню внизу.</p>
+    <button type="button" data-action="guide-close">Понятно</button>
+  </div>`;
+}
+
+// What you hold up to your eyes: the receipt off the printer or the phone out
+// of the snow, each with its own way to put it down.
+export function renderHand(kind, inner = '') {
+  const actions = kind === 'receipt'
+    ? '<button type="button" class="hand-back" data-action="kiosk-back">← Положить чек</button><a class="hand-link" href="#contact">Связаться →</a>'
+    : '<button type="button" class="hand-back" data-action="kiosk-back">← Положить телефон</button>';
+  return `<div class="hand hand-${kind}" role="dialog" aria-label="${kind === 'receipt' ? 'Чек' : 'Телефон'}">
+    <div class="hand-actions">${actions}</div>
+    <div class="hand-body">${inner}</div>
+  </div>`;
+}
+
+// A push-button phone of the early 2000s: the green screen and a keypad,
+// 2 4 6 8 steer the snake, 5 starts it.
+export function renderPhone() {
+  const keys = [['1', ''], ['2', '▲'], ['3', ''], ['4', '◀︎'], ['5', 'старт'], ['6', '▶︎'], ['7', ''], ['8', '▼'], ['9', ''], ['*', ''], ['0', ''], ['#', '']];
+  return `<div class="phone">
+    <div class="phone-ear" aria-hidden="true"></div>
+    <div class="phone-screen"><canvas width="420" height="280" aria-label="Змейка"></canvas></div>
+    <div class="phone-keys">${keys.map(([digit, hint]) => `<button type="button" data-phone-key="${digit}"><b>${digit}</b>${hint ? `<small>${hint}</small>` : ''}</button>`).join('')}</div>
+  </div>`;
 }
 
 export function renderNote(text = '') {
