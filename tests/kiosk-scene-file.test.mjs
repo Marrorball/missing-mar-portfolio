@@ -298,3 +298,24 @@ test('the radio has a needle on its scale, an on-lamp and an LCD to light up', (
   const lcd = json.nodes[index('screen_radio')];
   assert.ok(lcd.extras.width > 0.05 && lcd.extras.height > 0.01);
 });
+
+test('a phone lies lost in the snow by the trail, with a lit screen and a big invisible area to tap', () => {
+  const json = gltf();
+  const index = name => json.nodes.findIndex(node => node.name === name);
+  const parentOf = name => json.nodes.find(node => (node.children || []).includes(index(name)));
+  const phone = json.nodes[index('hs_phone')];
+  assert.ok(phone, 'hs_phone');
+  assert.ok(phone.translation[1] < 0.1, 'lying on the snow');
+  for (const name of ['phone_screen', 'phone_hit']) assert.equal(parentOf(name)?.name, 'hs_phone', name);
+  assert.ok(json.materials.some(mat => mat.name === 'phone_screen'), 'its screen has its own material to light up');
+  const hit = json.nodes[index('phone_hit')];
+  const used = json.meshes[hit.mesh].primitives.map(primitive => json.materials[primitive.material].name);
+  assert.deepEqual(used, ['hit_area']);
+});
+
+test('the terminal reads «Опыт и навыки»; cameras for its printer and for the phone', () => {
+  const json = gltf();
+  const label = json.nodes.find(node => node.name === 'terminal_label');
+  assert.equal(label.extras.caption, 'ОПЫТ И НАВЫКИ');
+  for (const name of ['cam_printer', 'tgt_printer', 'cam_phone', 'tgt_phone']) assert.ok(json.nodes.some(node => node.name === name), name);
+});

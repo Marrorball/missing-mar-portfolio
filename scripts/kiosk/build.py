@@ -37,6 +37,8 @@ CAMERAS = {
     'billboard': ((0.0, 1.4, 4.2), (0.0, 6.0, 4.2)),
     'terminal': ((3.0, -1.35, 1.25), (3.0, -0.6, 1.225)),
     'flyer': ((-1.79, -1.93, 1.55), (-1.938, -1.108, 1.55)),
+    'printer': ((3.0, -1.45, 0.85), (3.0, -0.59, 0.42)),       # the terminal's receipt slot
+    'phone': ((1.27, -3.38, 0.42), (1.15, -3.0, 0.0)),          # looking down at the lost phone
 }
 
 # Waypoints for walking between the street and the inside: round the kiosk

@@ -229,7 +229,8 @@ def _terminal(M):
         for cx in (-0.255, 0.255):
             wear.cylinder(0.009, 0.006, (cx, -0.232, z), exposed, segments=10, rot=(math.pi / 2, 0, 0))
     wear.finish(parent=terminal)
-    text('terminal_label', 'ПОПОЛНЕНИЕ\nБАЛАНСА', (0.0, -0.255, 0.985), 0.068, M['ink'], parent=terminal)
+    label = text('terminal_label', 'ОПЫТ\nИ НАВЫКИ', (0.0, -0.255, 0.985), 0.068, M['ink'], parent=terminal)
+    label['caption'] = 'ОПЫТ И НАВЫКИ'
     screen('screen_terminal', (tx, ty - 0.247, 1.225), 0.45, 0.32)
     # the receipt feeds out of the small slot under the bill acceptor (scene.js)
     empty('terminal_receipt_slot', (tx, ty - 0.247, 0.552))
@@ -244,6 +245,32 @@ def _terminal(M):
              lumps=1, seed=3, grid=0.012)
 
 
+def _lost_phone(M):
+    """A push-button phone of the early 2000s someone dropped by the trail,
+    face up and one edge sunk in the snow. Its screen lights up now and then
+    like a text came in (scene.js); a click picks it up for a game of Snake."""
+    phone = box('hs_phone', (0.048, 0.113, 0.02), (1.15, -3.0, 0.008), material('phone_body', (0.13, 0.19, 0.29), roughness=0.55),
+                rot_z=math.radians(35))
+    phone.rotation_euler[0] = 0.08
+    bevel = phone.modifiers.new('rounded phone', 'BEVEL')
+    bevel.width = 0.006
+    bevel.segments = 3
+    face = Merge('phone_details')
+    face.box((0.044, 0.108, 0.002), (0.0, 0.0, 0.0105), material('phone_face', (0.18, 0.27, 0.40), roughness=0.4))
+    face.box((0.038, 0.032, 0.0012), (0.0, 0.022, 0.0118), M['ink'])                      # the screen's dark frame
+    face.box((0.012, 0.002, 0.001), (0.0, 0.046, 0.0118), M['ink'])                       # earpiece
+    face.box((0.022, 0.009, 0.0016), (0.0, -0.002, 0.0118), M['plastic_light'])           # the big navi key
+    for row in range(4):
+        for col in range(3):
+            face.box((0.009, 0.006, 0.0014), (-0.012 + col * 0.012, -0.016 - row * 0.009, 0.0118), M['plastic_light'])
+    face.box((0.014, 0.01, 0.008), (0.012, 0.058, 0.006), material('phone_body', (0.13, 0.19, 0.29)))  # antenna hump
+    face.finish(parent=phone)
+    box('phone_screen', (0.03, 0.022, 0.001), (0.0, 0.022, 0.0126), material('phone_screen', (0.55, 0.68, 0.38), emission=0.35),
+        parent=phone)
+    # a phone is tiny from the street: tap anywhere around it
+    box('phone_hit', (0.32, 0.32, 0.12), (0.0, 0.0, 0.03), material('hit_area', (0.0, 0.0, 0.0), alpha=0.0), parent=phone)
+
+
 def build(M):
     rng = random.Random(13)
     _snow(M, rng)
@@ -253,4 +280,5 @@ def build(M):
     _billboard(M)
     _blocks(M, rng)
     _terminal(M)
+    _lost_phone(M)
     build_can('cola_can_bin', (2.065, -2.038, 0.62), 0.24, M)
