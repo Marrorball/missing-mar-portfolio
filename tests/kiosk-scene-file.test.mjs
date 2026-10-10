@@ -285,3 +285,16 @@ test('the terminal has a slot its receipt feeds out of, on the front under the b
   const [x, y, z] = slot.translation;
   assert.ok(Math.abs(x - 3.0) < 0.01 && Math.abs(y - 0.552) < 0.01 && Math.abs(z - 0.597) < 0.01, slot.translation.join(','));
 });
+
+test('the radio has a needle on its scale, an on-lamp and an LCD to light up', () => {
+  const json = gltf();
+  const index = name => json.nodes.findIndex(node => node.name === name);
+  const parentOf = name => json.nodes.find(node => (node.children || []).includes(index(name)));
+  for (const name of ['radio_needle', 'radio_led', 'screen_radio']) {
+    assert.ok(index(name) >= 0, name);
+    assert.equal(parentOf(name)?.name, 'hs_radio', name);
+  }
+  assert.ok(json.materials.some(mat => mat.name === 'radio_led'), 'the lamp has its own material to light');
+  const lcd = json.nodes[index('screen_radio')];
+  assert.ok(lcd.extras.width > 0.05 && lcd.extras.height > 0.01);
+});

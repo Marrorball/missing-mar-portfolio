@@ -3,7 +3,7 @@ import math
 from pathlib import Path
 import bpy
 from dims import WALL
-from lib import Merge, empty, material
+from lib import Merge, box, empty, material, screen
 
 ROOT = Path(__file__).resolve().parents[2] / 'assets/kiosk'
 
@@ -517,6 +517,12 @@ def radio_details(M, parent):
     for k in range(8): parts.bar((-.035+k*.009,.080,.06),(-.035+k*.009,.080,.078),.0015,M['ink'])
     parts.polyline([(-.13,0,.1),(-.13,0,.18),(.13,0,.18),(.13,0,.1)],.012,M['ink'])
     parts.finish(parent=parent)
+    # what the site moves when the radio plays (assets/js/kiosk/radio.js):
+    # the tuning needle at the left end of the scale, the on-lamp beside it
+    # and a green LCD between the scale and the cassette
+    box('radio_needle',(.0018,.002,.024),(-.035,.0815,.069),material('radio_needle',(.85,.1,.08),emission=.6),parent=parent)
+    box('radio_led',(.007,.004,.007),(.052,.0795,.069),material('radio_led',(.3,.03,.03)),parent=parent)
+    screen('screen_radio',(0,.0785,.037),.07,.018,rot_z=math.pi,parent=parent)
 
 def cartons(M):
     batch=Merge('stock_open_carton')
