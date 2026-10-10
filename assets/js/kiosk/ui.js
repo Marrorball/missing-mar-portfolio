@@ -53,6 +53,18 @@ export function renderHotspotButtons(entries = []) {
   return `<div class="kiosk-a11y">${entries.map(entry => `<button type="button" data-action="kiosk-pick" data-node="${escapeHtml(entry.node)}">${escapeHtml(entry.label)}</button>`).join('')}</div>`;
 }
 
+// While the radio plays: the station between arrows that change it, and a
+// way to switch it off. The name comes in from the side of the arrow pressed.
+export function renderRadioPanel(name = '', direction = 0) {
+  const from = direction > 0 ? ' is-from-right' : direction < 0 ? ' is-from-left' : '';
+  return `<div class="radio-panel" role="group" aria-label="Радио">
+    <button type="button" data-action="radio-step" data-step="-1" aria-label="Предыдущая станция">◀\uFE0E</button>
+    <span class="radio-name${from}" aria-live="polite"><b>FM</b> ${escapeHtml(name)}</span>
+    <button type="button" data-action="radio-step" data-step="1" aria-label="Следующая станция">▶\uFE0E</button>
+    <button type="button" class="radio-off" data-action="radio-off" aria-label="Выключить радио">Выкл</button>
+  </div>`;
+}
+
 export function renderRemote() {
   return `<div class="tv-remote" role="group" aria-label="Пульт">
     <button type="button" data-action="tv-off" aria-label="Выключить и вернуться назад">ВЫКЛ</button>

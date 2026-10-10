@@ -352,3 +352,105 @@ body.is-travelling .rack-controls {
   .rack-controls button { flex-shrink: 0; }
   .contact-card, .kiosk-note { bottom: calc(80px + env(safe-area-inset-bottom)); }
 }
+
+/* ---------- the radio's panel: the station between its arrows ---------- */
+
+.radio-panel {
+  position: fixed;
+  z-index: 6;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  padding: 4px;
+  color: var(--tag-ink);
+  background: var(--tag-paper);
+  border-top: 4px solid var(--tag-red);
+  box-shadow: var(--tag-shadow);
+  font: var(--tag-font);
+  font-size: 16px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  transform: rotate(1deg);
+}
+
+.radio-panel button {
+  width: 44px;
+  height: 44px;
+  color: var(--tag-ink);
+  background: transparent;
+  font: 16px 'PT Sans', Arial, sans-serif;
+}
+
+.radio-panel button:hover,
+.radio-panel button:focus-visible {
+  color: var(--tag-paper);
+  background: var(--tag-ink);
+  outline: none;
+}
+
+/* off is a red key, like ВЫКЛ on the TV remote */
+.radio-panel .radio-off {
+  width: auto;
+  margin-left: 4px;
+  padding: 0 12px;
+  color: #fff;
+  background: #a3332b;
+  font: var(--tag-font);
+  font-size: 15px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.radio-panel .radio-off:hover,
+.radio-panel .radio-off:focus-visible { color: #fff; background: #7d221c; }
+
+.radio-name {
+  min-width: 170px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.radio-name b {
+  margin-right: 4px;
+  padding: 1px 4px;
+  color: var(--tag-paper);
+  background: var(--tag-red);
+  font-size: .75em;
+}
+
+.radio-name.is-from-right { animation: radio-from-right .35s ease-out both; }
+.radio-name.is-from-left { animation: radio-from-left .35s ease-out both; }
+
+@keyframes radio-from-right {
+  from { opacity: 0; transform: translateX(40%); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes radio-from-left {
+  from { opacity: 0; transform: translateX(-40%); }
+  to { opacity: 1; transform: none; }
+}
+
+/* tuning in: the name blinks like the LCD's «ПОИСК» */
+.radio-panel.is-seeking .radio-name { animation: radio-seek .5s steps(2, jump-none) infinite; }
+
+@keyframes radio-seek {
+  from { opacity: 1; }
+  to { opacity: .35; }
+}
+
+body.is-dived .radio-panel { display: none; }
+
+@media (max-width: 640px) {
+  .radio-panel {
+    top: calc(72px + env(safe-area-inset-top));
+    right: 12px;
+    font-size: 13px;
+  }
+
+  .radio-name { min-width: 0; max-width: calc(100vw - 190px); }
+}

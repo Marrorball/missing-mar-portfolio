@@ -24,7 +24,7 @@ export const HOTSPOTS = {
   hs_doorway: { label: 'Зайти внутрь', action: { type: 'focus', preset: 'inside' } },
   hs_rack: { label: 'Все проекты', action: { type: 'focus', preset: 'rack' } },
   hs_tv: { label: 'Телевизор', action: { type: 'route', hash: '#catalog' } },
-  hs_radio: { label: 'Радио', action: { type: 'note', text: 'Радио пока молчит.' } },
+  hs_radio: { label: 'Радио', action: { type: 'radio' } },
   hs_cat: { label: 'Рыжий спит — погладить', action: { type: 'focus', preset: 'cat' } },
   hs_calendar: {
     label: 'Календарь',

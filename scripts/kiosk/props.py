@@ -352,12 +352,12 @@ def counter(M,y,z):
     calc=Merge('counter_calculator')
     # A pocket calculator lies flat. Display is away from the seller (+Y),
     # with the keypad and operator column facing the working side.
-    calc.box((.12,.16,.014),(.45,y,z+.007),M['ink'])
-    calc.box((.09,.028,.0012),(.45,y-.047,z+.0146),material('lcd_green',(.42,.51,.35)))
+    calc.box((.12,.16,.014),(.92,y,z+.007),M['ink'])
+    calc.box((.09,.028,.0012),(.92,y-.047,z+.0146),material('lcd_green',(.42,.51,.35)))
     for row in range(4):
         for col in range(4):
-            calc.box((.019,.018,.004),(.486-col*.024,y+.053-row*.023,z+.017),M['plastic_light'] if col<3 else M['away'])
-    for x in (.42,.442,.464,.486):
+            calc.box((.019,.018,.004),(.956-col*.024,y+.053-row*.023,z+.017),M['plastic_light'] if col<3 else M['away'])
+    for x in (.89,.912,.934,.956):
         for dy in (0,.007):
             calc.bar((x,y-.051+dy,z+.0158),(x+.009,y-.051+dy,z+.0158),.0013,M['ink'])
     calc.finish()
@@ -374,7 +374,7 @@ def counter(M,y,z):
     note.finish()
     coins=Merge('counter_loose_change')
     gold=material('coin_brass',(.65,.49,.22),metallic=.65,roughness=.48)
-    for i,(x,dy,r) in enumerate([(.31,.08,.011),(.33,.06,.012),(.345,.083,.01),(.305,.049,.009),(.36,.042,.012),(.32,.115,.01)]):
+    for i,(x,dy,r) in enumerate([(.73,.08,.011),(.75,.06,.012),(.765,.083,.01),(.725,.049,.009),(.78,.042,.012),(.74,.115,.01)]):
         h=z+.001+i%2*.001; coins.cylinder(r,.002,(x,y+dy,h),gold,segments=16); ring(coins,(x,y+dy,h+.0011),r*.85,.0006,gold,steps=12)
         coins.bar((x-r*.3,y+dy,h+.002),(x+r*.3,y+dy,h+.002),.0008,M['frame'])
     coins.finish()

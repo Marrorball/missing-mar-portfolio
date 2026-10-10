@@ -166,3 +166,7 @@ test('the terminal prints the résumé; the away sign points at the flyer for co
   assert.match(note, /листовке/);
   assert.doesNotMatch(note, /ищет команду|Контакты — на терминале/);
 });
+
+test('the radio is a radio now, not a note', () => {
+  assert.deepEqual(hotspotForNode('hs_radio').action, { type: 'radio' });
+});

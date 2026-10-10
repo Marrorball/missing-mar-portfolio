@@ -20,6 +20,7 @@ import { swipeStep } from './kiosk/dive.js';
 import { KIOSK_BYTES } from './kiosk/model-size.js';
 import { drawFlyer } from './kiosk/paper.js';
 import { purr } from './kiosk/purr.js';
+import { STATIONS, createRadio } from './kiosk/radio.js';
 import { isInside } from './kiosk/routes.js';
 import { assignHits } from './kiosk/slots.js';
 import { drawTeletext } from './kiosk/teletext.js';
@@ -32,6 +33,7 @@ import {
   renderLoading,
   renderNote,
   renderRackControls,
+  renderRadioPanel,
   renderRemote
 } from './kiosk/ui.js';
 
@@ -53,7 +55,11 @@ const state = {
   hash: '',
   returning: null,
   // the last receipt the terminal printed: it is still there when you come back
-  receipt: null
+  receipt: null,
+  radio: null,
+  // which station the panel shows, and the arrow last pressed (for its slide)
+  radioShown: { on: false, index: -1 },
+  radioStep: 0
 };
 
 const TRAIL_LENGTH = 12;
@@ -99,6 +105,7 @@ function drawShell() {
     <div id="kiosk-note-slot"></div>
     <div id="kiosk-closeup-slot"></div>
     <div id="contact-card-slot"></div>
+    <div id="radio-slot"></div>
   </div>`);
 }
 
@@ -202,10 +209,31 @@ function goHome() {
   focusPreset('home');
 }
 
-// Inside, the help bar's «Внутрь» becomes the way out.
+// Inside, the help bar's «Внутрь» becomes the way out, and the radio sounds
+// clear; out on the street it is heard through the wall.
 function syncDoorButton() {
   const button = document.querySelector('[data-action="kiosk-inside"]');
   if (button) button.textContent = isInside(state.preset) ? 'Выйти' : 'Внутрь';
+  state.radio?.setInside(isInside(state.preset));
+}
+
+// The radio's panel and the radio itself follow every change of station.
+function radioChanged({ on, index, state: tuning, station }) {
+  const slot = document.querySelector('#radio-slot');
+  if (on !== state.radioShown.on || index !== state.radioShown.index) {
+    slot.innerHTML = on ? renderRadioPanel(station.name, state.radioStep) : '';
+    state.radioShown = { on, index };
+  }
+  state.radioStep = 0;
+  slot.querySelector('.radio-panel')?.classList.toggle('is-seeking', tuning === 'seeking');
+  state.kiosk?.setRadio({
+    on,
+    index: Math.max(index, 0),
+    count: STATIONS.length,
+    text: station ? `${station.name} · ${station.by}` : '',
+    seeking: tuning === 'seeking'
+  });
+  if (tuning === 'static') showNote('Ловится только шум. Попробуй позже.');
 }
 
 // Out of the kiosk: back to where you last stood outside, or the overview.
@@ -265,6 +293,11 @@ function runAction(node) {
     state.kiosk?.purr();
     showNote('Мррр…');
   }
+  if (action.type === 'radio') {
+    // pressed again, it moves on to the next station, like the arrow does
+    state.radioStep = state.radio?.on ? 1 : 0;
+    state.radio?.press();
+  }
   if (action.type === 'route') window.location.hash = action.hash;
   if (action.type === 'note') showNote(action.text);
   if (action.type === 'focus') focusPreset(action.preset);
@@ -278,7 +311,9 @@ function showLabel(node, x, y) {
     label.hidden = true;
     return;
   }
-  label.textContent = DOOR_NODES.has(node) && isInside(state.preset) ? 'Выйти на улицу' : spot.label;
+  label.textContent = DOOR_NODES.has(node) && isInside(state.preset) ? 'Выйти на улицу'
+    : node === 'hs_radio' ? (state.radio?.on ? 'Радио — следующая станция' : 'Радио — включить')
+    : spot.label;
   label.style.transform = `translate(${x + 16}px, ${y + 14}px)`;
   label.hidden = false;
 }
@@ -451,6 +486,8 @@ async function mountKiosk() {
         if (title) title.textContent = rackTitle(face);
       }
     });
+    state.radio = createRadio({ onChange: radioChanged });
+    state.radio.setInside(isInside(state.preset));
     state.kiosk.setHits(state.hits);
     state.kiosk.setDiscs(state.discs);
     // canvas lettering needs its faces loaded first (Cyrillic subsets too)
@@ -509,6 +546,11 @@ document.addEventListener('click', event => {
   if (action === 'tv-chapter') showChapter(element.dataset.chapter);
   if (action === 'contacts-card') toggleContactCard();
   if (action === 'terminal-print') printReceipt();
+  if (action === 'radio-step') {
+    state.radioStep = step;
+    state.radio?.step(step);
+  }
+  if (action === 'radio-off') state.radio?.off();
 });
 
 document.addEventListener('keydown', event => {

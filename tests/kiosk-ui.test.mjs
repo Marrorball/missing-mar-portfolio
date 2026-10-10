@@ -8,6 +8,7 @@ import {
   renderLoading,
   renderNote,
   renderRackControls,
+  renderRadioPanel,
   renderRemote
 } from '../assets/js/kiosk/ui.js';
 
@@ -73,4 +74,14 @@ test('arrows stay text on iPhones, not emoji stickers', async () => {
     const bare = html.split(arrow).slice(1).filter(after => !after.startsWith('︎'));
     assert.equal(bare.length, 0, `${arrow} without U+FE0E`);
   }
+});
+
+test('while the radio plays, a panel shows the station with arrows to change it and a way to switch off', () => {
+  const html = renderRadioPanel('Russian <Gold>', 1);
+  assert.match(html, /data-action="radio-step" data-step="-1"[^>]*>◀\uFE0E</);
+  assert.match(html, /data-action="radio-step" data-step="1"[^>]*>▶\uFE0E</);
+  assert.match(html, /data-action="radio-off"[^>]*>Выкл</, 'switching off is a plain red ВЫКЛ key');
+  assert.match(html, /Russian &lt;Gold&gt;/);
+  assert.match(html, /is-from-right/, 'the name comes in from the side of the arrow');
+  assert.match(renderRadioPanel('A', -1), /is-from-left/);
 });

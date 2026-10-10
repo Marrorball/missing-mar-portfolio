@@ -89,9 +89,10 @@ def build(M):
     _tubes(M)
     _tv(M)
     cat.build(M)
-    build_can('cola_can_counter', (0.62, COUNTER_Y + 0.05, COUNTER_TOP + 0.01), math.pi - 0.5, M)  # label to the seller
+    build_can('cola_can_counter', (1.1, COUNTER_Y + 0.05, COUNTER_TOP + 0.01), math.pi - 0.5, M)  # label to the seller
 
-    radio = box('hs_radio', (0.36, 0.14, 0.2), (0.9, COUNTER_Y, COUNTER_TOP + 0.1), M['device'])
+    # in sight as you come in, between the notebook and the calculator
+    radio = box('hs_radio', (0.36, 0.14, 0.2), (0.47, COUNTER_Y, COUNTER_TOP + 0.1), M['device'])
     props.soften(radio, .012)
     props.radio_details(M, radio)
     radio_parts = Merge('radio_details')
