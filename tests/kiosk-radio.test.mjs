@@ -26,3 +26,18 @@ test('through the wall the radio is muffled and quieter', () => {
   assert.ok(outside.cutoff < inside.cutoff / 5);
   assert.ok(outside.level < inside.level);
 });
+
+test('the LCD shows the station, «ПОИСК…» while tuning, and ghost segments when off', async () => {
+  const { drawRadioDisplay } = await import('../assets/js/kiosk/radio.js');
+  const texts = [];
+  const context = new Proxy({
+    fillText: text => texts.push(text),
+    measureText: text => ({ width: text.length * 10 })
+  }, { get: (target, key) => (key in target ? target[key] : () => {}), set: () => true });
+  drawRadioDisplay(context, 400, 100, { on: true, text: 'Russian Gold' });
+  assert.ok(texts.includes('RUSSIAN GOLD'));
+  drawRadioDisplay(context, 400, 100, { on: true, seeking: true, now: 0 });
+  assert.ok(texts.includes('ПОИСК…'));
+  drawRadioDisplay(context, 400, 100, { on: false });
+  assert.ok(texts.includes('88888888'));
+});

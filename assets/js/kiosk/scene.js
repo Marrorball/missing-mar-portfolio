@@ -25,6 +25,7 @@ import { QUALITY, qualityTier, signTail, tvWarmUp } from './weather.js';
 import { drawPosterWear } from './poster.js';
 import { drawNeighbour } from './neighbours.js';
 import { drawNotice, packNotices } from './notices.js';
+import { drawRadioDisplay, needleAt } from './radio.js';
 
 const HOVER = 0x4a3210;
 const FLIGHT_MS = 1100;
@@ -161,6 +162,8 @@ export async function createKioskScene({
     }
     const name = pickableNameOf(object);
     if (!isPickable(name)) return;
+    // the radio's needle and lamp keep their own glow (setRadio lights them)
+    if (/^radio_(needle|led)$/.test(object.name)) return;
     object.material = object.material.clone();
     if (!highlight.has(name)) highlight.set(name, []);
     highlight.get(name).push(object.material);
@@ -942,6 +945,48 @@ export async function createKioskScene({
   // comes on by itself with the channel list.
   let tvPicture = null;
   let tvOnSince = null;
+  // The cassette radio: the needle slides along the scale to the station, the
+  // lamp lights while it is on, the green LCD runs the station's name (or
+  // «ПОИСК…» while it tunes in). The sound itself is radio.js.
+  const radioNeedle = root.getObjectByName('radio_needle');
+  const radioLamp = root.getObjectByName('radio_led');
+  const NEEDLE_HOME = radioNeedle ? radioNeedle.position.x : 0;
+  const NEEDLE_SPAN = 0.063;   // the scale's ticks run 63 mm to the right
+  let needleAt0 = NEEDLE_HOME;
+  let radioShown = { on: false, index: 0, count: 1, text: '', seeking: false };
+  let radioScroll = 0;
+  let radioDrawn = 0;
+  const radioScreen = paintAnchor('screen_radio', (context, width, height) => drawRadioDisplay(context, width, height),
+    { transparent: false, pickAs: 'hs_radio' });
+  function drawRadio(now = performance.now() / 1000) {
+    if (!radioScreen) return;
+    const canvas = radioScreen.material.map.image;
+    drawRadioDisplay(canvas.getContext('2d'), canvas.width, canvas.height, { ...radioShown, offset: radioScroll, now });
+    radioScreen.material.map.needsUpdate = true;
+  }
+  function setRadio(next = {}) {
+    radioShown = { ...radioShown, ...next };
+    radioScroll = 0;
+    if (radioLamp) {
+      radioLamp.material.emissive.setHex(0xff3a22);
+      radioLamp.material.emissiveIntensity = radioShown.on ? 3 : 0;
+    }
+    drawRadio();
+  }
+  function moveRadio(dt, now) {
+    if (radioNeedle) {
+      const target = NEEDLE_HOME + NEEDLE_SPAN * (radioShown.on ? needleAt(radioShown.index, radioShown.count) : 0);
+      needleAt0 += (target - needleAt0) * (1 - Math.exp(-dt * 5));
+      // while it tunes the needle trembles, as if a hand were on the knob
+      radioNeedle.position.x = needleAt0 + (radioShown.seeking ? Math.sin(now * 40) * 0.0007 : 0);
+    }
+    if (radioShown.on && now - radioDrawn > 0.08) {
+      radioDrawn = now;
+      radioScroll += 22;
+      drawRadio(now);
+    }
+  }
+
   function setTvPicture(draw) {
     tvPicture = paintAnchor('screen_tv', draw, { transparent: false, pickAs: 'hs_tv' });
     if (tvPicture) tvPicture.material.color.setScalar(0.03);
@@ -1356,6 +1401,7 @@ export async function createKioskScene({
     keepFrameRate(elapsed * 1000);
     easeZoom(Math.min(elapsed, 0.1));
     const dt = Math.min(elapsed, 0.1);
+    moveRadio(dt, now);
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * (1 - Math.exp(-elapsed * 10));
     updateTv(performance.now());
     breathe(performance.now() / 1000);
@@ -1410,6 +1456,7 @@ export async function createKioskScene({
     playDisc,
     cancelDisc,
     printReceipt,
+    setRadio,
     pageScroller: name => screens[name]?.scroller || null,
     setHits: hits => showOnly(/^slot_\d+$/, hits),
     setDiscs: discs => showOnly(/^disc_\d+$/, discs),

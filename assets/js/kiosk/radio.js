@@ -175,3 +175,44 @@ export function createRadio({ win = globalThis.window, onChange = () => {} } = {
     }
   };
 }
+
+// The green LCD on the radio: the station's name runs across it while it
+// plays, «ПОИСК…» blinks over noise bars while it tunes, dark when off.
+export function drawRadioDisplay(context, width, height, { on = false, text = '', seeking = false, offset = 0, now = 0 } = {}) {
+  context.fillStyle = on ? '#9ccf5f' : '#262d22';
+  context.fillRect(0, 0, width, height);
+  context.font = `700 ${Math.round(height * 0.62)}px "PT Mono", "Courier New", monospace`;
+  context.textBaseline = 'middle';
+  if (!on) {
+    // unlit segments still show faintly through the glass
+    context.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    context.textAlign = 'center';
+    context.fillText('88888888', width / 2, height / 2);
+    return;
+  }
+  context.fillStyle = '#16210d';
+  if (seeking) {
+    if (Math.floor(now * 3) % 2 === 0) {
+      context.textAlign = 'center';
+      context.fillText('ПОИСК…', width / 2, height / 2);
+    }
+    for (let bar = 0; bar < 24; bar += 1) {
+      const tall = Math.random() * height * 0.28;
+      context.fillRect((bar / 24) * width, height - tall - height * 0.06, width / 40, tall);
+    }
+    return;
+  }
+  const label = text.toUpperCase();
+  const textWidth = context.measureText(label).width;
+  if (textWidth <= width * 0.9) {
+    context.textAlign = 'center';
+    context.fillText(label, width / 2, height / 2);
+    return;
+  }
+  // too long for the glass: it runs, with a gap before it comes round again
+  const loop = textWidth + width * 0.3;
+  const x = width * 0.05 - (offset % loop);
+  context.textAlign = 'left';
+  context.fillText(label, x, height / 2);
+  context.fillText(label, x + loop, height / 2);
+}
