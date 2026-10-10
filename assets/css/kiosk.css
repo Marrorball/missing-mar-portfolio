@@ -164,7 +164,7 @@ body.is-pointing .kiosk-stage canvas {
     left: 12px;
     bottom: 12px;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     justify-content: space-between;
     transform: none;
   }
@@ -312,13 +312,6 @@ body.is-travelling .tv-remote,
 body.is-travelling .rack-controls {
   opacity: 0;
   pointer-events: none;
-}
-
-@media (max-width: 640px) and (hover: none), (max-width: 640px) and (any-pointer: coarse) {
-  /* the four places, and a small «?» for how to get around */
-  .kiosk-help { grid-template-columns: repeat(4, 1fr) 44px; }
-  .kiosk-help [data-action="kiosk-help"] { padding: 0; font-size: 0; }
-  .kiosk-help [data-action="kiosk-help"]::before { content: '?'; font-size: 18px; }
 }
 
 @media (max-width: 640px) {
@@ -592,4 +585,119 @@ body.has-hand .kiosk-back { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .hand { animation-duration: .2s; }
+}
+
+
+/* ---------- «?» how to get around: its own round button, apart from the menu ---------- */
+
+.guide-button {
+  position: fixed;
+  z-index: 6;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  left: 18px;
+  display: none;
+  gap: 9px;
+  align-items: center;
+  min-height: 48px;
+  padding: 6px 16px 6px 6px;
+  color: var(--tag-ink);
+  background: var(--tag-paper);
+  border-radius: 28px;
+  box-shadow: var(--tag-shadow);
+  font: var(--tag-font);
+  font-size: 15px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.guide-button b {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  background: var(--tag-red);
+  border-radius: 50%;
+  font: 700 22px/1 'PT Sans', Arial, sans-serif;
+  animation: guide-nudge 1.6s ease-in-out 1.2s 3;
+}
+
+@keyframes guide-nudge {
+  0%, 100% { transform: none; }
+  50% { transform: scale(1.18); }
+}
+
+.guide-button:hover,
+.guide-button:focus-visible {
+  background: #fff;
+  outline: none;
+}
+
+body[data-preset="home"] .guide-button,
+body[data-preset="inside"] .guide-button { display: flex; }
+
+body.has-hand .guide-button,
+body.is-dived .guide-button { display: none; }
+
+@media (max-width: 640px) {
+  .guide-button {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    left: 12px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-button b { animation: none; }
+}
+
+/* the card itself: a lead line, three numbered steps, what lies where */
+.kiosk-guide .kiosk-guide-lead { margin: 0 0 6px; }
+
+.kiosk-guide .kiosk-guide-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: guide;
+}
+
+.kiosk-guide .kiosk-guide-steps li {
+  position: relative;
+  padding: 9px 0 9px 44px;
+  border-bottom: 1px dashed rgba(29, 26, 22, .3);
+  counter-increment: guide;
+}
+
+.kiosk-guide .kiosk-guide-steps li::before {
+  content: counter(guide);
+  position: absolute;
+  top: 7px;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: #fff;
+  background: var(--tag-red);
+  border-radius: 50%;
+  font: 700 18px/1 'PT Sans', Arial, sans-serif;
+}
+
+.kiosk-guide h3 {
+  margin: 14px 0 4px;
+  font: var(--tag-font);
+  font-size: 15px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.kiosk-guide .kiosk-guide-where {
+  margin: 0;
+  padding: 0 0 0 18px;
+  list-style: '— ';
+}
+
+.kiosk-guide .kiosk-guide-where li {
+  padding: 2px 0;
+  border: 0;
 }

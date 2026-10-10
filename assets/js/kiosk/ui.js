@@ -7,7 +7,6 @@ export function renderHelpBar() {
     <button type="button" data-action="kiosk-focus" data-preset="rack">Проекты</button>
     <a href="#about">Обо мне</a>
     <button type="button" data-action="contacts-card" aria-expanded="false" aria-controls="contact-card">Контакты</button>
-    <button type="button" data-action="kiosk-help">Как тут ходить?</button>
     <button type="button" data-action="kiosk-inside">Внутрь</button>
   </nav>`;
 }
@@ -34,28 +33,40 @@ export function renderRackControls(title = '') {
   </div>`;
 }
 
-// The card that explains the kiosk to someone who just walked up: how to
-// look round, point and walk up to things and back, in mouse or finger words,
-// and what is where.
+// How to get around, on its own round button apart from the menu, so it is
+// easy to find again.
+export function renderGuideButton() {
+  return '<button type="button" class="guide-button" data-action="kiosk-help"><b aria-hidden="true">?</b><span>Как тут ходить</span></button>';
+}
+
+// The card for someone who just walked up: three light steps in mouse or
+// finger words, and what lies where.
 export function renderGuide({ touch = false } = {}) {
-  const rows = touch ? [
-    ['Веди пальцем', 'осмотреться вокруг ларька'],
-    ['Нажми на предмет', 'подойдёшь к нему: так открываются проекты, «обо мне» и контакты'],
-    ['Нажми мимо или «Назад»', 'отойдёшь обратно'],
-    ['Внутри ларька', 'веди пальцем, чтобы оглядеться, двумя пальцами — ближе']
+  const steps = touch ? [
+    ['Осмотрись', 'Веди пальцем по экрану — обойдёшь ларёк вокруг.'],
+    ['Подойди', 'Нажми на любую вещь — подойдёшь ближе.'],
+    ['Отойди', 'Нажми мимо или «Назад».']
   ] : [
-    ['Зажми и тяни мышью', 'осмотреться вокруг ларька'],
-    ['Наведи на предмет', 'он подсветится и подпишется'],
-    ['Нажми на него', 'подойдёшь ближе: так открываются проекты, «обо мне» и контакты'],
-    ['Нажми мимо или «Назад»', 'отойдёшь обратно'],
-    ['Внутри ларька', 'тяни, чтобы оглядеться, колесо — ближе']
+    ['Осмотрись', 'Зажми мышку и тяни — обойдёшь ларёк вокруг.'],
+    ['Подойди', 'Наведи на вещь — она подпишется. Нажми — подойдёшь ближе.'],
+    ['Отойди', 'Нажми мимо или «Назад».']
   ];
-  return `<div class="kiosk-guide" role="dialog" aria-label="Как тут ходить">
-    <h2>Как тут ходить</h2>
-    <ul>${rows.map(([what, does]) => `<li><b>${what}</b> — ${does}</li>`).join('')}</ul>
-    <p class="kiosk-guide-where"><b>Что где:</b> вертушка с дисками — проекты, билборд — обо мне, листовка на ставне — контакты, терминал — опыт и навыки. Внутри — телевизор, радио и кот. А ещё кто-то потерял телефон.</p>
-    <p class="kiosk-guide-menu">Не хочется искать — всё есть в меню внизу.</p>
-    <button type="button" data-action="guide-close">Понятно</button>
+  const where = [
+    'диски на вертушке — проекты',
+    'афиша наверху — обо мне',
+    'листовка на ставне — как со мной связаться',
+    'терминал — опыт и навыки, распечатаешь чек',
+    'внутри — телевизор, радио и кот (его можно погладить)',
+    'а где-то в снегу валяется чей-то телефон'
+  ];
+  return `<div class="kiosk-guide" role="dialog" aria-label="Как тут всё устроено">
+    <h2>Как тут всё устроено</h2>
+    <p class="kiosk-guide-lead">Это ларёк, только вместо чипсов и жвачки здесь мои работы. Всё, что видишь, можно трогать.</p>
+    <ol class="kiosk-guide-steps">${steps.map(([what, how]) => `<li><b>${what}.</b> ${how}</li>`).join('')}</ol>
+    <h3>Что где лежит</h3>
+    <ul class="kiosk-guide-where">${where.map(line => `<li>${line}</li>`).join('')}</ul>
+    <p class="kiosk-guide-menu">Лень искать — всё есть в меню внизу.</p>
+    <button type="button" data-action="guide-close">Понятно, погнали</button>
   </div>`;
 }
 

@@ -17,8 +17,16 @@ test('the help bar sends projects to the rack, about to the billboard, contacts 
   assert.match(html, /data-action="kiosk-focus" data-preset="rack">Проекты</);
   assert.match(html, /href="#about">Обо мне</);
   assert.match(html, /data-action="contacts-card" aria-expanded="false" aria-controls="contact-card">Контакты</);
-  assert.match(html, /data-action="kiosk-help"/);
   assert.match(html, /data-action="kiosk-inside">Внутрь</);
+  assert.doesNotMatch(html, /data-action="kiosk-help"|Как тут/, 'how to get around has its own button now');
+});
+
+test('how to get around is its own round «?» button, apart from the menu', async () => {
+  const { renderGuideButton } = await import('../assets/js/kiosk/ui.js');
+  const html = renderGuideButton();
+  assert.match(html, /class="guide-button" data-action="kiosk-help"/);
+  assert.match(html, /<b[^>]*>\?<\/b>/);
+  assert.match(html, /Как тут ходить/);
 });
 
 test('the contact card opens every contact directly without copy buttons', () => {
@@ -96,15 +104,17 @@ test('what you hold up: the receipt with a way to put it down and to get in touc
   assert.doesNotMatch(phone.replace(/◀︎|▶︎/g, ''), /[◀▶]/, 'arrows stay text on iPhones');
 });
 
-test('the «how to get around» card speaks mouse or finger, says what is where, and closes', async () => {
+test('the «how to get around» card: three light steps for mouse or finger, what lies where, and off we go', async () => {
   const { renderGuide } = await import('../assets/js/kiosk/ui.js');
   const mouse = renderGuide({ touch: false });
-  assert.match(mouse, /Как тут ходить/);
+  assert.match(mouse, /Как тут всё устроено/);
+  for (const step of ['Осмотрись', 'Подойди', 'Отойди']) assert.ok(mouse.includes(step), step);
+  assert.match(mouse, /Зажми мышку/);
   assert.match(mouse, /Наведи/);
-  assert.match(mouse, /мышью/);
-  assert.match(mouse, /вертушка.*проекты/s);
-  assert.match(mouse, /data-action="guide-close"/);
+  assert.match(mouse, /вертушке.*проекты/s);
+  assert.match(mouse, /телефон/);
+  assert.match(mouse, /data-action="guide-close">Понятно, погнали/);
   const finger = renderGuide({ touch: true });
   assert.match(finger, /пальцем/);
-  assert.doesNotMatch(finger, /мышью|Наведи/);
+  assert.doesNotMatch(finger, /мышк|Наведи/);
 });

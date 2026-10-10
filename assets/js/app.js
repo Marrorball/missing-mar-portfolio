@@ -33,6 +33,7 @@ import {
   renderContactCard,
   renderHelpBar,
   renderGuide,
+  renderGuideButton,
   renderHand,
   renderHotspotButtons,
   renderLoading,
@@ -105,7 +106,8 @@ function drawShell() {
   homeView.innerHTML = `<div class="kiosk-stage" id="kiosk-stage"></div>
     <div class="kiosk-label" id="kiosk-label" hidden></div>
     <div id="kiosk-loading-slot">${renderLoading(0)}</div>
-    ${renderHelpBar()}`;
+    ${renderHelpBar()}
+    ${renderGuideButton()}`;
   // Notes, the way back, the remote and the contact card float above
   // everything, including full-screen pages on phones.
   document.body.insertAdjacentHTML('beforeend', `<div class="kiosk-chrome">
@@ -263,6 +265,8 @@ function syncDoorButton() {
   const button = document.querySelector('[data-action="kiosk-inside"]');
   if (button) button.textContent = isInside(state.preset) ? 'Выйти' : 'Внутрь';
   state.radio?.setInside(isInside(state.preset));
+  // the «?» shows where you walk about, not over a close-up's own controls
+  document.body.dataset.preset = state.preset;
 }
 
 // The radio's panel and the radio itself follow every change of station.
