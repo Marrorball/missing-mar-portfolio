@@ -30,3 +30,22 @@ export function walkingRoute({ from, to, fromPosition, toPosition, waypoints }) 
   const leg = [...outsideLeg(outside, waypoints), 'path_doorway', 'path_door_in'].filter(name => name in waypoints);
   return isInside(to) ? leg : leg.reverse();
 }
+
+// Where you stand after stepping away from a close-up: a few steps further
+// back the way you faced it, the eye a little above what you looked at, kept
+// near the ground (the billboard hangs high, you don't).
+export function stepBack({ target, eye, distance = 3.5 }) {
+  const [tx, ty, tz] = target;
+  let dx = eye[0] - tx;
+  let dz = eye[2] - tz;
+  const length = Math.hypot(dx, dz);
+  if (length < 1e-6) {
+    dx = 0;
+    dz = 1;
+  } else {
+    dx /= length;
+    dz /= length;
+  }
+  const y = Math.min(1.8, Math.max(0.9, ty));
+  return { target: [tx, y, tz], position: [tx + dx * distance, y + 0.5, tz + dz * distance] };
+}

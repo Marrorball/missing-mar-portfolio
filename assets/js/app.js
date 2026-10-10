@@ -4,7 +4,7 @@ import { parseRoute } from './router.js';
 import { channelNumber, neighbourId } from './kiosk/channels.js';
 import { contactLinks } from './kiosk/contacts.js';
 import { assignDiscs } from './kiosk/discs.js';
-import { HOTSPOTS, LOCKED_PRESETS, ROUTE_PRESETS, hotspotForNode } from './kiosk/hotspots.js';
+import { HOTSPOTS, LOCKED_PRESETS, ROUTE_PRESETS, hotspotForNode, isCloseUp } from './kiosk/hotspots.js';
 import {
   renderAboutBoard,
   renderFlyer,
@@ -256,6 +256,22 @@ function goBack() {
   else renderRoute();
 }
 
+// Clicking beside a close-up steps back from it right where you are. Coming
+// from a free view it returns you there, as before; coming from another
+// object it no longer walks you back to that object (Назад still does).
+function stepAway() {
+  const previous = state.trail.at(-1);
+  if (!state.kiosk || !previous || !isCloseUp(previous.preset)) {
+    goBack();
+    return;
+  }
+  while (state.trail.length && isCloseUp(state.trail.at(-1).preset)) state.trail.pop();
+  const { preset, position, target, fov } = state.kiosk.stepBackView(state.preset);
+  state.returning = { preset, hash: '', view: { preset, position, target, fov } };
+  if (currentHash()) window.location.hash = '';
+  else renderRoute();
+}
+
 function arriveBack(entry) {
   if (LOCKED_PRESETS.includes(entry.preset)) {
     focusPreset(entry.preset);
@@ -472,7 +488,7 @@ async function mountKiosk() {
       onProgress: percent => { loading.innerHTML = renderLoading(percent); },
       onHover: showLabel,
       onPick: runAction,
-      onEmptyClick: goBack,
+      onEmptyClick: stepAway,
       onStreetClick: exitKiosk,
       onArrive: () => document.body.classList.remove('is-travelling'),
       onDive: name => {

@@ -68,3 +68,13 @@ test('a waypoint the model does not have is left out', () => {
   assert.deepEqual(result, ['path_side_left', 'path_door_out', 'path_doorway', 'path_door_in']);
   assert.ok(path_front_left);
 });
+
+test('stepping away from a close-up: a few steps back the way you faced it, at eye height', async () => {
+  const { stepBack } = await import('../assets/js/kiosk/routes.js');
+  // the billboard high up: you stay on the ground, looking at the street in front of it
+  assert.deepEqual(stepBack({ target: [0, 4.2, -6], eye: [0, 4.2, -1], distance: 6 }), { target: [0, 1.8, -6], position: [0, 2.3, 0] });
+  // the flyer on the shutter: three and a half metres back from where you read it
+  const away = stepBack({ target: [-1.9, 1.55, 1.1], eye: [-1.8, 1.55, 1.9], distance: 3.5 });
+  assert.ok(Math.abs(Math.hypot(away.position[0] + 1.9, away.position[2] - 1.1) - 3.5) < 1e-9);
+  assert.ok(away.position[2] > 1.9, 'further out the same way, not back past the object');
+});

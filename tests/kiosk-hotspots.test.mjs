@@ -170,3 +170,9 @@ test('the terminal prints the résumé; the away sign points at the flyer for co
 test('the radio is a radio now, not a note', () => {
   assert.deepEqual(hotspotForNode('hs_radio').action, { type: 'radio' });
 });
+
+test('close-ups are the objects you walk up to; the street and the inside are free views', async () => {
+  const { isCloseUp } = await import('../assets/js/kiosk/hotspots.js');
+  for (const preset of ['tv', 'billboard', 'terminal', 'flyer', 'rack', 'cat', 'showcase']) assert.ok(isCloseUp(preset), preset);
+  for (const preset of ['home', 'inside']) assert.ok(!isCloseUp(preset), preset);
+});

@@ -6,7 +6,7 @@ import { coverDescriptor, drawCover } from './covers.js';
 import { lookDirection, turnLook } from './look.js';
 import { quadTransform } from './quad.js';
 import { diveClip, isPhone } from './dive.js';
-import { walkingRoute } from './routes.js';
+import { stepBack, walkingRoute } from './routes.js';
 import { flightDuration, flightOrientation, flightProgress, prepareFlightOrientation } from './motion.js';
 import {
   PRESETS,
@@ -791,6 +791,22 @@ export async function createKioskScene({
     }
   }
 
+  // A step back from the close-up you're in, right where you are: inside the
+  // kiosk that is the inside eye point facing the object; outside, a few steps
+  // further off the way you faced it (more for the wide billboard).
+  function stepBackView(name) {
+    const screen = screens[name];
+    const target = (screen?.center || controls.target).clone();
+    if (withinWalls(camera.position) && presets.inside) {
+      return { preset: 'inside', position: presets.inside.position.clone(), target,
+        fov: fitFov(presetLimits('inside').fov, camera.aspect) };
+    }
+    const step = stepBack({ target: target.toArray(), eye: camera.position.toArray(),
+      distance: Math.max(3.5, (screen?.width || 0) * 1.2) });
+    return { preset: 'home', position: new THREE.Vector3(...step.position), target: new THREE.Vector3(...step.target),
+      fov: fitFov(presetLimits('home').fov, camera.aspect) };
+  }
+
   // Where the camera stands now, to come back to after a close-up.
   function snapshot() {
     return {
@@ -1447,6 +1463,7 @@ export async function createKioskScene({
     purr,
     snapshot,
     restore,
+    stepBackView,
     spinRack,
     lookInside,
     setPage,

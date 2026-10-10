@@ -3,6 +3,11 @@ export const PRESETS = ['home', 'showcase', 'inside', 'cat', 'rack', 'tv', 'bill
 // Close-ups hold the camera still: you read or spin something, you don't orbit.
 export const LOCKED_PRESETS = ['cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
 
+// Something you walked up to, as opposed to the free street or inside view.
+export function isCloseUp(preset) {
+  return LOCKED_PRESETS.includes(preset) || preset === 'showcase';
+}
+
 // Close-ups that show a page, and the Blender anchor the page sits on.
 export const SCREENS = {
   tv: 'screen_tv',
