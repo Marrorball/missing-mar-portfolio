@@ -162,8 +162,8 @@ export async function createKioskScene({
     }
     const name = pickableNameOf(object);
     if (!isPickable(name)) return;
-    // the radio's needle and lamp keep their own glow (setRadio lights them)
-    if (/^radio_(needle|led)$/.test(object.name)) return;
+    // the radio's needle and lamp, and the lost phone's screen, keep their own glow
+    if (/^(radio_(needle|led)|phone_screen)$/.test(object.name)) return;
     object.material = object.material.clone();
     if (!highlight.has(name)) highlight.set(name, []);
     highlight.get(name).push(object.material);
@@ -1052,30 +1052,60 @@ export async function createKioskScene({
   }
 
   // What the billboard shows when nobody is reading it: a printed ad.
-  // The terminal's receipt: a strip of paper that feeds out of the slot under
-  // the bill acceptor in jerks and stays hanging there.
+  // The terminal's receipt: a strip of the printed receipt that feeds out of
+  // the slot under the bill acceptor in jerks, the text coming out with it,
+  // and stays hanging. Resolves when the paper is out.
   const receiptSlot = root.getObjectByName('terminal_receipt_slot');
+  const RECEIPT = { width: 0.08, length: 0.3, ms: 2600, jerks: 16 };
   let receiptStrip = null;
   let receiptFeed = null;
-  function printReceipt() {
-    if (!receiptSlot) return;
+  function printReceipt(draw) {
+    if (!receiptSlot) return Promise.resolve();
+    const paper = document.createElement('canvas');
+    paper.width = 512;
+    paper.height = Math.round(512 * RECEIPT.length / RECEIPT.width);
+    draw?.(paper.getContext('2d'), paper.width, paper.height);
+    const map = new THREE.CanvasTexture(paper);
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.anisotropy = 4;
     if (!receiptStrip) {
-      const paper = document.createElement('canvas');
-      paper.width = 64;
-      paper.height = 256;
-      const context = paper.getContext('2d');
-      context.fillStyle = '#f4f2ec';
-      context.fillRect(0, 0, paper.width, paper.height);
-      context.fillStyle = 'rgba(40, 40, 40, .55)';
-      for (let y = 10; y < 246; y += 7) context.fillRect(6, y, 20 + ((y * 37) % 32), 2);
-      const map = new THREE.CanvasTexture(paper);
-      map.colorSpace = THREE.SRGBColorSpace;
-      receiptStrip = new THREE.Mesh(new THREE.PlaneGeometry(0.085, 0.26).translate(0, -0.13, 0),
-        new THREE.MeshStandardMaterial({ map, roughness: 0.9, side: THREE.DoubleSide }));
+      receiptStrip = new THREE.Mesh(new THREE.PlaneGeometry(RECEIPT.width, RECEIPT.length).translate(0, -RECEIPT.length / 2, 0),
+        new THREE.MeshStandardMaterial({ map, roughness: 0.9, side: THREE.DoubleSide, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.25 }));
       receiptStrip.name = 'terminal_receipt';
       receiptSlot.add(receiptStrip);
+    } else {
+      receiptStrip.material.map.dispose();
+      receiptStrip.material.map = map;
+      receiptStrip.material.emissiveMap = map;
+      receiptStrip.material.needsUpdate = true;
     }
-    receiptFeed = { start: performance.now() };
+    receiptFeed?.done();
+    return new Promise(resolve => { receiptFeed = { start: performance.now(), done: resolve }; });
+  }
+  function feedReceipt() {
+    if (!receiptFeed) return;
+    const t = Math.min((performance.now() - receiptFeed.start) / RECEIPT.ms, 1);
+    const fed = Math.max(0.001, Math.floor(t * RECEIPT.jerks) / RECEIPT.jerks);
+    // the paper grows from the slot and shows what has been printed so far
+    receiptStrip.scale.y = fed;
+    receiptStrip.material.map.repeat.set(1, fed);
+    receiptStrip.material.map.offset.set(0, 1 - fed);
+    receiptStrip.rotation.x = -0.18 * fed;   // the free end curls out
+    if (t === 1) {
+      const { done } = receiptFeed;
+      receiptFeed = null;
+      done();
+    }
+  }
+
+  // The phone lost in the snow: now and then a text comes in and its screen
+  // lights up green for a moment, which is how you notice it.
+  const phoneScreen = root.getObjectByName('phone_screen');
+  phoneScreen?.material.emissive.setRGB(0.55, 0.78, 0.33);
+  function blinkPhone(now) {
+    if (!phoneScreen) return;
+    const cycle = now % 12;
+    phoneScreen.material.emissiveIntensity = 0.3 + (cycle < 1.6 ? 2.4 * Math.sin((cycle / 1.6) * Math.PI) : 0);
   }
 
   const billboardSlats = [];
@@ -1379,12 +1409,7 @@ export async function createKioskScene({
         }
       }
     }
-    if (receiptFeed) {
-      const t = Math.min((performance.now() - receiptFeed.start) / 1200, 1);
-      receiptStrip.scale.y = Math.max(0.001, Math.floor(t * 12) / 12);
-      receiptStrip.rotation.x = -0.25 * receiptStrip.scale.y;   // the free end curls out
-      if (t === 1) receiptFeed = null;
-    }
+    feedReceipt();
     if (movingDisc) {
       // The disc hops off the rack into your hand, rides along in front of
       // you round the kiosk and drops into the player as you reach the TV.
@@ -1418,6 +1443,7 @@ export async function createKioskScene({
     easeZoom(Math.min(elapsed, 0.1));
     const dt = Math.min(elapsed, 0.1);
     moveRadio(dt, now);
+    blinkPhone(now);
     if (rack) rack.rotation.y += (rackTarget - rack.rotation.y) * (1 - Math.exp(-elapsed * 10));
     updateTv(performance.now());
     breathe(performance.now() / 1000);
@@ -1480,6 +1506,7 @@ export async function createKioskScene({
     dispose() {
       disposed = true;
       cancelDisc();
+      receiptFeed?.done();
       if (receiptStrip) {
         receiptStrip.geometry.dispose();
         receiptStrip.material.map.dispose();

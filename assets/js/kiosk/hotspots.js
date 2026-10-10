@@ -1,7 +1,7 @@
-export const PRESETS = ['home', 'showcase', 'inside', 'cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
+export const PRESETS = ['home', 'showcase', 'inside', 'cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer', 'printer', 'phone'];
 
 // Close-ups hold the camera still: you read or spin something, you don't orbit.
-export const LOCKED_PRESETS = ['cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer'];
+export const LOCKED_PRESETS = ['cat', 'rack', 'tv', 'billboard', 'terminal', 'flyer', 'printer', 'phone'];
 
 // Something you walked up to, as opposed to the free street or inside view.
 export function isCloseUp(preset) {
@@ -30,6 +30,7 @@ export const HOTSPOTS = {
   hs_rack: { label: 'Все проекты', action: { type: 'focus', preset: 'rack' } },
   hs_tv: { label: 'Телевизор', action: { type: 'route', hash: '#catalog' } },
   hs_radio: { label: 'Радио', action: { type: 'radio' } },
+  hs_phone: { label: 'Чей-то телефон', action: { type: 'phone' } },
   hs_cat: { label: 'Рыжий спит — погладить', action: { type: 'focus', preset: 'cat' } },
   hs_calendar: {
     label: 'Календарь',
@@ -128,6 +129,9 @@ const CLOSE_UP_TARGETS = {
   billboard: /^hs_billboard$/,
   terminal: /^hs_terminal$/,
   flyer: /^hs_flyer$/,
+  // watching the receipt print, nothing else answers; the phone is picked up
+  printer: /^$/,
+  phone: /^hs_phone$/,
   // the showcase is looked at, not walked round: only its projects answer
   showcase: /^slot_\d+$/
 };

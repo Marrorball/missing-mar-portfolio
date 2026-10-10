@@ -4,8 +4,9 @@ import {
   renderAboutBoard,
   renderFlyer,
   renderPageBoard,
+  renderPrinting,
   renderReceipt,
-  renderTerminalScreen,
+  renderResumeScreen,
   renderTvChannel,
   renderTvGuide
 } from '../assets/js/kiosk/pages.js';
@@ -92,14 +93,6 @@ test('generic pages fit the billboard', () => {
   assert.match(renderPageBoard({ title: 'Пресса', content: '<p>x</p>' }), /Пресса.*<p>x<\/p>/s);
 });
 
-test('the terminal opens on one key that prints the résumé, no contacts', () => {
-  const html = renderTerminalScreen();
-  assert.match(html, /data-action="terminal-print"/);
-  assert.match(html, /Распечатать выписку/);
-  assert.doesNotMatch(html, /mailto:|t\.me/);
-  assert.match(html, /data-action="kiosk-back"/);
-});
-
 test('the résumé prints as a till receipt from the content', () => {
   const html = renderReceipt(
     { owner: { name: 'Марат <Д>', role: 'Product Designer', location: 'Москва, Россия' } },
@@ -115,8 +108,6 @@ test('the résumé prints as a till receipt from the content', () => {
   for (const text of ['Фриланс', 'Лендинги', 'Интерфейсы', 'Figma · Tilda', 'МТУСИ', 'Видеоаналитика', 'Не боюсь критики', 'Открыт к предложениям']) {
     assert.ok(html.includes(text), text);
   }
-  assert.match(html, /data-action="terminal-print">Распечатать ещё/);
-  assert.match(html, /href="#contact"/);
   assert.doesNotMatch(html, /is-kept/, 'a fresh receipt prints');
   assert.match(renderReceipt({}, {}, { fresh: false }), /class="receipt is-kept"/, 'coming back, the receipt is just there');
 });
@@ -133,4 +124,21 @@ test('the flyer carries clickable contacts', () => {
   assert.doesNotMatch(slips, /<button|copy-contact|Скопировать/);
   const long = renderFlyer([{ kind: 'email', label: 'Почта', value: 'marrorball@gmail.com', href: 'mailto:marrorball@gmail.com' }]);
   assert.match(long, /<span>marrorball<\/span><span>@gmail\.com<\/span>/, 'long contacts wrap on the slip');
+});
+
+test('the terminal shows the résumé to read first, then offers to print it', () => {
+  const html = renderResumeScreen(
+    { owner: { name: 'Марат <Д>', role: 'Product Designer', location: 'Москва, Россия' } },
+    { experience: [{ period: '2026 — н.в.', company: 'ЦНИИП', role: 'Главный дизайнер', description: 'Сайты' }],
+      skills: [{ name: 'Интерфейсы', level: 'UI' }], tools: ['Figma'], education: [], publications: [], about: '' });
+  assert.match(html, /class="terminal-bar"><span>Дизайн у Марата<\/span><span>Опыт и навыки<\/span>/);
+  assert.match(html, /Марат &lt;Д&gt;/);
+  for (const text of ['ЦНИИП', 'Главный дизайнер', 'Сайты', 'Интерфейсы', 'Figma']) assert.ok(html.includes(text), text);
+  assert.match(html, /data-action="terminal-print"[^>]*>Распечатать чек/);
+  assert.match(html, /data-action="kiosk-back"/);
+});
+
+test('while it prints, the screen says to take the receipt', () => {
+  assert.match(renderPrinting(), /Печатаем/);
+  assert.match(renderPrinting(), /Возьмите чек/);
 });

@@ -10,7 +10,8 @@ import {
   renderFlyer,
   renderPageBoard,
   renderReceipt,
-  renderTerminalScreen,
+  renderResumeScreen,
+  renderPrinting,
   renderTvChannel,
   renderTvGuide
 } from './kiosk/pages.js';
@@ -416,9 +417,7 @@ function showRoute() {
   }
 
   if (route.view === 'resume') {
-    openScreen('terminal', state.receipt
-      ? renderReceipt(site, state.bundle.resume, { ...state.receipt, fresh: false })
-      : renderTerminalScreen());
+    openScreen('terminal', renderResumeScreen(site, state.bundle.resume));
     announce('Выписка');
     return;
   }

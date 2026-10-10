@@ -142,16 +142,41 @@ function terminalFoot() {
     </footer>`;
 }
 
-// The terminal's first screen: one big key prints the résumé.
-export function renderTerminalScreen() {
-  return `<article class="terminal-page">
-    <header class="terminal-bar"><span>Дизайн у Марата</span><span>Касса</span></header>
-    <h1>Выписка о дизайнере</h1>
-    <p class="terminal-lead">Опыт, навыки и инструменты одним чеком</p>
-    <div class="terminal-buttons">
-      <button type="button" class="terminal-button" data-action="terminal-print"><span>Распечатать выписку</span><small>Чек бесплатный</small></button>
+// The résumé as titled rows, shared by the terminal's screen and its receipt.
+function resumeRows(resume = {}) {
+  const line = (bold, text, small = '') => `<p><b>${escapeHtml(bold)}</b> ${escapeHtml(text)}${small ? `<br><small>${escapeHtml(small)}</small>` : ''}</p>`;
+  return [
+    ['Опыт', (resume.experience || []).map(item => line(item.period || '', `${item.company || ''} · ${item.role || ''}`, item.description))],
+    ['Умею', (resume.skills || []).map(item => line(item.name || '', '', item.level))],
+    ['Инструменты', resume.tools?.length ? [`<p>${resume.tools.map(escapeHtml).join(' · ')}</p>`] : []],
+    ['Образование', (resume.education || []).map(item => line(item.period || '', item.institution || '', item.program))],
+    ['Публикации', (resume.publications || []).map(item => line(item.year || '', '', item.title))],
+    ['О себе', resume.about ? [`<p><small>${escapeHtml(resume.about)}</small></p>`] : []]
+  ].filter(([, rows]) => rows.length);
+}
+
+// The terminal opens on the résumé to read; printing it is the key below.
+export function renderResumeScreen(site = {}, resume = {}) {
+  const owner = site.owner || {};
+  const city = String(owner.location || '').split(',')[0].trim();
+  return `<article class="terminal-page terminal-resume">
+    <header class="terminal-bar"><span>Дизайн у Марата</span><span>Опыт и навыки</span></header>
+    <h1>${escapeHtml(owner.name || '')}</h1>
+    <p class="terminal-lead">${escapeHtml([owner.role, city].filter(Boolean).join(' · '))}</p>
+    ${resumeRows(resume).map(([title, rows]) => `<section class="resume-block"><h2>${title}</h2>${rows.join('')}</section>`).join('')}
+    <div class="terminal-actions">
+      <button type="button" class="terminal-button" data-action="terminal-print">Распечатать чек</button>
     </div>
     ${terminalFoot()}
+  </article>`;
+}
+
+// While the receipt prints, the screen points down at the slot.
+export function renderPrinting() {
+  return `<article class="terminal-page terminal-printing">
+    <header class="terminal-bar"><span>Дизайн у Марата</span><span>Опыт и навыки</span></header>
+    <p class="printing-now">Печатаем<span aria-hidden="true">…</span></p>
+    <p class="printing-take">Возьмите чек ↓</p>
   </article>`;
 }
 
@@ -159,33 +184,16 @@ export function renderTerminalScreen() {
 export function renderReceipt(site = {}, resume = {}, { number = 1, date = new Date(), fresh = true } = {}) {
   const owner = site.owner || {};
   const city = String(owner.location || '').split(',')[0].trim();
-  const block = (title, rows) => (rows.length ? `<section class="receipt-block"><h2>${title}</h2>${rows.join('')}</section>` : '');
-  const line = (bold, text, small = '') => `<p><b>${escapeHtml(bold)}</b> ${escapeHtml(text)}${small ? `<br><small>${escapeHtml(small)}</small>` : ''}</p>`;
-  return `<article class="terminal-page terminal-printed">
-    <header class="terminal-bar"><span>Дизайн у Марата</span><span>Касса</span></header>
-    <div class="receipt-slot">
-      <div class="receipt${fresh ? '' : ' is-kept'}">
+  return `<div class="receipt${fresh ? '' : ' is-kept'}">
         <p class="receipt-head">Терминал «Дизайн у Марата»</p>
         <p class="receipt-line"><span>Выписка № ${String(number).padStart(6, '0')}</span><span>${receiptDate(date)}</span></p>
         <h1>${escapeHtml(owner.name || '')}</h1>
         <p class="receipt-role">${escapeHtml([owner.role, city].filter(Boolean).join(' · '))}</p>
-        ${block('Опыт', (resume.experience || []).map(item => line(item.period || '', `${item.company || ''} · ${item.role || ''}`, item.description)))}
-        ${block('Умею', (resume.skills || []).map(item => line(item.name || '', '', item.level)))}
-        ${block('Инструменты', resume.tools?.length ? [`<p>${resume.tools.map(escapeHtml).join(' · ')}</p>`] : [])}
-        ${block('Образование', (resume.education || []).map(item => line(item.period || '', item.institution || '', item.program)))}
-        ${block('Публикации', (resume.publications || []).map(item => line(item.year || '', '', item.title)))}
-        ${block('О себе', resume.about ? [`<p><small>${escapeHtml(resume.about)}</small></p>`] : [])}
+        ${resumeRows(resume).map(([title, rows]) => `<section class="receipt-block"><h2>${title}</h2>${rows.join('')}</section>`).join('')}
         <p class="receipt-total"><span>Итого:</span><b>${RECEIPT_TOTAL}</b></p>
         <p class="receipt-thanks">Спасибо! Сохраняйте чек</p>
         <p class="receipt-barcode" aria-hidden="true"></p>
-      </div>
-    </div>
-    <div class="terminal-actions">
-      <button type="button" class="terminal-button" data-action="terminal-print">Распечатать ещё</button>
-      <a class="terminal-button" href="#contact">Связаться →</a>
-    </div>
-    ${terminalFoot()}
-  </article>`;
+      </div>`;
 }
 
 // Same layout as the sheet painted on the shutter (paper.js), so the page
