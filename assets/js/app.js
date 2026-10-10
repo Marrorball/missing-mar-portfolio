@@ -63,9 +63,8 @@ const state = {
   // the last receipt the terminal printed: it is still there when you come back
   receipt: null,
   radio: null,
-  // which station the panel shows, and the arrow last pressed (for its slide)
+  // which station the panel shows
   radioShown: { on: false, index: -1 },
-  radioStep: 0,
   // something to do once the camera gets to a preset (start printing, pick up the phone)
   arrival: null
 };
@@ -270,10 +269,9 @@ function syncDoorButton() {
 function radioChanged({ on, index, state: tuning, station }) {
   const slot = document.querySelector('#radio-slot');
   if (on !== state.radioShown.on || index !== state.radioShown.index) {
-    slot.innerHTML = on ? renderRadioPanel(station.name, state.radioStep) : '';
+    slot.innerHTML = on ? renderRadioPanel(station.name) : '';
     state.radioShown = { on, index };
   }
-  state.radioStep = 0;
   slot.querySelector('.radio-panel')?.classList.toggle('is-seeking', tuning === 'seeking');
   state.kiosk?.setRadio({
     on,
@@ -376,11 +374,7 @@ function runAction(node) {
     state.arrival = { preset: 'phone', run: () => showHand('phone') };
     focusPreset('phone');
   }
-  if (action.type === 'radio') {
-    // pressed again, it moves on to the next station, like the arrow does
-    state.radioStep = state.radio?.on ? 1 : 0;
-    state.radio?.press();
-  }
+  if (action.type === 'radio') state.radio?.press();
   if (action.type === 'route') window.location.hash = action.hash;
   if (action.type === 'note') showNote(action.text);
   if (action.type === 'focus') focusPreset(action.preset);
@@ -395,7 +389,7 @@ function showLabel(node, x, y) {
     return;
   }
   label.textContent = DOOR_NODES.has(node) && isInside(state.preset) ? 'Выйти на улицу'
-    : node === 'hs_radio' ? (state.radio?.on ? 'Радио — следующая станция' : 'Радио — включить')
+    : node === 'hs_radio' ? (state.radio?.on ? 'Радио — выключить' : 'Радио — включить')
     : spot.label;
   label.style.transform = `translate(${x + 16}px, ${y + 14}px)`;
   label.hidden = false;
@@ -628,10 +622,6 @@ document.addEventListener('click', event => {
   if (action === 'tv-chapter') showChapter(element.dataset.chapter);
   if (action === 'contacts-card') toggleContactCard();
   if (action === 'terminal-print') printReceipt();
-  if (action === 'radio-step') {
-    state.radioStep = step;
-    state.radio?.step(step);
-  }
   if (action === 'radio-off') state.radio?.off();
 });
 

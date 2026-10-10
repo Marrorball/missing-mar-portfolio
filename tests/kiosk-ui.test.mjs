@@ -76,14 +76,11 @@ test('arrows stay text on iPhones, not emoji stickers', async () => {
   }
 });
 
-test('while the radio plays, a panel shows the station with arrows to change it and a way to switch off', () => {
-  const html = renderRadioPanel('Russian <Gold>', 1);
-  assert.match(html, /data-action="radio-step" data-step="-1"[^>]*>◀\uFE0E</);
-  assert.match(html, /data-action="radio-step" data-step="1"[^>]*>▶\uFE0E</);
-  assert.match(html, /data-action="radio-off"[^>]*>Выкл</, 'switching off is a plain red ВЫКЛ key');
+test('while the radio plays, a panel shows the station and a red ВЫКЛ key', () => {
+  const html = renderRadioPanel('Russian <Gold>');
+  assert.match(html, /data-action="radio-off"[^>]*>Выкл</);
   assert.match(html, /Russian &lt;Gold&gt;/);
-  assert.match(html, /is-from-right/, 'the name comes in from the side of the arrow');
-  assert.match(renderRadioPanel('A', -1), /is-from-left/);
+  assert.doesNotMatch(html, /radio-step/, 'one station: no arrows');
 });
 
 test('what you hold up: the receipt with a way to put it down and to get in touch, the phone with its keys', async () => {

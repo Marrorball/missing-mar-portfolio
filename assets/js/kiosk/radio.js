@@ -1,15 +1,13 @@
-// The cassette radio on the counter plays real stations of the 2000s. No song
-// lives on the site: the stations stream from their own servers (and allow
-// it: their streams answer with Access-Control-Allow-Origin). Between
-// stations, and while one tunes in, there is the hiss of the air.
+// The cassette radio on the counter plays a real station of Russian hits of
+// the 90s and 2000s. No song lives on the site: the station streams from its
+// own server (and allows it: the stream answers with
+// Access-Control-Allow-Origin). While it tunes in there is the hiss of the air.
 
 export const STATIONS = [
-  { name: 'Russian Gold', by: 'Радио Рекорд', url: 'https://radiorecord.hostingradio.ru/russiangold96.aacp' },
-  { name: 'Russian Hits', by: 'Радио Рекорд', url: 'https://radiorecord.hostingradio.ru/russianhits96.aacp' },
-  { name: 'Pop Gold 2000s', by: 'DFM', url: 'https://dfm-popgold00.hostingradio.ru/popgold0096.aacp' }
+  { name: 'Russian Gold', by: 'Радио Рекорд', url: 'https://radiorecord.hostingradio.ru/russiangold96.aacp' }
 ];
 
-// The arrows go round the stations.
+// Round the stations: a silent one gives way to the next.
 export function stationAfter(index, step, count = STATIONS.length) {
   return (((index + step) % count) + count) % count;
 }
@@ -143,14 +141,14 @@ export function createRadio({ win = globalThis.window, onChange = () => {} } = {
     get on() { return index >= 0; },
     get index() { return index; },
     get state() { return state; },
-    // the radio's own button: on, then the next station
+    // the radio's own button switches it on and off
     press() {
+      if (index >= 0) {
+        this.off();
+        return;
+      }
       failures = 0;
-      tune(index < 0 ? 0 : stationAfter(index, 1));
-    },
-    step(direction) {
-      failures = 0;
-      tune(stationAfter(Math.max(index, 0), direction));
+      tune(0);
     },
     off() {
       win.clearTimeout(watchdog);
