@@ -441,6 +441,8 @@ export async function createKioskScene({
   // layout and a clip opens from the screen's rectangle to the edges, so
   // nothing stretches; going back closes it the same way.
   let dived = null;
+  // once open, the page covers the scene: from then on nothing behind it is drawn
+  let coveredFrom = 0;
   const OPEN = 'inset(0px 0px 0px 0px round 0px)';
   function restingRect(name) {
     const { width, height } = pagePixels(name, camera.position.distanceTo(screens[name].center));
@@ -452,6 +454,7 @@ export async function createKioskScene({
     const viewport = { width: container.clientWidth, height: container.clientHeight };
     const from = diveClip(restingRect(name), viewport, 18);
     dived = name;
+    coveredFrom = performance.now() + (animate ? 420 : 0);
     element.classList.add('is-dived');
     onDive(name);
     if (animate && element.animate) {
@@ -852,13 +855,15 @@ export async function createKioskScene({
   // Paints a canvas onto a Blender anchor (marker on the shutter, the ad on
   // the billboard). `draw(context, width, height)` works in canvas pixels.
   // `pickAs` lets a painted surface answer clicks for the object it covers.
-  function paintAnchor(name, draw, { transparent = true, lit = false, glow = 0, pickAs = '' } = {}) {
+  // `size` is the canvas width in pixels: small things on the model need no
+  // more than they show (a big canvas costs video memory, more so on phones).
+  function paintAnchor(name, draw, { transparent = true, lit = false, glow = 0, pickAs = '', size = 1024 } = {}) {
     const anchor = root.getObjectByName(name);
     if (!anchor) return null;
     const { width, height } = anchor.userData;
     const paint = document.createElement('canvas');
-    paint.width = 1024;
-    paint.height = Math.round(1024 * (height / width));
+    paint.width = size;
+    paint.height = Math.round(size * (height / width));
     draw(paint.getContext('2d'), paint.width, paint.height);
     const texture = new THREE.CanvasTexture(paint);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -890,8 +895,8 @@ export async function createKioskScene({
   }
 
   // Paint sprayed on a wall: lit like the wall, see-through around it.
-  function paintDecal(name, draw, glow = 0) {
-    const plane = paintAnchor(name, draw, { transparent: true, lit: true, glow });
+  function paintDecal(name, draw, glow = 0, size = 1024) {
+    const plane = paintAnchor(name, draw, { transparent: true, lit: true, glow, size });
     if (plane) {
       plane.material.depthWrite = false;
       plane.material.polygonOffset = true;
@@ -967,13 +972,14 @@ export async function createKioskScene({
   const radioNeedle = root.getObjectByName('radio_needle');
   const radioLamp = root.getObjectByName('radio_led');
   const NEEDLE_HOME = radioNeedle ? radioNeedle.position.x : 0;
-  const NEEDLE_SPAN = 0.063;   // the scale's ticks run 63 mm to the right
+  // the scale's ticks run 63 mm to the seller's right, which is −x on the model
+  const NEEDLE_SPAN = -0.063;
   let needleAt0 = NEEDLE_HOME;
   let radioShown = { on: false, index: 0, count: 1, text: '', seeking: false };
   let radioScroll = 0;
   let radioDrawn = 0;
   const radioScreen = paintAnchor('screen_radio', (context, width, height) => drawRadioDisplay(context, width, height),
-    { transparent: false, pickAs: 'hs_radio' });
+    { transparent: false, pickAs: 'hs_radio', size: 320 });
   function drawRadio(now = performance.now() / 1000) {
     if (!radioScreen) return;
     const canvas = radioScreen.material.map.image;
@@ -1364,6 +1370,12 @@ export async function createKioskScene({
   const flat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
   let lastFrame = 0;
   const frame = () => {
+    // a screen open on a phone hides the whole scene: draw nothing behind it
+    // (scrolling the page stays smooth and the phone stays cool)
+    if (dived && !flight && !billboardMotion && performance.now() > coveredFrom) {
+      lastFrame = performance.now() / 1000;
+      return;
+    }
     if (flight) {
       const t = Math.min((performance.now() - flight.start) / flight.duration, 1);
       const k = flightProgress(t);
@@ -1465,7 +1477,7 @@ export async function createKioskScene({
 
   // neighbours at two lit windows across the street
   for (const pose of ['smoking', 'looking']) {
-    paintAnchor(`window_person_${pose}`, (context, width, height) => drawNeighbour(context, width, height, pose));
+    paintAnchor(`window_person_${pose}`, (context, width, height) => drawNeighbour(context, width, height, pose), { size: 512 });
   }
 
   // Compile every shader and upload every texture now, behind the loading

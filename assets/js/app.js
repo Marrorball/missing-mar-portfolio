@@ -536,7 +536,7 @@ async function paintSheets() {
   }
   for (const kind of STICKERS) {
     // glossy vinyl catches a little of the window's light
-    state.kiosk?.paintDecal(`sticker_${kind}`, (context, width, height) => drawSticker(context, width, height, kind), 0.3);
+    state.kiosk?.paintDecal(`sticker_${kind}`, (context, width, height) => drawSticker(context, width, height, kind), 0.3, 512);
   }
   state.kiosk?.setTvPicture((context, width, height) => drawTeletext(context, width, height,
     projects.map((project, index) => ({ number: channelNumber(index), title: project.title || '' }))));
